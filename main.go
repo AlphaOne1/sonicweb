@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -9,6 +10,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"syscall"
+	"text/template"
 
 	"github.com/corazawaf/coraza/v3"
 	cor_http "github.com/corazawaf/coraza/v3/http"
@@ -18,46 +20,44 @@ import (
 	"github.com/AlphaOne1/midgard/handler"
 )
 
+//go:embed logo.tmpl
+var logoTmpl string
+
 func printLogo() {
-	vcsRevision := "unknown"
-	vcsTime := "unknown"
-	vcsModified := ""
-	goVersion := "unknown"
+	revData := struct {
+		VcsRevision string
+		VcsTime     string
+		VcsModified string
+		GoVersion   string
+	}{
+		VcsRevision: "unknown",
+		VcsTime:     "unknown",
+		VcsModified: "",
+		GoVersion:   "unknown",
+	}
 
 	if bi, biOK := debug.ReadBuildInfo(); biOK {
-		goVersion = bi.GoVersion
+		revData.GoVersion = bi.GoVersion
 
 		for _, s := range bi.Settings {
 			switch s.Key {
 			case "vcs.revision":
-				vcsRevision = s.Value
+				revData.VcsRevision = s.Value
 			case "vcs.modified":
 				if s.Value == "true" {
-					vcsModified = "*"
+					revData.VcsModified = "*"
 				}
 			case "vcs.time":
-				vcsTime = s.Value
+				revData.VcsTime = s.Value
 			}
 		}
 	}
 
-	fmt.Println(`               /\______      `)
-	fmt.Println(`            .-//\\     ''--__`)
-	fmt.Println(`          /' // ||        _,/`)
-	fmt.Println(`        /'  //__||      ,/   `)
-	fmt.Println(`______/'    __         /____             _     _       __     __  `)
-	fmt.Println(`\    /    /'_ '\      / ___/____  ____  (_)___| |     / /__  / /_ `)
-	fmt.Println(` \  /    / / '\ \     \__ \/ __ \/ __ \/ / ___/ | /| / / _ \/ __ \`)
-	fmt.Println(`  \/      / _  \     ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /`)
-	fmt.Println(`   \ .   / | \ /_   /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/ `)
-	fmt.Println(`    \|\  |  \ // \       '\   `)
-	fmt.Print(`     \ \-'__-/ _/ \        '\   `)
-	fmt.Printf("Version: %v%v\n", vcsRevision, vcsModified)
-	fmt.Print(`     @@_       _--/-----_    '\ `)
-	fmt.Printf("     of: %v\n", vcsTime)
-	fmt.Print(`        -------          ''-_  \`)
-	fmt.Printf("  using: %v\n", goVersion)
-	fmt.Println(`                             '-_\`)
+	logo := template.New("logo")
+	template.Must(logo.Parse(logoTmpl))
+
+	logo.Execute(os.Stdout, revData)
+
 	fmt.Println()
 }
 
