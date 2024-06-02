@@ -1,0 +1,230 @@
+variables:
+    GIT_DEPTH: "1"
+
+stages:
+    - Test
+    - Build
+    - Publish
+    - Rollout
+
+workflow:
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+        - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+          when: never
+        - when: always
+
+
+################################################################################
+## Definitions                                                                ##
+################################################################################
+
+.go-cache:
+    variables:
+        GOPATH: $CI_PROJECT_DIR/.go
+    before_script:
+        - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf https://gitlab.com/
+        - mkdir -p .go
+    cache:
+        paths:
+            - .go/pkg/mod
+
+
+################################################################################
+## Pre-Build-Tests                                                            ##
+################################################################################
+
+Pipeline Env:
+    stage: Test
+    tags:
+        - docker
+    script:
+        - env | grep -E "^CI_" | grep -Ev "_KEY=|_SECRET=|_PASS(WORD)?=|_CERT(IFICATE)?=|_JWT=|_TOKEN=" | sort"
+    needs: []
+
+Dependency Check:
+    extends: .go-cache
+    stage: Test
+    variables:
+        GIT_DEPTH: "0"
+        GIT_STRATEGY: clone
+    tags:
+        - docker
+    script:
+        - go get -u ./...
+        - go mod tidy
+        - if [ `git diff | wc -l` -eq 0 ];
+          then
+              echo "No dependency updates found";
+              exit 0;
+          else
+              echo "Found dependency updates";
+              git diff;
+              exit 1;
+          fi
+    rules:
+        - if: $RENOVATE == '1'
+          when: never
+        - when: always
+    needs: []
+
+Format Check:
+    extends: .go-cache
+    stage: Test
+    tags:
+        - docker
+    script:
+        - if [ `go fmt ./... | wc -l` -gt 0 ];
+          then
+              echo "Unformatted checkin";
+              exit -1;
+          else
+              echo "All well formatted";
+              exit 0;
+          fi
+    needs: []
+
+SonarQube Check:
+    stage: Test
+    tags:
+        - docker
+    variables:
+        SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # defines the location of the analysis task cache
+        GIT_DEPTH: "0" # tells git to fetch all the branches of the project, required by the analysis task
+        GIT_STRATEGY: clone
+    cache:
+        key: "$CI_JOB_NAME"
+        paths:
+            - .sonar/cache
+    script:
+        - pwd
+        - ls
+        - export SONAR_PROJECT_KEY=`echo ${CI_PROJECT_PATH} | sed s@/@_@g`
+        - echo "Using SONAR_PROJECT_KEY=${SONAR_PROJECT_KEY}"
+        - sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+                        -Dsonar.host.url=${SONAR_CENTRALIZED_HOST_URL}
+                        -Dsonar.login=${SONAR_CENTRALIZED_TOKEN}
+                        -Dsonar.qualitygate.wait=true
+                        -Dsonar.exclusions=testroot/**
+                        -Dsonar.coverage.exclusions=*_test.go,**/*_test.go
+                        -Dsonar.go.coverage.reportPaths=coverprofile.out
+                        -Dsonar.go.tests.reportPaths=report.json
+    allow_failure: true
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "merge_request_event && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^update_deps_[0-9]+$/'
+          when: never
+        - when: always
+    needs:
+        - Test
+
+Static Check:
+    extends: .go-cache
+    stage: Test
+    tags:
+        - docker
+    script:
+        - go get ./...
+        - go run honnef.co/go/tools/cmd/staticcheck@0.4.7 ./...
+    needs: []
+
+Test:
+    extends: .go-cache
+    stage: Test
+    tags:
+        - docker
+    script:
+        - go get ./...
+        - go run gotest.tools/gotestsum@latest --junitfile report.xml --jsonfile report.json --format testname --  -coverprofile=coverprofile.out ./...
+        - go run github.com/boumenot/gocover-coberture@latest -by-files -ignore-gen-files < coverprofile.out > coverprofile.xml
+        - go tool cover -func=coverprofile.out
+    coverage: '/total:.*\(statements\).*\d+.\d+%/'
+    artifacts:
+        when: always
+        reports:
+            junit: report.xml
+            coverage_report:
+                coverage_format: cobertura
+                path: coverprofile.xml
+        paths:
+            - report.xml
+            - coverprofile.out
+    needs: []
+
+Vulnerability Check:
+    extends: .go-cache
+    stage: Test
+    tags:
+        - docker
+    script:
+        - go get ./...
+        - go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+    allow_failure: true
+    needs: []
+
+
+################################################################################
+## Artifact Build                                                             ##
+################################################################################
+
+Build:
+    extends: .go-cache
+    stage: Build
+    variables:
+        GIT_DEPTH: "0"
+        GIT_STRATEGY: clone
+        CGO_ENABLED: "0"
+    tags:
+        - docker
+    script:
+        - go build
+    artifacts:
+        paths:
+            - sonic
+        expire_in: 2 hours
+    needs: []
+
+Dependency Update:
+    extends: .go-cache
+    stage: Build
+    variables:
+        GIT_DEPTH: "0"
+        GIT_STRATEGY: clone
+    tags:
+        - docker
+    script:
+        - go get -u ./...
+        - go mod tidy
+        - if [ `git diff | wc -l` -eq 0 ];
+          then
+              echo "No update found";
+              exit 0;
+          else
+              echo "Found updates"
+              git diff;
+          fi
+        - echo  git config --glboal user.name  "$SERVICE_BOT_USER}"
+        -       git config --glboal user.name  "$SERVICE_BOT_USER}"
+        - echo  git config --glboal user.email "$SERVICE_BOT_EMAIL}"
+        -       git config --glboal user.email "$SERVICE_BOT_EMAIL}"
+        - echo 'git user:'  `git config --get user.name`
+        - echo 'git email:' `git config --get user.email`
+        - git commit -a -m "Update dependencies."
+        - git remote set-url origin "https://${SERVICE_BOT_USER}:${SERVICE_BOT_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+        - git push origin HEAD:refs/heads/update_deps_${CI_PIPELINE_IID}
+              -o merge_request.label=dependencies::update
+              -o merge_request.create
+              -o merge_request.target=${CI_COMMIT_BRANCH}
+              -o merge_request.remove_source_branch
+              -o merge_request.merge_when_pipeline_succeeds
+              -o merge_request.assign="root"
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+          when: never
+        - if: $RENOVATE == '1'
+          when: always
+        - when: manual
+          allow_failure: true
+    needs:
+        - job: Test
+          artifacts: false
