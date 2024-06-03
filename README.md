@@ -19,3 +19,4 @@ Usage
 | -telemetry {true,false} | enable/disable telemetry support, defaults to `true`        |
 | -pprof     {true,false} | enable/disable pprof support, defaults to `false`           |
 | -log       \<level\>    | log level (debug, info, warn, error), defaults to `debug`   |
+| -logstyle  \<style\>    | log style (auto, text, json), defaults to `auto`            |
