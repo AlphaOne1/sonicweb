@@ -61,7 +61,7 @@ func printLogo() {
 	fmt.Println()
 }
 
-func setupLogging(logLevel string) {
+func setupLogging(logLevel string, logStyle string) {
 	options := slog.HandlerOptions{
 		AddSource: true,
 		Level: func() slog.Level {
@@ -87,10 +87,13 @@ func setupLogging(logLevel string) {
 
 	ppid := os.Getppid()
 
-	if ppid > 1 {
+	if (logStyle == "auto" && ppid > 1) || logStyle == "text" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &options)))
-	} else {
+	} else if logStyle == "json" {
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
+	} else {
+		slog.Error("unsupported log style", slog.String("logStyle", logStyle))
+		os.Exit(1)
 	}
 }
 
@@ -106,10 +109,11 @@ func main() {
 	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
 	enablePprof := flag.Bool("pprof", false, "enable pprof support")
 	logLevel := flag.String("log", "debug", "log level, valid options are debug, info, warn and error")
+	logStyle := flag.String("logstyle", "auto", "log style, valid options are auto, text and json")
 
 	flag.Parse()
 
-	setupLogging(*logLevel)
+	setupLogging(*logLevel, *logStyle)
 
 	slog.Info("logging", slog.String("level", *logLevel))
 
@@ -128,6 +132,13 @@ func main() {
 		slog.Info("using root directory", slog.String("root", *rootPath))
 	} else {
 		slog.Error("no root directory")
+		os.Exit(1)
+	}
+
+	if _, statErr := os.Stat(*rootPath); statErr != nil {
+		slog.Error("could not get info of root path",
+			slog.String("path", *rootPath),
+			slog.String("error", statErr.Error()))
 		os.Exit(1)
 	}
 

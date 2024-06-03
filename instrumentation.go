@@ -78,6 +78,6 @@ func serveMetrics(address string, port int, enableTelemetry, enablePprof bool) {
 
 	if err := http.ListenAndServe(listenAddress, mux); err != nil {
 		slog.Error("error serving metrics", slog.String("error", err.Error()))
-		return
+		os.Exit(1)
 	}
 }
