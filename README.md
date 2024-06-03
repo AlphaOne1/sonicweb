@@ -6,7 +6,7 @@ SonicWeb
 Features
 --------
 
-* statically linked, apt to be used in scratch containers (~19MB)
+* statically linked, apt to be used in scratch containers (~13MB)
 * focused purpose, thus little attack surface
 * usage of OWASP [coraza](https://github.com/corazawaf/coraza) middleware
   to follow best security practises
@@ -41,3 +41,18 @@ Usage
 |                         | defaults to `debug`                          |
 | -logstyle  \<style\>    | log style (auto, text, json),                |
 |                         | defaults to `auto`                           |
+
+Building
+--------
+
+For easier management a `Makefile` is included, using it, the build is as easy as:
+
+```sh
+make
+```
+
+If your operating system does not provide a usable form of `make`, you can also do:
+
+```sh
+CGO_ENABLED=0 go build -ldflags "-s -w"
+```
