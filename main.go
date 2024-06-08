@@ -17,7 +17,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/AlphaOne1/midgard"
-	"github.com/AlphaOne1/midgard/handler"
+	"github.com/AlphaOne1/midgard/handler/access_log"
+	"github.com/AlphaOne1/midgard/handler/correlation"
 )
 
 //go:embed logo.tmpl
@@ -177,8 +178,8 @@ func main() {
 		func(next http.Handler) http.Handler {
 			return cor_http.WrapHandler(waf, next)
 		},
-		handler.Correlation,
-		handler.AccessLogging,
+		correlation.New(),
+		access_log.New(),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(*basePath, next)
 		})
