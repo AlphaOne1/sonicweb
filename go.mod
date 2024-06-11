@@ -3,7 +3,7 @@ module sonic
 go 1.22.1
 
 require (
-	github.com/AlphaOne1/midgard v0.0.0-20240608083800-78f78458a0e4
+	github.com/AlphaOne1/midgard v0.0.0-20240611154906-bf111c86158a
 	github.com/corazawaf/coraza/v3 v3.1.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.19.1
@@ -17,7 +17,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/corazawaf/libinjection-go v0.2.0 // indirect
+	github.com/corazawaf/libinjection-go v0.2.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -34,6 +34,6 @@ require (
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect
 )
