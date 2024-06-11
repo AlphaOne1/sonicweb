@@ -3,64 +3,23 @@ package main
 import (
 	_ "embed"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
-	"text/template"
-
-	"github.com/corazawaf/coraza/v3"
-	cor_http "github.com/corazawaf/coraza/v3/http"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/handler/access_log"
 	"github.com/AlphaOne1/midgard/handler/correlation"
+
+	"github.com/corazawaf/coraza/v3"
+	cor_http "github.com/corazawaf/coraza/v3/http"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 //go:embed logo.tmpl
 var logoTmpl string
-
-func printLogo() {
-	revData := struct {
-		VcsRevision string
-		VcsTime     string
-		VcsModified string
-		GoVersion   string
-	}{
-		VcsRevision: "unknown",
-		VcsTime:     "unknown",
-		VcsModified: "",
-		GoVersion:   "unknown",
-	}
-
-	if bi, biOK := debug.ReadBuildInfo(); biOK {
-		revData.GoVersion = bi.GoVersion
-
-		for _, s := range bi.Settings {
-			switch s.Key {
-			case "vcs.revision":
-				revData.VcsRevision = s.Value
-			case "vcs.modified":
-				if s.Value == "true" {
-					revData.VcsModified = "*"
-				}
-			case "vcs.time":
-				revData.VcsTime = s.Value
-			}
-		}
-	}
-
-	logo := template.New("logo")
-	template.Must(logo.Parse(logoTmpl))
-
-	logo.Execute(os.Stdout, revData)
-
-	fmt.Println()
-}
 
 func setupLogging(logLevel string, logStyle string) {
 	options := slog.HandlerOptions{
@@ -99,7 +58,7 @@ func setupLogging(logLevel string, logStyle string) {
 }
 
 func main() {
-	printLogo()
+	PrintLogo(logoTmpl)
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
