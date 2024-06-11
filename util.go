@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"runtime/debug"
+	"text/template"
 
 	"github.com/google/uuid"
 )
@@ -32,4 +35,50 @@ func GetOrCreateID(id string) string {
 	}
 
 	return newID
+}
+
+// PrintLogo takes a text/template string as parameter and renders it to be the logo. It offers the
+// following data for the template:
+//   - VcsRevision
+//   - VcsTime
+//   - VcsModified
+//   - GoVersion
+//
+// these can be referenced in the template, e.g. using {{ .VcsRevision }}
+func PrintLogo(tmpl string) {
+	revData := struct {
+		VcsRevision string
+		VcsTime     string
+		VcsModified string
+		GoVersion   string
+	}{
+		VcsRevision: "unknown",
+		VcsTime:     "unknown",
+		VcsModified: "",
+		GoVersion:   "unknown",
+	}
+
+	if bi, biOK := debug.ReadBuildInfo(); biOK {
+		revData.GoVersion = bi.GoVersion
+
+		for _, s := range bi.Settings {
+			switch s.Key {
+			case "vcs.revision":
+				revData.VcsRevision = s.Value
+			case "vcs.modified":
+				if s.Value == "true" {
+					revData.VcsModified = "*"
+				}
+			case "vcs.time":
+				revData.VcsTime = s.Value
+			}
+		}
+	}
+
+	logo := template.New("logo")
+	template.Must(logo.Parse(tmpl))
+
+	logo.Execute(os.Stdout, revData)
+
+	fmt.Println()
 }
