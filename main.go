@@ -14,7 +14,7 @@ import (
 	"github.com/AlphaOne1/midgard/handler/correlation"
 
 	"github.com/corazawaf/coraza/v3"
-	cor_http "github.com/corazawaf/coraza/v3/http"
+	corhttp "github.com/corazawaf/coraza/v3/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -135,7 +135,7 @@ func main() {
 
 	mwStack = append(mwStack,
 		func(next http.Handler) http.Handler {
-			return cor_http.WrapHandler(waf, next)
+			return corhttp.WrapHandler(waf, next)
 		},
 		correlation.New(),
 		access_log.New(),
