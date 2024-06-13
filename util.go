@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"runtime/debug"
 	"text/template"
@@ -78,7 +80,13 @@ func PrintLogo(tmpl string) {
 	logo := template.New("logo")
 	template.Must(logo.Parse(tmpl))
 
-	logo.Execute(os.Stdout, revData)
+	if err := logo.Execute(os.Stdout, revData); err != nil {
+		if jErr := json.NewEncoder(os.Stdout).Encode(revData); jErr != nil {
+			slog.Error("logo rendering and version information failed",
+				slog.String("logo_error", err.Error()),
+				slog.String("info_error", jErr.Error()))
+		}
+	}
 
 	fmt.Println()
 }
