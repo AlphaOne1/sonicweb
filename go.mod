@@ -12,6 +12,7 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.49.0
 	go.opentelemetry.io/otel/sdk v1.27.0
 	go.opentelemetry.io/otel/sdk/metric v1.27.0
+	go.uber.org/automaxprocs v1.5.3
 )
 
 require (
