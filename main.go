@@ -11,6 +11,7 @@ import (
 	_ "time/tzdata"
 
 	"github.com/AlphaOne1/midgard"
+	"github.com/AlphaOne1/midgard/defs"
 	"github.com/AlphaOne1/midgard/handler/access_log"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 
@@ -125,10 +126,10 @@ func main() {
 
 	slog.Info("registering handler for FileServer")
 
-	// remove all implicetely registered handlers
+	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()
 
-	mwStack := make([]midgard.Middleware, 0, 4)
+	mwStack := make([]defs.Middleware, 0, 4)
 
 	if *enableTelemetry {
 		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+*basePath))
