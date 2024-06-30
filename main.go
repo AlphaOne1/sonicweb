@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	_ "time/tzdata"
 
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/handler/access_log"
