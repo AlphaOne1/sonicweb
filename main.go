@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	_ "time/tzdata"
+
+	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/defs"
@@ -59,6 +63,21 @@ func setupLogging(logLevel string, logStyle string) {
 	}
 }
 
+func setupMaxProcs() {
+	if _, mpFound := os.LookupEnv("GOMAXPROCS"); !mpFound {
+		if _, err := maxprocs.Set(maxprocs.Logger(func(format string, args ...any) {
+			if slog.Default().Enabled(context.Background(), slog.LevelInfo) {
+				message := fmt.Sprintf(format, args...)
+				slog.Info(message)
+			}
+		})); err != nil {
+			slog.Error("failed to automatically set GOMAXPROCS",
+				slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+	}
+}
+
 func main() {
 	PrintLogo(logoTmpl)
 
@@ -76,6 +95,7 @@ func main() {
 	flag.Parse()
 
 	setupLogging(*logLevel, *logStyle)
+	setupMaxProcs()
 
 	slog.Info("logging", slog.String("level", *logLevel))
 
