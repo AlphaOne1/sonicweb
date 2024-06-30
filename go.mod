@@ -3,8 +3,8 @@ module sonic
 go 1.22.1
 
 require (
-	github.com/AlphaOne1/midgard v0.0.0-20240613222519-1339aa69abba
-	github.com/corazawaf/coraza/v3 v3.1.0
+	github.com/AlphaOne1/midgard v0.0.0-20240629083627-f1d8ad6ee3d6
+	github.com/corazawaf/coraza/v3 v3.2.1
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.19.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0
@@ -22,9 +22,10 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/petar-dambovaliev/aho-corasick v0.0.0-20240411101913-e07a1f0e8eb4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.54.0 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
