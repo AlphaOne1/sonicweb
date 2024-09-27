@@ -18,6 +18,7 @@ import (
 	"github.com/AlphaOne1/midgard/defs"
 	"github.com/AlphaOne1/midgard/handler/access_log"
 	"github.com/AlphaOne1/midgard/handler/correlation"
+	"github.com/AlphaOne1/midgard/util"
 
 	"github.com/corazawaf/coraza/v3"
 	corhttp "github.com/corazawaf/coraza/v3/http"
@@ -159,8 +160,8 @@ func main() {
 		func(next http.Handler) http.Handler {
 			return corhttp.WrapHandler(waf, next)
 		},
-		correlation.New(),
-		access_log.New(),
+		util.Must(correlation.New()),
+		util.Must(access_log.New()),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(*basePath, next)
 		})
