@@ -10,8 +10,12 @@ func TestGetEnvDefault(t *testing.T) {
 		envKey     string
 		envDefault string
 	}{
-		{
+		{ // Works on macOS and Linux
 			envKey:     "USER",
+			envDefault: "test",
+		},
+		{ // Works on Windows
+			envKey:     "USERNAME",
 			envDefault: "test",
 		},
 		{

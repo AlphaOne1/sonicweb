@@ -90,7 +90,7 @@ func main() {
 	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
 	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
 	enablePprof := flag.Bool("pprof", false, "enable pprof support")
-	logLevel := flag.String("log", "debug", "log level, valid options are debug, info, warn and error")
+	logLevel := flag.String("log", "info", "log level, valid options are debug, info, warn and error")
 	logStyle := flag.String("logstyle", "auto", "log style, valid options are auto, text and json")
 
 	flag.Parse()

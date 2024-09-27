@@ -3,7 +3,7 @@
 all: sonic
 
 sonic: *.go logo.tmpl
-	CGO_ENABLED=0 go build -ldflags "-s -w"
+	CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
 
 clean:
-	-rm sonic
+	-rm -f sonic sonic.exe
