@@ -10,7 +10,7 @@ jobs:
         strategy:
             matrix:
                 go-version:
-                    - "1.23"
+                    - stable
                 architecture:
                     - 386
                     - amd64
@@ -32,7 +32,7 @@ jobs:
             - name: Install Go
               uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
               with:
-                  go-version: ${{matrix.go-version}}
+                  go-version: ${{ matrix.go-version }}
 
             - name: Checkout
               uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
@@ -46,7 +46,10 @@ jobs:
                   GOARCH: ${{matrix.architecture}}
               run: make
 
-            - name: Upload Artifact
-              uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+            - name: Compress
+              run: xz -9 sonic-*-*
+
+            - name: Upload Release
+              uses: softprops/action-gh-release@v2
               with:
-                  path: sonic-*-*
+                  path: sonic-*-*.xz
