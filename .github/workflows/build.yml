@@ -5,6 +5,9 @@ on:
         types:
             - published
 
+permissions:
+    contents: write
+
 jobs:
     Build:
         strategy:
