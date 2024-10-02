@@ -1,0 +1,172 @@
+# Copyright the midgard contributors.
+# SPDX-License-Identifier: MPL-2.0
+
+name: Tests
+
+on:
+    push:
+        branches:
+          - master
+    pull_request:
+        branches:
+          - master
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+    FormatCheck:
+        strategy:
+            matrix:
+                go-version:
+                  - "1.23"
+        runs-on: ubuntu-latest
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+            with:
+              egress-policy: audit
+
+          - name: Install Go
+            uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+            with:
+                go-version: ${{matrix.go-version}}
+
+          - name: Checkout
+            uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+            with:
+                fetch-depth: 1
+
+          - name: FormatCheck
+            run: if [ `go fmt ./... | wc -l` -gt 0 ] ; then echo "Found unformatted code" ; exit 1 ; else exit 0 ; fi
+
+    StaticCheck:
+        strategy:
+            matrix:
+                go-version:
+                  - "1.23"
+        runs-on: ubuntu-latest
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+            with:
+              egress-policy: audit
+
+          - name: Install Go
+            uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+            with:
+                go-version: ${{matrix.go-version}}
+
+          - name: Checkout
+            uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+            with:
+                fetch-depth: 1
+
+          - name: StaticCheck
+            uses: dominikh/staticcheck-action@fe1dd0c3658873b46f8c9bb3291096a617310ca6 # v1.3.1
+            with:
+                version: latest
+                install-go: false
+                cache-key: ${{matrix.go-version}}
+
+    Test:
+        strategy:
+            matrix:
+                go-version:
+                  - "1.23"
+                platform:
+                  #- macos-latest
+                  - ubuntu-latest
+                  #- windows-latest
+        runs-on: ${{matrix.platform}}
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+            with:
+              egress-policy: audit
+
+          - name: Install Go
+            uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+            with:
+                go-version: ${{matrix.go-version}}
+
+          - name: Checkout
+            uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+            with:
+                fetch-depth: 1
+
+          - name: Test
+            run: go test -v `go list ./... | grep -v example` --covermode=count --coverpkg=./... --coverprofile=coverage.txt
+
+          - name: Coverage
+            run: go tool cover -func=coverage.txt
+
+          - name: Upload coverage to Codecov
+            uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+            with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+
+    # This action is mainly composed of snippets of github.com/jidicula/go-fuzz-action
+#    FuzzTest:
+#        strategy:
+#            matrix:
+#                go-version:
+#                  - "1.22"
+#                platform:
+#                  #- macos-latest
+#                  - ubuntu-latest
+#                  #- windows-latest
+#                packages:
+#                  - ./handler/method_filter
+#        runs-on: ${{ matrix.platform }}
+#        steps:
+#          - name: Harden Runner
+#            uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+#            with:
+#              egress-policy: audit
+#
+#          - name: Install Go
+#            uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+#            with:
+#                go-version: ${{matrix.go-version}}
+#
+#          - name: Checkout
+#            uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+#            with:
+#                fetch-depth: 1
+#
+#          - name: Run Fuzz Test
+#            shell: bash
+#            run: go test ${{ matrix.packages }} -fuzz="Fuzz" -fuzztime="30s" -fuzzminimizetime="10s"
+#
+#          - name: Upload fuzz failure seed corpus as run artifact
+#            if: failure()
+#            uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+#            with:
+#                name: testdata
+#                path: testdata
+#
+#          - run: echo "EVENT NAME IS ${{ github.event_name }}"
+#            if: failure()
+#            shell: bash
+#
+#          - name: Save PR head commit SHA
+#            if: failure() && github.event_name == 'pull_request'
+#            shell: bash
+#            run: |
+#                SHA="${{ github.event.pull_request.head.sha }}"
+#                echo "SHA=$SHA" >> $GITHUB_ENV
+#
+#          - name: Save latest commit SHA if not PR
+#            if: failure() && github.event_name != 'pull_request'
+#            shell: bash
+#            run: echo "SHA=${{ github.sha }}" >> $GITHUB_ENV
+#
+#          - name: Output message
+#            if: failure()
+#            shell: bash
+#            run: |
+#                MESSAGE='Fuzz test failed on commit ${{ env.SHA }}. To troubleshoot locally, use the [GitHub CLI](https://cli.github.com) to download the seed corpus with\n```\ngh run download ${{ github.run_id }} -n testdata\n```'
+#                DEEPLINK="https://github.com/${{ github.repository }}/commit/${{ env.SHA }}"
+#                echo -e "${MESSAGE/${{ env.SHA }}/$DEEPLINK}"
+#                echo -e "${MESSAGE/${{ env.SHA }}/[${GITHUB_SHA:0:8}]($DEEPLINK)}" >> $GITHUB_STEP_SUMMARY
