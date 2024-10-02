@@ -15,13 +15,13 @@ jobs:
                     - 386
                     - amd64
                     - arm64
-                include:
-                    - os: linux
-                    - os: windows
+                os:
+                    - linux
+                    - windows
+                    - darwin
+                exclude:
                     - os: darwin
-                      architecture:
-                        - amd64
-                        - arm64
+                      architecture: 386
         runs-on: ubuntu-latest
         steps:
             - name: Harden Runner
