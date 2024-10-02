@@ -1,0 +1,52 @@
+name: Build
+
+on:
+    release:
+        types:
+            - published
+
+jobs:
+    Build:
+        strategy:
+            matrix:
+                go-version:
+                    - "1.23"
+                architecture:
+                    - 386
+                    - amd64
+                    - arm64
+                include:
+                    - os: linux
+                    - os: windows
+                    - os: darwin
+                      architecture:
+                        - amd64
+                        - arm64
+        runs-on: ubuntu-latest
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+              with:
+                  egress-policy: audit
+
+            - name: Install Go
+              uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+              with:
+                  go-version: ${{matrix.go-version}}
+
+            - name: Checkout
+              uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+              with:
+                  fetch-depth: 1
+
+            - name: Build
+              env:
+                  CGO_ENABLED: "0"
+                  GOOS: ${{matrix.os}}
+                  GOARCH: ${{matrix.architecture}}
+              run: make
+
+            - name: Upload Artifact
+              uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+              with:
+                  path: sonic-*-*

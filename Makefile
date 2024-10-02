@@ -5,8 +5,12 @@
 
 all: sonic
 
+IGOOS=       $(shell go env GOOS)
+IGOARCH=     $(shell go env GOARCH)
+ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
+
 sonic: *.go logo.tmpl
-	CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
+	CGO_ENABLED=$(ICGO_ENABLED) go build -trimpath -ldflags "-s -w" -o $@-$(IGOOS)-$(IGOARCH)
 
 clean:
-	-rm -f sonic sonic.exe
+	-rm -f sonic-$(IGOOS)-$(IGOARCH)
