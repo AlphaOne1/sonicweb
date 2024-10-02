@@ -1,3 +1,6 @@
+# Copyright thesonicweb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
 .PHONY: all clean
 
 all: sonic

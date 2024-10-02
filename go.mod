@@ -1,3 +1,6 @@
+// Copyright thesonicweb contributors.
+// SPDX-License-Identifier: MPL-2.0
+
 module sonic
 
 go 1.22.1
