@@ -35,21 +35,21 @@ Usage
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```
-             |\
-             ||\
-    _________||\\
-    \            \   /|
-     \     ___    \ / |
-    /     /.-.\   _V__|             _     _       __     __
-   /     //   \  / ___/____  ____  (_)___| |     / /__  / /_
-  /___  // _  |  \__ \/ __ \/ __ \/ / ___/ | /| / / _ \/ __ \
-     |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
-     |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
-     | / \           \
-     |/   \    _______\ Version: 926891b9d3a0672044a7de3e12d567f0e6763af6*
-           \  |              of: 2024-10-02T22:10:33Z
-            \ |           using: go1.23.1
-             \|
+           |\
+           ||\
+  _________||\\
+  \            \   /|
+   \     ___    \ / |
+  /     /.-.\   _V__|             _     _       __     __
+ /     //   \  / ___/____  ____  (_)___| |     / /__  / /_
+/___  // _  |  \__ \/ __ \/ __ \/ / ___/ | /| / / _ \/ __ \
+   |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
+   |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
+   | / \           \
+   |/   \    _______\ Version: 926891b9d3a0672044a7de3e12d567f0e6763af6*
+         \  |              of: 2024-10-02T22:10:33Z
+          \ |           using: go1.23.2
+           \|
 time=2024-10-03T09:19:29.031699 level=INFO source=sonic/main.go:75 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
 time=2024-10-03T09:19:29.032050 level=INFO source=sonic/main.go:104 msg=logging level=info
 time=2024-10-03T09:19:29.032357 level=INFO source=sonic/main.go:118 msg="using root directory" root=testroot/
