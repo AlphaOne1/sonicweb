@@ -1,4 +1,4 @@
-// Copyright the sonicweb contributors.
+// Copyright the SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 module sonic
