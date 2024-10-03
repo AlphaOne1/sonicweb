@@ -1,3 +1,6 @@
+# Copyright the sonicweb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
 name: Release
 
 on:
