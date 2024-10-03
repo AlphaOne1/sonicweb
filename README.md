@@ -19,28 +19,18 @@ Usage
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
-| Paraeter                | Description                                  |
-|-------------------------|----------------------------------------------|
-| -root      \<path\>     | root directory of content,                   |
-|                         | defaults to `/www`                           |
-| -base      \<path\>     | base path to publish the content,            |
-|                         | defaults to `/`                              |
-| -port      \<port\>     | port to listen on for web requests,          |
-|                         | defaults to `8080`                           |
-| -address   \<address\>  | address to listen on for web requests,       |
-|                         | defaults to all                              |
-| -iport     \<port\>     | port to listen on for telemetry requests,    |
-|                         | defaults to `8081`                           |
-| -iaddress  \<address\>  | address to listen on for telemetry requests, |
-|                         | defaults to all                              |
-| -telemetry {true,false} | enable/disable telemetry support,            |
-|                         | defaults to `true`                           |
-| -pprof     {true,false} | enable/disable pprof support,                |
-|                         | defaults to `false`                          |
-| -log       \<level\>    | log level (debug, info, warn, error),        |
-|                         | defaults to `info`                           |
-| -logstyle  \<style\>    | log style (auto, text, json),                |
-|                         | defaults to `auto`                           |
+| Paraeter                | Description                                  | Default |
+|-------------------------|---------------------------------------------|---------|
+| -root      \<path\>     | root directory of content                   | `/www`  |
+| -base      \<path\>     | base path to publish the content            | `/`     |
+| -port      \<port\>     | port to listen on for web requests          | `8080`  |
+| -address   \<address\>  | address to listen on for web requests       | all     |
+| -iport     \<port\>     | port to listen on for telemetry requests    | `8081`  |
+| -iaddress  \<address\>  | address to listen on for telemetry requests | all     |
+| -telemetry {true,false} | enable/disable telemetry support            | `true`  |
+| -pprof     {true,false} | enable/disable pprof support                | `false` |
+| -log       \<level\>    | log level (debug, info, warn, error)        | `info`  |
+| -logstyle  \<style\>    | log style (auto, text, json)                | `auto`  |
 
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
