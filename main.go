@@ -30,6 +30,7 @@ import (
 
 //go:embed logo.tmpl
 var logoTmpl string
+var exitFunc = os.Exit
 
 func setupLogging(logLevel string, logStyle string) {
 	options := slog.HandlerOptions{
@@ -42,7 +43,7 @@ func setupLogging(logLevel string, logStyle string) {
 					slog.String("error", levelErr.Error()),
 					slog.String("given", logLevel))
 
-				os.Exit(1)
+				exitFunc(1)
 			}
 
 			return tmp
@@ -63,7 +64,7 @@ func setupLogging(logLevel string, logStyle string) {
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
 	} else {
 		slog.Error("unsupported log style", slog.String("logStyle", logStyle))
-		os.Exit(1)
+		exitFunc(1)
 	}
 }
 
@@ -77,7 +78,7 @@ func setupMaxProcs() {
 		})); err != nil {
 			slog.Error("failed to automatically set GOMAXPROCS",
 				slog.String("error", err.Error()))
-			os.Exit(1)
+			exitFunc(1)
 		}
 	}
 }
@@ -110,7 +111,7 @@ func main() {
 	go func() {
 		<-termReceived
 		slog.Info("received termination signal")
-		os.Exit(0)
+		exitFunc(0)
 	}()
 
 	// file path to serve from
@@ -118,14 +119,14 @@ func main() {
 		slog.Info("using root directory", slog.String("root", *rootPath))
 	} else {
 		slog.Error("no root directory")
-		os.Exit(1)
+		exitFunc(1)
 	}
 
 	if _, statErr := os.Stat(*rootPath); statErr != nil {
 		slog.Error("could not get info of root path",
 			slog.String("path", *rootPath),
 			slog.String("error", statErr.Error()))
-		os.Exit(1)
+		exitFunc(1)
 	}
 
 	// base path in the URL to serve to
@@ -133,7 +134,7 @@ func main() {
 		slog.Info("using base path", slog.String("path", *basePath))
 	} else {
 		slog.Error("no basepath directory")
-		os.Exit(1)
+		exitFunc(1)
 	}
 
 	// setup opentelemetry and prometheus metricsExporter
@@ -145,7 +146,7 @@ func main() {
 	// Now we parse our rules
 	if wafErr != nil {
 		slog.Error("could not initialize waf", slog.String("error", wafErr.Error()))
-		os.Exit(1)
+		exitFunc(1)
 	}
 
 	slog.Info("registering handler for FileServer")
@@ -180,8 +181,8 @@ func main() {
 	slog.Info("starting server")
 	if err := http.ListenAndServe(*listenAddress+":"+*listenPort, nil); err != nil {
 		slog.Error("error listening", slog.String("error", err.Error()))
-		os.Exit(1)
+		exitFunc(1)
 	}
 
-	os.Exit(0)
+	exitFunc(0)
 }
