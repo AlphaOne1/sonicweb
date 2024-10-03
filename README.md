@@ -45,29 +45,29 @@ Usage
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```
-$ ./sonic -root testroot/
-               /\______
-            .-//\\     `'--__
-          /´ // ||        _,/
-        /´  //__||      ,/
-______/´    __         /____             _     _       __     __
-\    /    /'_ '\      / ___/____  ____  (_)___| |     / /__  / /_
- \  /    / / '\ \     \__ \/ __ \/ __ \/ / ___/ | /| / / _ \/ __ \
-  \/      / _  \     ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
-   \ .   / | \ /_   /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
-    \|\  |  \ // \       `\
-     \ \-'__-/ _/ \        `\   Version: 3e2283cb1a2b3322493002265b9f932aecb0efc5*
-     @@_       _--/-----_    `\      of: 2024-06-11T15:55:44Z
-        `-----´          `'-_  \  using: go1.22.4
-                             `-_\
-
-time=2024-06-12T01:42:20.092282 level=INFO source=/home/dev/sonic/main.go:119 msg=logging level=debug
-time=2024-06-12T01:42:20.093238 level=INFO source=/home/dev/sonic/main.go:133 msg="using root directory" root=testroot/
-time=2024-06-12T01:42:20.093335 level=INFO source=/home/dev/sonic/main.go:148 msg="using base path" path=/
-time=2024-06-12T01:42:20.093776 level=INFO source=/home/dev/sonic/main.go:166 msg="registering handler for FileServer"
-time=2024-06-12T01:42:20.093884 level=INFO source=/home/dev/sonic/main.go:195 msg="starting server"
-time=2024-06-12T01:42:20.094049 level=INFO source=/home/dev/sonic/instrumentation.go:69 msg="serving pprof disabled"
-time=2024-06-12T01:42:20.094170 level=INFO source=/home/dev/sonic/instrumentation.go:73 msg="serving telemetry" address=:8081/metrics
+             |\
+             ||\
+    _________||\\
+    \            \   /|
+     \     ___    \ / |
+    /     /.-.\   _V__|             _     _       __     __
+   /     //   \  / ___/____  ____  (_)___| |     / /__  / /_
+  /___  // _  |  \__ \/ __ \/ __ \/ / ___/ | /| / / _ \/ __ \
+     |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
+     |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
+     | / \           \
+     |/   \    _______\ Version: 926891b9d3a0672044a7de3e12d567f0e6763af6*
+           \  |              of: 2024-10-02T22:10:33Z
+            \ |           using: go1.23.1
+             \|
+time=2024-10-03T09:19:29.031699 level=INFO source=sonic/main.go:75 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2024-10-03T09:19:29.032050 level=INFO source=sonic/main.go:104 msg=logging level=info
+time=2024-10-03T09:19:29.032357 level=INFO source=sonic/main.go:118 msg="using root directory" root=testroot/
+time=2024-10-03T09:19:29.032433 level=INFO source=sonic/main.go:133 msg="using base path" path=/
+time=2024-10-03T09:19:29.032769 level=INFO source=sonic/instrumentation.go:72 msg="serving pprof disabled"
+time=2024-10-03T09:19:29.032837 level=INFO source=sonic/instrumentation.go:76 msg="serving telemetry" address=:8081/metrics
+time=2024-10-03T09:19:29.033072 level=INFO source=sonic/main.go:151 msg="registering handler for FileServer"
+time=2024-10-03T09:19:29.033176 level=INFO source=sonic/main.go:180 msg="starting server"
 ```
 
 Building
@@ -82,5 +82,5 @@ make
 If your operating system does not provide a usable form of `make`, you can also do:
 
 ```sh
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
+CGO_ENABLED=0 go build -trimpath-ldflags "-s -w"
 ```
