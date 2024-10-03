@@ -35,6 +35,7 @@ Usage
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```
+$ ./sonic-linux-amd64 -root=testroot/
            |\
            ||\
   _________||\\
