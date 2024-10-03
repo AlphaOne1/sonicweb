@@ -19,7 +19,7 @@ Usage
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
-| Paraeter                | Description                                  | Default |
+| Paraeter                | Description                                 | Default |
 |-------------------------|---------------------------------------------|---------|
 | -root      \<path\>     | root directory of content                   | `/www`  |
 | -base      \<path\>     | base path to publish the content            | `/`     |
