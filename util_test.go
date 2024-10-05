@@ -68,3 +68,13 @@ func TestGetOrCreateID(t *testing.T) {
 		}
 	}
 }
+
+func TestToPointer(t *testing.T) {
+	var result *bool = ToPointer(true)
+
+	if result == nil {
+		t.Errorf("ToPointer should return non-nil pointer")
+	} else if *result != true {
+		t.Errorf("ToPointer should give the same value inside the new variable")
+	}
+}

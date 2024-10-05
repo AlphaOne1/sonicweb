@@ -42,6 +42,11 @@ func GetOrCreateID(id string) string {
 	return newID
 }
 
+// ToPointer gives a pointer version of the given value
+func ToPointer[T any](v T) *T {
+	return &v
+}
+
 // PrintLogo takes a text/template string as parameter and renders it to be the logo. It offers the
 // following data for the template:
 //   - VcsRevision

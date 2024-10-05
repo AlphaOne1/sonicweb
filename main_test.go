@@ -5,8 +5,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"runtime"
 	"testing"
@@ -47,5 +49,31 @@ func TestSonicMain(t *testing.T) {
 
 	if !couldRequest {
 		t.Errorf("could not send any request")
+	}
+}
+
+func BenchmarkHandler(b *testing.B) {
+	server := httptest.NewServer(
+		generateFileHandler(
+			ToPointer(false),
+			ToPointer("/"),
+			ToPointer("testroot/")))
+
+	client := &http.Client{}
+
+	for i := 0; i < b.N; i++ {
+		resp, err := client.Get(server.URL)
+
+		if err != nil {
+			b.Fatalf("Failed to make GET request: %v", err)
+		}
+
+		_, err = io.Copy(io.Discard, resp.Body)
+
+		if err != nil {
+			b.Fatalf("Failed to read response body: %v", err)
+		}
+
+		_ = resp.Body.Close()
 	}
 }

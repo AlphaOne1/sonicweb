@@ -83,6 +83,44 @@ func setupMaxProcs() {
 	}
 }
 
+func generateFileHandler(
+	enableTelemetry *bool,
+	basePath *string,
+	rootPath *string) http.Handler {
+
+	// First we initialize our waf and our seclang parser
+	waf, wafErr := coraza.NewWAF(coraza.NewWAFConfig())
+
+	// Now we parse our rules
+	if wafErr != nil {
+		slog.Error("could not initialize waf", slog.String("error", wafErr.Error()))
+		exitFunc(1)
+	}
+
+	mwStack := make([]defs.Middleware, 0, 4)
+
+	if *enableTelemetry {
+		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+*basePath))
+	}
+
+	mwStack = append(mwStack,
+		func(next http.Handler) http.Handler {
+			return corhttp.WrapHandler(waf, next)
+		},
+		util.Must(correlation.New()),
+		util.Must(access_log.New()),
+		func(next http.Handler) http.Handler {
+			return http.StripPrefix(*basePath, next)
+		})
+
+	return midgard.StackMiddlewareHandler(
+		mwStack,
+		http.FileServer(
+			http.Dir(*rootPath),
+		),
+	)
+}
+
 func main() {
 	PrintLogo(logoTmpl)
 
@@ -140,43 +178,14 @@ func main() {
 	// setup opentelemetry and prometheus metricsExporter
 	setupInstrumentation(instrumentAddress, instrumentPort, *enableTelemetry, *enablePprof)
 
-	// First we initialize our waf and our seclang parser
-	waf, wafErr := coraza.NewWAF(coraza.NewWAFConfig())
-
-	// Now we parse our rules
-	if wafErr != nil {
-		slog.Error("could not initialize waf", slog.String("error", wafErr.Error()))
-		exitFunc(1)
-	}
-
 	slog.Info("registering handler for FileServer")
 
 	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()
 
-	mwStack := make([]defs.Middleware, 0, 4)
+	handler := generateFileHandler(enableTelemetry, basePath, rootPath)
 
-	if *enableTelemetry {
-		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+*basePath))
-	}
-
-	mwStack = append(mwStack,
-		func(next http.Handler) http.Handler {
-			return corhttp.WrapHandler(waf, next)
-		},
-		util.Must(correlation.New()),
-		util.Must(access_log.New()),
-		func(next http.Handler) http.Handler {
-			return http.StripPrefix(*basePath, next)
-		})
-
-	http.Handle("GET "+*basePath,
-		midgard.StackMiddlewareHandler(
-			mwStack,
-			http.FileServer(
-				http.Dir(*rootPath),
-			),
-		))
+	http.Handle("GET "+*basePath, handler)
 
 	slog.Info("starting server")
 	if err := http.ListenAndServe(*listenAddress+":"+*listenPort, nil); err != nil {
