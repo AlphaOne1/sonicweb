@@ -21,10 +21,10 @@ jobs:
             security-events: write
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v4.2.0
+              uses: actions/checkout@v4
 
             - name: Trivy Vulnerability Scan Repo Mode
-              uses: aquasecurity/trivy-action@v0.24.0
+              uses: aquasecurity/trivy-action@0.24.0
               with:
                   scan-type: fs
                   ignore-unfixed: true
@@ -33,7 +33,7 @@ jobs:
                   severity: CRITICAL
 
             - name: Upload Scan Results to Security Tab
-              uses: github/codeql-action/upload-sarif@v3.26.11
+              uses: github/codeql-action/upload-sarif@v3
               with:
                   sarif-file: trivy-results.sarif
 
@@ -43,7 +43,7 @@ jobs:
             security-events: write
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v4.2.0
+              uses: actions/checkout@v4
               with:
                   fetch-depth: '1'
 
@@ -65,6 +65,6 @@ jobs:
                   fi
             - name: Upload govulncheck Results to Security Tab
               if: ${{ steps.PrintSarif.outputs.hasResults == 'true' }}
-              uses: github/codeql-action/upload-sarif@v3.26.11
+              uses: github/codeql-action/upload-sarif@v3
               with:
                   sarif-file: govulncheck-results.sarif
