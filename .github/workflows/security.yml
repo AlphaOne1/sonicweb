@@ -69,9 +69,10 @@ jobs:
                 output-file: govulncheck-results.sarif
 
           - name: Print Sarif
+            id: printSarif
             run:  |
                 cat govulncheck-results.sarif
-                if [ grep results govulncheck-results.serif ]
+                if grep results govulncheck-results.sarif
                 then
                     echo "hasResults=true" >> $GITHUB_OUTPUT
                 else
@@ -79,7 +80,7 @@ jobs:
                 fi
 
           - name: Upload govulncheck Results to Security Tab
-            if: ${{ steps.PrintSarif.outputs.hasResults == 'true' }}
+            if: ${{ steps.printSarif.outputs.hasResults == 'true' }}
             uses: github/codeql-action/upload-sarif@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
             with:
                 sarif_file: govulncheck-results.sarif
