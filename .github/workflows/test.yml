@@ -170,3 +170,72 @@ jobs:
 #                DEEPLINK="https://github.com/${{ github.repository }}/commit/${{ env.SHA }}"
 #                echo -e "${MESSAGE/${{ env.SHA }}/$DEEPLINK}"
 #                echo -e "${MESSAGE/${{ env.SHA }}/[${GITHUB_SHA:0:8}]($DEEPLINK)}" >> $GITHUB_STEP_SUMMARY
+
+    TrivyCode:
+        runs-on: ubuntu-latest
+        permissions:
+            security-events: write
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+              with:
+                  egress-policy: audit
+
+            - name: Checkout code
+              uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+
+            - name: Run Trivy vulnerability scanner in repo mode
+              uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+              with:
+                  scan-type: 'fs'
+                  ignore-unfixed: true
+                  format: 'sarif'
+                  output: 'trivy-results.sarif'
+                  severity: 'CRITICAL'
+
+            - name: Upload Trivy scan results to GitHub Security tab
+              uses: github/codeql-action/upload-sarif@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
+              with:
+                  sarif_file: 'trivy-results.sarif'
+
+    VulnerabilityCheck:
+        strategy:
+            matrix:
+                go-version:
+                    - "1.23"
+        runs-on: ubuntu-latest
+        permissions:
+            security-events: write
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+              with:
+                  egress-policy: audit
+
+            - name: Checkout
+              uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+              with:
+                  fetch-depth: 1
+
+            - name: VulnerabilityCheck
+              uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
+              with:
+                  go-version-input: ${{matrix.go-version}}
+                  output-format: sarif
+                  output-file: govulncheck-results.sarif
+
+            - name: PrintSarif
+              run:  |
+                  cat govulncheck-results.sarif
+                  if [ grep results govulncheck-results.sarif ]
+                  then
+                      echo "hasResults=true" >> $GITHUB_OUTPUT
+                  else
+                      echo "hasResults=false" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Upload govolncheck results to GitHub Security tab
+              if: ${{ steps.PrintSarif.outputs.hasResults == 'true' }}
+              uses: github/codeql-action/upload-sarif@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
+              with:
+                  sarif_file: govulncheck-results.sarif
