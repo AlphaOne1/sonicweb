@@ -18,6 +18,7 @@ jobs:
     TrivyCode:
         runs-on: ubuntu-latest
         permissions:
+            contents: read
             security-events: write
         steps:
           - name: Harden Runner
@@ -49,6 +50,7 @@ jobs:
                   - "1.23"
         runs-on: ubuntu-latest
         permissions:
+            contents: read
             security-events: write
         steps:
           - name: Harden Runner
