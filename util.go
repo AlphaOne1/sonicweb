@@ -55,17 +55,24 @@ func ToPointer[T any](v T) *T {
 //   - GoVersion
 //
 // these can be referenced in the template, e.g. using {{ .VcsRevision }}
-func PrintLogo(tmpl string) {
+func PrintLogo(tmpl string, custom map[string]string) {
 	revData := struct {
 		VcsRevision string
 		VcsTime     string
 		VcsModified string
 		GoVersion   string
+		Custom      map[string]string
 	}{
 		VcsRevision: "unknown",
 		VcsTime:     "unknown",
 		VcsModified: "",
 		GoVersion:   "unknown",
+		Custom: func() map[string]string {
+			if custom != nil {
+				return custom
+			}
+			return make(map[string]string)
+		}(),
 	}
 
 	if bi, biOK := debug.ReadBuildInfo(); biOK {

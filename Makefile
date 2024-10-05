@@ -8,9 +8,13 @@ all: sonic
 IGOOS=       $(shell go env GOOS)
 IGOARCH=     $(shell go env GOARCH)
 ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
+IBUILDTAG=   $(shell git describe --tags)
 
 sonic: *.go logo.tmpl
-	CGO_ENABLED=$(ICGO_ENABLED) go build -trimpath -ldflags "-s -w" -o $@-$(IGOOS)-$(IGOARCH)
+	CGO_ENABLED=$(ICGO_ENABLED) go build						\
+			-trimpath											\
+			-ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
+			-o $@-$(IGOOS)-$(IGOARCH)
 
 clean:
 	-rm -f sonic-$(IGOOS)-$(IGOARCH)

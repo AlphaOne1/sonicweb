@@ -9,7 +9,7 @@
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: {{ .VcsRevision }}{{ .VcsModified }}
+   |/   \    _______\ Version: {{ .VcsRevision }}{{ .VcsModified }} {{- if .Custom.Tag }} ( {{- .Custom.Tag -}} ) {{- end }}
          \  |              of: {{ .VcsTime }}
           \ |           using: {{ .GoVersion }}
            \|

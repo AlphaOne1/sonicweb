@@ -28,9 +28,11 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+var buildInfoTag = ""
+var exitFunc = os.Exit
+
 //go:embed logo.tmpl
 var logoTmpl string
-var exitFunc = os.Exit
 
 func setupLogging(logLevel string, logStyle string) {
 	options := slog.HandlerOptions{
@@ -107,6 +109,18 @@ func generateFileHandler(
 		func(next http.Handler) http.Handler {
 			return corhttp.WrapHandler(waf, next)
 		},
+		func(next http.Handler) http.Handler {
+			serverVal := "SonicWeb"
+
+			if len(buildInfoTag) > 0 {
+				serverVal = serverVal + "/" + buildInfoTag
+			}
+
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Server", serverVal)
+				next.ServeHTTP(w, r)
+			})
+		},
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
 		func(next http.Handler) http.Handler {
@@ -122,7 +136,7 @@ func generateFileHandler(
 }
 
 func main() {
-	PrintLogo(logoTmpl)
+	PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
