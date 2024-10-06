@@ -129,8 +129,8 @@ func generateFileHandler(
 
 	return midgard.StackMiddlewareHandler(
 		mwStack,
-		http.FileServer(
-			http.Dir(*rootPath),
+		http.FileServerFS(
+			os.DirFS(*rootPath),
 		),
 	)
 }
