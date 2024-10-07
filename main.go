@@ -62,7 +62,7 @@ func setupLogging(logLevel string, logStyle string) {
 
 	if (logStyle == "auto" && ppid > 1) || logStyle == "text" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &options)))
-	} else if logStyle == "json" {
+	} else if logStyle == "auto" || logStyle == "json" {
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
 	} else {
 		slog.Error("unsupported log style", slog.String("logStyle", logStyle))
