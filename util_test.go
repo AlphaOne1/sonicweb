@@ -70,7 +70,7 @@ func TestGetOrCreateID(t *testing.T) {
 }
 
 func TestToPointer(t *testing.T) {
-	var result *bool = ToPointer(true)
+	result := ToPointer(true)
 
 	if result == nil {
 		t.Errorf("ToPointer should return non-nil pointer")

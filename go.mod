@@ -3,10 +3,10 @@
 
 module sonic
 
-go 1.22.1
+go 1.23
 
 require (
-	github.com/AlphaOne1/midgard v0.0.0-20241003232635-a74e7465325b
+	github.com/AlphaOne1/midgard v0.0.0-20241008054723-2f449422ad01
 	github.com/corazawaf/coraza/v3 v3.2.1
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.20.4
@@ -40,6 +40,6 @@ require (
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/protobuf v1.35.1 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect
 )

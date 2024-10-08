@@ -1,6 +1,14 @@
 # Copyright the SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
+############################
+# Usage:
+#
+# This dockerfile relies on a previously build linux executable, it can be generated as follows:
+#     $ GOOS=linux make
+# Copy the web content to the /www directory.
+# After starting the image the content of this directory will be served.
+
 FROM ubuntu:latest AS builder
 
 ENV USER=appuser
