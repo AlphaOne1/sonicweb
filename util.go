@@ -61,13 +61,13 @@ func PrintLogo(tmpl string, custom map[string]string) {
 		VcsTime     string
 		VcsModified string
 		GoVersion   string
-		Custom      map[string]string
+		Values      map[string]string
 	}{
 		VcsRevision: "unknown",
 		VcsTime:     "unknown",
 		VcsModified: "",
 		GoVersion:   "unknown",
-		Custom: func() map[string]string {
+		Values: func() map[string]string {
 			if custom != nil {
 				return custom
 			}

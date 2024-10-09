@@ -35,7 +35,7 @@ Usage
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```
-$ ./sonic-linux-amd64 -root=testroot/
+$ ./sonic-linux-amd64 --root testroot
            |\
            ||\
   _________||\\
@@ -47,18 +47,18 @@ $ ./sonic-linux-amd64 -root=testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: 926891b9d3a0672044a7de3e12d567f0e6763af6*
-         \  |              of: 2024-10-02T22:10:33Z
+   |/   \    _______\ Version: v1.0.0-32-g77369ff*
+         \  |              of: 2024-10-08T23:24:30Z
           \ |           using: go1.23.2
            \|
-time=2024-10-03T09:19:29.031699 level=INFO source=sonic/main.go:75 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2024-10-03T09:19:29.032050 level=INFO source=sonic/main.go:104 msg=logging level=info
-time=2024-10-03T09:19:29.032357 level=INFO source=sonic/main.go:118 msg="using root directory" root=testroot/
-time=2024-10-03T09:19:29.032433 level=INFO source=sonic/main.go:133 msg="using base path" path=/
-time=2024-10-03T09:19:29.032769 level=INFO source=sonic/instrumentation.go:72 msg="serving pprof disabled"
-time=2024-10-03T09:19:29.032837 level=INFO source=sonic/instrumentation.go:76 msg="serving telemetry" address=:8081/metrics
-time=2024-10-03T09:19:29.033072 level=INFO source=sonic/main.go:151 msg="registering handler for FileServer"
-time=2024-10-03T09:19:29.033176 level=INFO source=sonic/main.go:180 msg="starting server"
+time=2024-10-10T01:17:15.409549 level=INFO source=sonic/main.go:78 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2024-10-10T01:17:15.411215 level=INFO source=sonic/main.go:157 msg=logging level=info
+time=2024-10-10T01:17:15.412224 level=INFO source=sonic/main.go:171 msg="using root directory" root=testroot
+time=2024-10-10T01:17:15.412313 level=INFO source=sonic/main.go:186 msg="using base path" path=/
+time=2024-10-10T01:17:15.412579 level=INFO source=sonic/main.go:195 msg="registering handler for FileServer"
+time=2024-10-10T01:17:15.413270 level=INFO source=sonic/main.go:204 msg="starting server"
+time=2024-10-10T01:17:15.413799 level=INFO source=sonic/instrumentation.go:72 msg="serving pprof disabled"
+time=2024-10-10T01:17:15.413839 level=INFO source=sonic/instrumentation.go:76 msg="serving telemetry" address=:8081/metrics
 ```
 
 Building
