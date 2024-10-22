@@ -9,7 +9,7 @@ require (
 	github.com/AlphaOne1/midgard v0.0.0-20241008054723-2f449422ad01
 	github.com/corazawaf/coraza/v3 v3.2.1
 	github.com/google/uuid v1.6.0
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0
 	go.opentelemetry.io/otel v1.31.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.53.0
