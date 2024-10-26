@@ -19,8 +19,7 @@ RUN useradd --home     "/nonexistent"  \
 
 RUN mkdir -p /tmp/bin /tmp/tmp /tmp/www
 
-COPY sonic-*-* .
-RUN mv sonic-linux-* /tmp/bin/sonicweb
+COPY sonic-linux-* /tmp/bin/sonicweb
 RUN chmod +x /tmp/bin/sonicweb
 
 ################################################################################
