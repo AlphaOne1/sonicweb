@@ -18,11 +18,11 @@ sonic-%: *.go logo.tmpl
 			-o $@
 
 docker-%: sonic-%
-	TARGET_OS=`  echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\1'/` \
-	TARGET_ARCH=`echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\2'/` \
-	docker build --platform=${TARGET_OS}/${TARGET_ARCH}            \
-	             -t sonicweb:$(IBUILDTAG)                          \
-	             --squash                                          \
+	export TARGET_OS=`  echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\1'/`; \
+	export TARGET_ARCH=`echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\2'/`; \
+	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}                  \
+	             -t sonicweb:$(IBUILDTAG)                                  \
+	             --squash                                                  \
 	             .
 
 clean:
