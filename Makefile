@@ -8,7 +8,8 @@ IBUILDTAG=   $(shell git describe --tags)
 
 .PHONY: all docker clean
 
-all: sonic-$(IGOOS)-$(IGOARCH) docker
+all: sonic-$(IGOOS)-$(IGOARCH)
+docker: docker-linux-amd64
 
 sonic-%: *.go logo.tmpl
 	CGO_ENABLED=$(ICGO_ENABLED) go build						\
@@ -16,8 +17,13 @@ sonic-%: *.go logo.tmpl
 			-ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
 			-o $@
 
-docker: sonic-linux-amd64
-	docker build --platform=`echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\1\/\2'/` -t sonicweb:$(IBUILDTAG) --squash .
+docker-%: sonic-%
+	export TARGET_OS=`  echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\1'/`; \
+	export TARGET_ARCH=`echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\2'/`; \
+	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}                  \
+	             -t sonicweb:$(IBUILDTAG)                                  \
+	             --squash                                                  \
+	             .
 
 clean:
 	@-rm -vf sonic-*-* | sed -r s/"(.*)"/"cleaning \\1"/

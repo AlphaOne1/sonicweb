@@ -28,6 +28,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+const ServerName = "SonicWeb"
+
 var buildInfoTag = ""
 var exitFunc = os.Exit
 
@@ -110,7 +112,7 @@ func generateFileHandler(
 			return corhttp.WrapHandler(waf, next)
 		},
 		func(next http.Handler) http.Handler {
-			serverVal := "SonicWeb"
+			serverVal := ServerName
 
 			if len(buildInfoTag) > 0 {
 				serverVal = serverVal + "/" + buildInfoTag
