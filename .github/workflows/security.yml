@@ -51,7 +51,7 @@ jobs:
 #
 #          - name: Upload Trivy Results to Security Tab
 #            if: ${{ steps.printSarif.outputs.hasResults == 'true' }}
-#            uses: github/codeql-action/upload-sarif@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # v3.27.4
+#            uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
 #            with:
 #                sarif_file: 'trivy-results.sarif'
 
@@ -95,6 +95,6 @@ jobs:
 
           - name: Upload govulncheck Results to Security Tab
             if: ${{ steps.printSarif.outputs.hasResults == 'true' }}
-            uses: github/codeql-action/upload-sarif@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # v3.27.4
+            uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
             with:
                 sarif_file: govulncheck-results.sarif
