@@ -88,9 +88,10 @@ func setupMaxProcs() {
 }
 
 func generateFileHandler(
-	enableTelemetry *bool,
-	basePath *string,
-	rootPath *string) http.Handler {
+	enableTelemetry bool,
+	enableTracing bool,
+	basePath string,
+	rootPath string) http.Handler {
 
 	// First we initialize our waf and our seclang parser
 	waf, wafErr := coraza.NewWAF(coraza.NewWAFConfig())
@@ -103,8 +104,8 @@ func generateFileHandler(
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
-	if *enableTelemetry {
-		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+*basePath))
+	if enableTelemetry || enableTracing {
+		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+basePath))
 	}
 
 	mwStack = append(mwStack,
@@ -126,13 +127,13 @@ func generateFileHandler(
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
 		func(next http.Handler) http.Handler {
-			return http.StripPrefix(*basePath, next)
+			return http.StripPrefix(basePath, next)
 		})
 
 	return midgard.StackMiddlewareHandler(
 		mwStack,
 		http.FileServerFS(
-			os.DirFS(*rootPath),
+			os.DirFS(rootPath),
 		),
 	)
 }
@@ -147,6 +148,7 @@ func main() {
 	instrumentPort := flag.Int("iport", 8081, "port to listen on for instrumentation")
 	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
 	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
+	traceEndpoint := flag.String("trace-endpoint", "", "endpoint for tracing data")
 	enablePprof := flag.Bool("pprof", false, "enable pprof support")
 	logLevel := flag.String("log", "info", "log level, valid options are debug, info, warn and error")
 	logStyle := flag.String("logstyle", "auto", "log style, valid options are auto, text and json")
@@ -191,15 +193,26 @@ func main() {
 		exitFunc(1)
 	}
 
-	// setup opentelemetry and prometheus metricsExporter
-	setupInstrumentation(instrumentAddress, instrumentPort, *enableTelemetry, *enablePprof)
+	if len(*traceEndpoint) > 0 {
+		if _, err := initTracer(*traceEndpoint); err != nil {
+			slog.Error("could not initialize tracing", slog.String("error", err.Error()))
+			exitFunc(1)
+		}
+
+		slog.Info("tracing initialized")
+	} else {
+		slog.Info("tracing disabled")
+	}
+
+	// setup opentelemetry with prometheus metricsExporter
+	setupMetricsInstrumentation(instrumentAddress, instrumentPort, *enableTelemetry, *enablePprof)
 
 	slog.Info("registering handler for FileServer")
 
 	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()
 
-	handler := generateFileHandler(enableTelemetry, basePath, rootPath)
+	handler := generateFileHandler(*enableTelemetry, len(*traceEndpoint) > 0, *basePath, *rootPath)
 
 	http.Handle("GET "+*basePath, handler)
 

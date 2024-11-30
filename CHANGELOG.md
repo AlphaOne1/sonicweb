@@ -7,3 +7,10 @@ Initial release
 - access logging
 - correlation id
 - coraza waf middleware
+
+Release 1.1.0
+=============
+
+- add Dockerfile
+- add helm chart
+- add opentelemetry tracing support

@@ -10,6 +10,7 @@ IBUILDTAG=   $(shell git describe --tags)
 
 all: sonic-$(IGOOS)-$(IGOARCH)
 docker: docker-linux-amd64
+helm: SonicWeb-$(IBUILDTAG).tgz
 
 sonic-%: *.go logo.tmpl
 	CGO_ENABLED=$(ICGO_ENABLED) go build						\
@@ -23,7 +24,10 @@ docker-%: sonic-%
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}                  \
 	             -t sonicweb:$(IBUILDTAG)                                  \
 	             --squash                                                  \
-	             .
+
+SonicWeb-$(IBUILDTAG).tgz: $(shell find helm -type f)
+	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
 clean:
-	@-rm -vf sonic-*-* | sed -r s/"(.*)"/"cleaning \\1"/
+	@-rm -vf	sonic-*-*		\
+				SonicWeb-*.tgz	| sed -r s/"(.*)"/"cleaning \\1"/

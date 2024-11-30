@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: {{ include "SonicWeb.fullname" . }}
+    labels:
+        {{- include "SonicWeb.labels" . | nindent 8 }}
+spec:
+    {{- if not .Values.autoscaling.enabled }}
+    replicas: {{ .Values.replicaCount }}
+    {{- end }}
+    selector:
+        matchLabels:
+            {{- include "SonicWeb.selectorLabels" . | nindent 12 }}
+    template:
+        metadata:
+            {{- with .Values.podAnnotations }}
+            annotations:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            labels:
+                {{- include "SonicWeb.labels" . | nindent 16 }}
+                {{- with .Values.podLabels }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+        spec:
+            {{- with .Values.imagePullSecrets }}
+            imagePullSecrets:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            serviceAccountName: {{ include "SonicWeb.serviceAccountName" . }}
+            securityContext:
+                {{- toYaml .Values.podSecurityContext | nindent 16 }}
+            containers:
+              - name: {{ .Chart.Name }}
+                securityContext:
+                    {{- toYaml .Values.securityContext | nindent 20 }}
+                image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+                imagePullPolicy: {{ .Values.image.pullPolicy }}
+                ports:
+                  - name: http
+                    containerPort: {{ .Values.service.port }}
+                    protocol: TCP
+                livenessProbe:
+                    {{- toYaml .Values.livenessProbe | nindent 20 }}
+                readinessProbe:
+                    {{- toYaml .Values.readinessProbe | nindent 20 }}
+                resources:
+                    {{- toYaml .Values.resources | nindent 20 }}
+                {{- with .Values.volumeMounts }}
+                volumeMounts:
+                    {{- toYaml . | nindent 20 }}
+                {{- end }}
+            {{- with .Values.volumes }}
+            volumes:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- with .Values.nodeSelector }}
+            nodeSelector:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- with .Values.affinity }}
+            affinity:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- with .Values.tolerations }}
+            tolerations:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}

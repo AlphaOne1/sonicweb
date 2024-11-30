@@ -38,8 +38,10 @@ COPY --from=builder --chown=${USER}:${USER} /tmp/bin    /bin
 COPY --from=builder --chown=${USER}:${USER} /tmp/tmp    /tmp
 COPY --from=builder --chown=${USER}:${USER} /tmp/www    /www
 
+VOLUME /www
+
 EXPOSE 8080/tcp
 EXPOSE 8081/tcp
 USER ${USER}:${USER}
 
-ENTRYPOINT ["/bin/sonicweb", "--root=/www"]
+ENTRYPOINT ["/bin/sonicweb", "--port=80", "--root=/www"]
