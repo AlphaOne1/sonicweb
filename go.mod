@@ -6,7 +6,7 @@ module sonic
 go 1.23
 
 require (
-	github.com/AlphaOne1/midgard v0.0.0-20241116035658-c2069c383d3d
+	github.com/AlphaOne1/midgard v0.0.0-20241122001401-4f5bba34d44d
 	github.com/corazawaf/coraza/v3 v3.2.2
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.20.5
@@ -27,7 +27,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/magefile/mage v1.15.1-0.20231118170541-2385abb49a1f // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
