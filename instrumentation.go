@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,11 +15,48 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
+	// stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 )
 
-func setupInstrumentation(instrumentAddress *string, instrumentPort *int, enableTelemetry bool, enablePprof bool) {
+func initTracer(endpoint string) (*sdktrace.TracerProvider, error) {
+	// // Create stdout exporter to be able to retrieve
+	// // the collected spans.
+	// exporter, err := stdout.New(stdout.WithPrettyPrint())
+
+	exporter, err := otlptracehttp.New(context.Background(),
+		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
+		otlptracehttp.WithEndpoint(endpoint),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// For the demonstration, use sdktrace.AlwaysSample sampler to sample all traces.
+	// In a production application, use sdktrace.ProbabilitySampler with a desired probability.
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName(ServerName))),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+	)
+
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+
+	return tp, nil
+}
+
+func setupMetricsInstrumentation(instrumentAddress *string, instrumentPort *int, enableTelemetry bool, enablePprof bool) {
 	if !enableTelemetry && !enablePprof {
 		return
 	}

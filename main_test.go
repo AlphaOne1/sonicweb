@@ -16,6 +16,14 @@ import (
 )
 
 func TestSonicMain(t *testing.T) {
+	exitFunc = func(code int) {
+		if code == 0 {
+			return
+		} else {
+			os.Exit(code)
+		}
+	}
+
 	go func() {
 		os.Args = []string{
 			"sonicmain.exe",
@@ -55,9 +63,10 @@ func TestSonicMain(t *testing.T) {
 func BenchmarkHandler(b *testing.B) {
 	server := httptest.NewServer(
 		generateFileHandler(
-			ToPointer(false),
-			ToPointer("/"),
-			ToPointer("testroot/")))
+			false,
+			false,
+			"/",
+			"testroot/"))
 
 	client := &http.Client{}
 
