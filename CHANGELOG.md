@@ -1,3 +1,10 @@
+Future Release 1.1.0
+====================
+
+- add Dockerfile
+- add helm chart
+- add opentelemetry tracing support
+
 Release 1.0.0
 =============
 
@@ -7,10 +14,3 @@ Initial release
 - access logging
 - correlation id
 - coraza waf middleware
-
-Release 1.1.0
-=============
-
-- add Dockerfile
-- add helm chart
-- add opentelemetry tracing support
