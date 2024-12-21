@@ -3,5 +3,6 @@
 
 sonic
 sonic-*-*
+SonicWeb-*.*
 /.idea
 go.work*
