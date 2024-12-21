@@ -31,9 +31,11 @@ SonicWeb-$(IBUILDTAG).tgz: $(shell find helm -type f)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
 SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml sonic-$(IGOOS)-$(IGOARCH)
+    export PATH=${PATH}:~/go/bin; \
 	nfpm package --config $< --packager deb --target $@
 
 SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml sonic-$(IGOOS)-$(IGOARCH)
+    export PATH=${PATH}:~/go/bin; \
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl

@@ -1,0 +1,33 @@
+# Copyright the SonicWeb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/static/schema.json
+
+name:       "SonicWeb"
+arch:       "${TARGET_ARCH}"
+platform:   "${TARGET_OS}"
+version:    "${TARGET_VERSION}"
+section:    "default"
+priority:   "extra"
+replaces:   []
+provides:
+  - sonicweb
+depends:    []
+recommends: []
+suggests:   []
+conflicts:  []
+maintainer: "AlphaOne1 <alphaone23@gmail.com>"
+description: |
+    SonicWeb is a no-configuration webserver. It is meant to serve
+    static content fast without fuzz.
+vendor:     "AlphaOne1 <alphaone23@gmail.com>"
+homepage:   "https://github.com/AlphaOne1/sonicweb"
+license:    "MPL-2.0"
+contents:
+  - src: ./sonic-${TARGET_OS}-${TARGET_ARCH}
+    dst: /usr/bin/sonicweb
+overrides:  {}
+deb:
+    compression: xz
+rpm:
+    compression: xz

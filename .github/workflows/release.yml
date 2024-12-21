@@ -40,6 +40,9 @@ jobs:
               with:
                   go-version: ${{ matrix.go-version }}
 
+            - name: Install nfpm
+              run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
             - name: Checkout
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
               with:
