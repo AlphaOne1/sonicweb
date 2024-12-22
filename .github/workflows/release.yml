@@ -18,9 +18,9 @@ jobs:
                 go-version:
                     - stable
                 architecture:
-                    - 386
-                    - amd64
-                    - arm64
+                    - "386"
+                    - "amd64"
+                    - "arm64"
                 os:
                     - linux
                     - windows
@@ -40,6 +40,9 @@ jobs:
               with:
                   go-version: ${{ matrix.go-version }}
 
+            - name: Install nfpm
+              run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
             - name: Checkout
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
               with:
@@ -50,7 +53,7 @@ jobs:
                   CGO_ENABLED: "0"
                   GOOS: ${{matrix.os}}
                   GOARCH: ${{matrix.architecture}}
-              run: make
+              run: make package
 
             - name: Compress
               run: xz -9 sonic-*-*
@@ -58,4 +61,7 @@ jobs:
             - name: Upload Release
               uses: softprops/action-gh-release@v2
               with:
-                  files: sonic-*-*.xz
+                  files: |
+                      sonic-*-*.xz
+                      SonicWeb*.rpm
+                      SonicWeb*.deb

@@ -16,10 +16,6 @@ permissions: read-all
 
 jobs:
     FormatCheck:
-        strategy:
-            matrix:
-                go-version:
-                  - "1.23"
         runs-on: ubuntu-latest
         steps:
           - name: Harden Runner
@@ -30,7 +26,7 @@ jobs:
           - name: Install Go
             uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
             with:
-                go-version: ${{matrix.go-version}}
+                go-version: stable
 
           - name: Checkout
             uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -41,10 +37,6 @@ jobs:
             run: if [ `go fmt ./... | wc -l` -gt 0 ] ; then echo "Found unformatted code" ; exit 1 ; else exit 0 ; fi
 
     StaticCheck:
-        strategy:
-            matrix:
-                go-version:
-                  - "1.23"
         runs-on: ubuntu-latest
         steps:
           - name: Harden Runner
@@ -55,7 +47,7 @@ jobs:
           - name: Install Go
             uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
             with:
-                go-version: ${{matrix.go-version}}
+                go-version: "stable"
 
           - name: Checkout
             uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -67,13 +59,10 @@ jobs:
             with:
                 version: latest
                 install-go: false
-                cache-key: ${{matrix.go-version}}
 
     Test:
         strategy:
             matrix:
-                go-version:
-                  - "1.23"
                 platform:
                   #- macos-latest
                   - ubuntu-latest
@@ -88,7 +77,7 @@ jobs:
           - name: Install Go
             uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
             with:
-                go-version: ${{matrix.go-version}}
+                go-version: stable
 
           - name: Checkout
             uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -110,8 +99,6 @@ jobs:
 #    FuzzTest:
 #        strategy:
 #            matrix:
-#                go-version:
-#                  - "1.22"
 #                platform:
 #                  #- macos-latest
 #                  - ubuntu-latest
@@ -128,7 +115,7 @@ jobs:
 #          - name: Install Go
 #            uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
 #            with:
-#                go-version: ${{matrix.go-version}}
+#                go-version: stable
 #
 #          - name: Checkout
 #            uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

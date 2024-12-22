@@ -10,6 +10,7 @@ IBUILDTAG=   $(shell git describe --tags)
 
 all: sonic-$(IGOOS)-$(IGOARCH)
 docker: docker-linux-amd64
+package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: SonicWeb-$(IBUILDTAG).tgz
 
 sonic-%: *.go logo.tmpl
@@ -24,10 +25,26 @@ docker-%: sonic-%
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}                  \
 	             -t sonicweb:$(IBUILDTAG)                                  \
 	             --squash                                                  \
+	             .
 
 SonicWeb-$(IBUILDTAG).tgz: $(shell find helm -type f)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
+SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml sonic-$(IGOOS)-$(IGOARCH)
+    export PATH=${PATH}:~/go/bin; \
+	nfpm package --config $< --packager deb --target $@
+
+SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml sonic-$(IGOOS)-$(IGOARCH)
+    export PATH=${PATH}:~/go/bin; \
+	nfpm package --config $< --packager rpm --target $@
+
+nfpm-%.yaml: nfpm.yaml.tmpl
+	export TARGET_OS=`  echo $@ | sed -r s/'nfpm-([^-]+)-([^-]+).yaml'/'\1'/`; \
+	export TARGET_ARCH=`echo $@ | sed -r s/'nfpm-([^-]+)-([^-]+).yaml'/'\2'/`; \
+	export TARGET_VERSION="$(IBUILDTAG)";                                      \
+	cat $< | envsubst > $@
+
 clean:
-	@-rm -vf	sonic-*-*		\
-				SonicWeb-*.tgz	| sed -r s/"(.*)"/"cleaning \\1"/
+	@-rm -vf	sonic-*-*	 \
+				nfpm-*.yaml  \
+				SonicWeb-*.* | sed -r s/"(.*)"/"cleaning \\1"/
