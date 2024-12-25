@@ -1,0 +1,99 @@
+\" Derechos de autor de los colaboradores de SonicWeb.
+\" SPDX-License-Identifier: MPL-2.0
+.\" -*- modo: troff; codificación: UTF-8 -*-
+.\"TOPICS "Temas:"
+.TH SONICWEB 1 "${GIT_REF_DATE}" "Versión de SonicWeb ${GIT_TAG}" "SonicWeb"
+.\"SKIP_SECTION"
+.SH "NOMBRE"
+sonicweb \- Pequeño servidor seguro de archivos estáticos.
+.\"SKIP_SECTION"
+.SH "SINOPSIS"
+.B sonicweb
+[\-root ruta]
+[\-base ruta]
+[\-port número]
+[\-address dirección]
+[\-iport número]
+[\-iaddress dirección]
+[\-telemetry {true,false}]
+[\-trace-endpoint dirección]
+[\-pprof {true,false}]
+[\-log level {debug,info,warn,error}]
+[\-logstyle {auto,text,json}]
+.\"NODE "DESCRIPCIÓN"
+.SH "DESCRIPCIÓN"
+SonicWeb es un pequeño servidor de archivos estáticos que tiene integrado el firewall de aplicaciones web de corasa.
+.\"NODE "OPCIONES"
+.\"DONT_SPLIT"
+.SH "OPCIONES"
+.TP
+.I \-root ruta
+Establece la ruta raíz para los archivos servidos en el sistema de archivos. Por defecto en
+.BR /www
+.TP
+.I \-base ruta
+Establece la ruta base en las URLs. Por defecto en
+.BR /
+.TP
+.I \-port número
+Establece el puerto de escucha al número indicado. Por defecto en
+.BR 8080
+.TP
+.I \-address dirección
+Establece la dirección de escucha. Por defecto en
+.BR "todas\ las\ direcciones".
+.TP
+.I \-iport número
+Establece el puerto de escucha para las solicitudes de telemetría. Por defecto en
+.BR 8081
+.TP
+.I \-iaddress dirección
+Establece la dirección de escucha para las solicitudes de telemetría. Por defecto en
+.BR "todas\ las\ direcciones".
+.TP
+.I \-telemetry {true,false}
+Habilita o deshabilita el soporte de telemetría. Por defecto en
+.BR true
+.TP
+.I \-trace-endpoint dirección
+Establece el punto de conexión para la funcionalidad de trazado. Por defecto en
+.BR <vacío>
+.TP
+.I \-pprof {true,false}
+Habilita o deshabilita el soporte de pprof para la depuración remota. Por defecto en
+.BR false
+.TP
+.I \-log level {debug,info,warn,error}
+Establece el nivel de registro. Por defecto en
+.BR info
+.TP
+.I \-logstyle {auto,text,json}
+Establece el estilo de registro. Por defecto en
+.BR auto
+.TP
+.I \-help
+Imprime ayuda sobre los posibles argumentos y sale.
+.TP
+.I \-version
+Imprime la información de versión y sale.
+.SH "LICENCIA"
+Este programa se distribuye bajo los términos de la Licencia Pública de Mozilla
+Versión 2.0 según lo publicado por la Fundación Mozilla.
+.\"NODE "DISPONIBILIDAD"
+.SH "DISPONIBILIDAD"
+La última versión de este programa se puede encontrar en
+https://github.com/AlphaOne1/sonicweb.git.
+.\"NODE "AUTORES"
+.SH "AUTORES"
+Los autores y colaboradores están listados en el archivo AUTHORS en la distribución
+de código fuente.
+.\"NODE "PROBLEMAS"
+.SH "PROBLEMAS"
+Si deseas reportar un problema con el programa, por favor crea un reporte de errores
+en https://github.com/AlphaOne1/sonicweb/issues.
+.PP
+Proporciona una descripción detallada del error, la versión del programa
+que estás utilizando
+.RI ( "sonicweb \-version"
+muestra esta información) y el sistema operativo en el que estás ejecutando el
+programa. Si el programa falla, agradeceríamos un seguimiento de pila.

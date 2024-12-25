@@ -41,7 +41,10 @@ jobs:
                   go-version: ${{ matrix.go-version }}
 
             - name: Install nfpm
-              run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+              if: matrix.os == 'linux'
+              run: |
+                  go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+                  echo "$(go env GOPATH)/bin" >> GITHUB_PATH
 
             - name: Checkout
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -49,6 +52,14 @@ jobs:
                   fetch-depth: 1
 
             - name: Build
+              env:
+                CGO_ENABLED: "0"
+                GOOS: ${{matrix.os}}
+                GOARCH: ${{matrix.architecture}}
+              run: make
+
+            - name: Build Package
+              if: matrix.os == 'linux'
               env:
                   CGO_ENABLED: "0"
                   GOOS: ${{matrix.os}}

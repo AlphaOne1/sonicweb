@@ -152,8 +152,14 @@ func main() {
 	enablePprof := flag.Bool("pprof", false, "enable pprof support")
 	logLevel := flag.String("log", "info", "log level, valid options are debug, info, warn and error")
 	logStyle := flag.String("logstyle", "auto", "log style, valid options are auto, text and json")
+	printVersion := flag.Bool("version", false, "print version and exit")
 
 	flag.Parse()
+
+	if *printVersion {
+		// we already printed the logo, that contains all the necessary information
+		os.Exit(0)
+	}
 
 	setupLogging(*logLevel, *logStyle)
 	setupMaxProcs()

@@ -32,6 +32,8 @@ Usage
 | -pprof          {true,false} | enable/disable pprof support                | `false` |
 | -log            \<level\>    | log level (debug, info, warn, error)        | `info`  |
 | -logstyle       \<style\>    | log style (auto, text, json)                | `auto`  |
+| -help                        | print the argument overview and exit        | n/a     |
+| -version                     | print just version information and exit     | n/a     |
 
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
