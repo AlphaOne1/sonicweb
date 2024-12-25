@@ -41,6 +41,7 @@ jobs:
                   go-version: ${{ matrix.go-version }}
 
             - name: Install nfpm
+              if: matrix.os == 'linux'
               run: |
                   go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
                   echo "$(go env GOPATH)/bin" >> GITHUB_PATH
@@ -51,6 +52,14 @@ jobs:
                   fetch-depth: 1
 
             - name: Build
+              env:
+                CGO_ENABLED: "0"
+                GOOS: ${{matrix.os}}
+                GOARCH: ${{matrix.architecture}}
+              run: make
+
+            - name: Build Package
+              if: matrix.os == 'linux'
               env:
                   CGO_ENABLED: "0"
                   GOOS: ${{matrix.os}}
