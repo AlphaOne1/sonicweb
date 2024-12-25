@@ -1,0 +1,99 @@
+\" Copyright the SonicWeb contributors.
+\" SPDX-License-Identifier: MPL-2.0
+.\" -*- mode: troff; coding: UTF-8 -*-
+.\"TOPICS "Topics:"
+.TH SONICWEB 1 "${GIT_REF_DATE}" "SonicWeb Version ${GIT_TAG}" "SonicWeb"
+.\"SKIP_SECTION"
+.SH "NAME"
+sonicweb \- Small secure static file server.
+.\"SKIP_SECTION"
+.SH "SYNOPSIS"
+.B sonicweb
+[\-root path]
+[\-base path]
+[\-port number]
+[\-address address]
+[\-iport number]
+[\-iaddress address]
+[\-telemetry {true,false}]
+[\-trace-endpoint address]
+[\-pprof {true,false}]
+[\-log level {debug,info,warn,error}]
+[\-logstyle {auto,text,json}]
+.\"NODE "DESCRIPTION"
+.SH "DESCRIPTION"
+SonicWeb is a small static fileserver that has the web application firewall of corasa integrated.
+.\"NODE "OPTIONS"
+.\"DONT_SPLIT"
+.SH "OPTIONS"
+.TP
+.I \-root path
+Set the root path for served files in the filesystem. Defaults to
+.BR /www
+.TP
+.I \-base path
+Set the base path in the URLs to be that. Defaults to
+.BR /
+.TP
+.I \-port number
+Set the listen port to number. Defaults to
+.BR 8080
+.TP
+.I \-address address
+Set the listen address. Defaults to
+.BR "all\ addresses".
+.TP
+.I \-iport number
+Set the listen port for telemetry requests. Defaults to
+.BR 8081
+.TP
+.I \-iaddress address
+Set the listen address for telemetry requests. Defaults to
+.BR "all\ addresses".
+.TP
+.I \-telemetry {true,false}
+Enable or disable telemetry support. Defaults to
+.BR true
+.TP
+.I \-trace-endpoint address
+Set the endpoint for the tracing facility. Defaults to
+.BR <empty>
+.TP
+.I \-pprof {true,false}
+Enable or disable the pprof support for remote debugging. Defaults to
+.BR false
+.TP
+.I \-log level {debug,info,warn,error}
+Set the log level. Defaults to
+.BR info
+.TP
+.I \-logstyle {auto,text,json}
+Set the logging style. Defaults to
+.BR auto
+.TP
+.I \-help
+Print help about possible arguments and exit.
+.TP
+.I \-version
+Print the version information and exit.
+.SH "LICENSE"
+This program is distributed under the terms of the Mozilla Public License
+Version 2.0 as published by the Mozilla Foundation.
+.\"NODE "AVAILABILITY"
+.SH "AVAILABILITY"
+The latest version of this program can be found at
+https://github.com/AlphaOne1/sonicweb.git.
+.\"NODE "AUTHORS"
+.SH "AUTHORS"
+Authors and contributors are listed in the AUTHORS file in the source
+distribution.
+.\"NODE "BUGS"
+.SH "BUGS"
+If you want to report a problem with the program, please create bugreport
+at https://github.com/AlphaOne1/sonicweb/issues.
+.PP
+Provide a detailed description of the bug, the version of the program
+you are running
+.RI ( "sonicweb \-version"
+displays this information) and the operating system you are running the
+program on. If the program crashes, we would appreciate a stack trace.

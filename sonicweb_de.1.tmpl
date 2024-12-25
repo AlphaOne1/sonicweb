@@ -1,0 +1,98 @@
+\" Copyright the SonicWeb contributors.
+\" SPDX-License-Identifier: MPL-2.0
+.\" -*- Modus: troff; Kodierung: UTF-8 -*-
+.\"TOPICS "Themen:"
+.TH SONICWEB 1 "${GIT_REF_DATE}" "SonicWeb Version ${GIT_TAG}" "SonicWeb"
+.\"SKIP_SECTION"
+.SH "NAME"
+sonicweb \- Kleiner, sicherer statischer Dateiserver.
+.\"SKIP_SECTION"
+.SH "SYNOPSIS"
+.B sonicweb
+[\-root pfad]
+[\-base pfad]
+[\-port nummer]
+[\-address adresse]
+[\-iport nummer]
+[\-iaddress adresse]
+[\-telemetry {true,false}]
+[\-trace-endpoint adresse]
+[\-pprof {true,false}]
+[\-log level {debug,info,warn,error}]
+[\-logstyle {auto,text,json}]
+.\"NODE "BESCHREIBUNG"
+.SH "BESCHREIBUNG"
+SonicWeb ist ein kleiner statischer Dateiserver, der die Web Application Firewall von corasa integriert hat.
+.\"NODE "OPTIONEN"
+.\"DONT_SPLIT"
+.SH "OPTIONEN"
+.TP
+.I \-root pfad
+Setzt den Wurzelpfad für die bereitgestellten Dateien im Dateisystem. Standardmäßig auf
+.BR /www
+.TP
+.I \-base pfad
+Setzt den Basispfad in den URLs. Standardmäßig auf
+.BR /
+.TP
+.I \-port nummer
+Setzt den eingehenden Port auf die angegebene Nummer. Standardmäßig auf
+.BR 8080
+.TP
+.I \-address adresse
+Setzt die eingehende Adresse. Standardmäßig auf
+.BR "alle\ Adressen".
+.TP
+.I \-iport nummer
+Setzt den eingehenden Port für Telemetrieanfragen. Standardmäßig auf
+.BR 8081
+.TP
+.I \-iaddress adresse
+Setzt die eingehende Adresse für Telemetrieanfragen. Standardmäßig auf
+.BR "alle\ Adressen".
+.TP
+.I \-telemetry {true,false}
+Aktiviert oder deaktiviert die Telemetrieunterstützung. Standardmäßig auf
+.BR true
+.TP
+.I \-trace-endpoint adresse
+Setzt den Endpunkt für die Tracing-Funktionalität. Standardmäßig auf
+.BR <leer>
+.TP
+.I \-pprof {true,false}
+Aktiviert oder deaktiviert die pprof-Unterstützung für Remote-Debugging. Standardmäßig auf
+.BR false
+.TP
+.I \-log level {debug,info,warn,error}
+Setzt das Logstufe. Standardmäßig auf
+.BR info
+.TP
+.I \-logstyle {auto,text,json}
+Setzt den Logstil. Standardmäßig auf
+.BR auto
+.TP
+.I \-help
+Gibt Hilfe zu den möglichen Argumenten aus und beendet das Programm.
+.TP
+.I \-version
+Gibt die Versionsinformationen aus und beendet das Programm.
+.SH "LIZENZ"
+Dieses Programm wird unter den Bedingungen der Mozilla Public License
+Version 2.0 veröffentlicht, wie sie von der Mozilla Foundation veröffentlicht wurde.
+.\"NODE "VERFÜGBARKEIT"
+.SH "VERFÜGBARKEIT"
+Die neueste Version dieses Programms findest du unter
+https://github.com/AlphaOne1/sonicweb.git.
+.\"NODE "AUTOREN"
+.SH "AUTOREN"
+Autoren und Mitwirkende sind in der AUTHORS-Datei in der Quellcode-Verteilung aufgeführt.
+.\"NODE "FEHLER"
+.SH "FEHLER"
+Wenn du ein Problem mit dem Programm melden möchtest, erstelle bitte einen Bugreport
+unter https://github.com/AlphaOne1/sonicweb/issues.
+.PP
+Gib eine detaillierte Beschreibung des Fehlers, die Version des Programms
+die du verwendest
+.RI ( "sonicweb \-version"
+zeigt diese Informationen an) und das Betriebssystem, auf dem du das Programm
+ausführst. Wenn das Programm abstürzt, wäre ein Stack-Trace hilfreich.

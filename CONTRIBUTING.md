@@ -64,7 +64,7 @@ due to non-existent (or bad, or wrong) documentation. Please take care that you
 include:
 
 - a corse description of your nea feature
-- generate new or update (in case) the existing examnples
+- generate new or update (in case) the existing examples
 - update the CHANGELOG.md
 
 The CHANGELOG document contains the changes of the next major contains all the
@@ -78,7 +78,7 @@ At this point, if your changes look good and tests are passing, you are ready to
 create a pull request.
 
 Github Actions will run the test suite against the latest Go version. There are
-tests that most likey did not run in the developers machine (CodeQL, Trivy). These
+tests that most likely did not run in the developers machine (CodeQL, Trivy). These
 tests may produce warnings. Take those warnings serious even if they seem harmless.
 Too many harmless warnings could possibly overlay really serious ones, so all
 warnings are to be resolved.
@@ -92,4 +92,11 @@ A Pull Request can only be merged into master by a maintainer if:
 - approved by another maintainer
 - and is up to date with the default branch.
 
-Any maintainer is allowed to merge a PR if all of these conditions ae met.
+In addition to these automatic checks, the following conditions have to be met:
+
+- Changelog: The changelog has the sections with the changes of the past releases, these
+  are immutable less for corrections. There is at least one section explicating the next
+  release. All visible changes have to be included in the changelog. Further security
+  fixes have to be included here.
+
+Any maintainer is allowed to merge a PR if all of these conditions have been met.
