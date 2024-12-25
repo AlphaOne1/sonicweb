@@ -50,18 +50,19 @@ $ ./sonic-linux-amd64 --root testroot
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.0.0-32-g77369ff*
-         \  |              of: 2024-10-08T23:24:30Z
-          \ |           using: go1.23.2
+   |/   \    _______\ Version: v1.1.0
+         \  |              of: 2024-12-25T20:57:06Z
+          \ |           using: go1.23.4
            \|
-time=2024-10-10T01:17:15.409549 level=INFO source=sonic/main.go:78 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2024-10-10T01:17:15.411215 level=INFO source=sonic/main.go:157 msg=logging level=info
-time=2024-10-10T01:17:15.412224 level=INFO source=sonic/main.go:171 msg="using root directory" root=testroot
-time=2024-10-10T01:17:15.412313 level=INFO source=sonic/main.go:186 msg="using base path" path=/
-time=2024-10-10T01:17:15.412579 level=INFO source=sonic/main.go:195 msg="registering handler for FileServer"
-time=2024-10-10T01:17:15.413270 level=INFO source=sonic/main.go:204 msg="starting server"
-time=2024-10-10T01:17:15.413799 level=INFO source=sonic/instrumentation.go:72 msg="serving pprof disabled"
-time=2024-10-10T01:17:15.413839 level=INFO source=sonic/instrumentation.go:76 msg="serving telemetry" address=:8081/metrics
+time=2024-12-25T22:03:53.295799 level=INFO source=sonic/main.go:80 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2024-12-25T22:03:53.296113 level=INFO source=sonic/main.go:167 msg=logging level=info
+time=2024-12-25T22:03:53.297680 level=INFO source=sonic/main.go:181 msg="using root directory" root=testroot
+time=2024-12-25T22:03:53.297771 level=INFO source=sonic/main.go:196 msg="using base path" path=/
+time=2024-12-25T22:03:53.297797 level=INFO source=sonic/main.go:210 msg="tracing disabled"
+time=2024-12-25T22:03:53.298090 level=INFO source=sonic/main.go:216 msg="registering handler for FileServer"
+time=2024-12-25T22:03:53.298260 level=INFO source=sonic/instrumentation.go:110 msg="serving pprof disabled"
+time=2024-12-25T22:03:53.298355 level=INFO source=sonic/instrumentation.go:114 msg="serving telemetry" address=:8081/metrics
+time=2024-12-25T22:03:53.299414 level=INFO source=sonic/main.go:225 msg="starting server"
 ```
 
 Building
