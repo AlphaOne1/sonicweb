@@ -9,7 +9,7 @@ toolchain go1.23.4
 
 require (
 	github.com/AlphaOne1/midgard v0.0.0-20241219230104-54e786bd5a9c
-	github.com/corazawaf/coraza/v3 v3.2.2
+	github.com/corazawaf/coraza/v3 v3.3.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.20.5
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0
@@ -31,7 +31,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
-	github.com/magefile/mage v1.15.1-0.20231118170541-2385abb49a1f // indirect
+	github.com/magefile/mage v1.15.1-0.20241126214340-bdc92f694516 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/petar-dambovaliev/aho-corasick v0.0.0-20240411101913-e07a1f0e8eb4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
