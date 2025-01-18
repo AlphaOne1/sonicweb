@@ -13,10 +13,10 @@ on:
 
 # Declare default permissions as read only.
 permissions:
-  #only need as long as private
-  - actions: read
-  - contents: read
-  - security-events: write
+    #only need as long as private
+    actions: read
+    contents: read
+    security-events: write
 
 jobs:
 #    TrivyCode:
