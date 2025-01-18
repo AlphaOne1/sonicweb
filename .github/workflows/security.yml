@@ -89,8 +89,9 @@ jobs:
                     echo "hasResults=false" >> $GITHUB_OUTPUT
                 fi
 
-          - name: Upload govulncheck Results to Security Tab
-            if: ${{ steps.printSarif.outputs.hasResults == 'true' }}
-            uses: github/codeql-action/upload-sarif@b6a472f63d85b9c78a3ac5e89422239fc15e9b3c # v3.28.1
-            with:
-                sarif_file: govulncheck-results.sarif
+# Disabled as long as not public
+#          - name: Upload govulncheck Results to Security Tab
+#            if: ${{ steps.printSarif.outputs.hasResults == 'true' }}
+#            uses: github/codeql-action/upload-sarif@b6a472f63d85b9c78a3ac5e89422239fc15e9b3c # v3.28.1
+#            with:
+#                sarif_file: govulncheck-results.sarif
