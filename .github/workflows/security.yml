@@ -58,6 +58,7 @@ jobs:
     VulnerabilityCheck:
         runs-on: ubuntu-latest
         permissions:
+            # read action required for private repository
             actions: read
             contents: read
             security-events: write
