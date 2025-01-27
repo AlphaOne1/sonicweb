@@ -12,7 +12,7 @@ require (
 	github.com/corazawaf/coraza/v3 v3.3.2
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.20.5
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
 	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.34.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.56.0
