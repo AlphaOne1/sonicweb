@@ -12,7 +12,7 @@ MANPAGES=	 sonicweb.1.gz		\
              sonicweb_de.1.gz	\
              sonicweb_es.1.gz
 
-.PHONY: all docker clean
+.PHONY: all clean docker  test
 
 all: sonic-$(IGOOS)-$(IGOARCH)
 docker: docker-linux-amd64
@@ -55,6 +55,9 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 
 %.gz: %
 	gzip -k -9 $<
+
+test:
+	go test ./...
 
 clean:
 	@-rm -vf	sonic-*-*		\

@@ -3,15 +3,13 @@
 
 module sonic
 
-go 1.23.0
-
-toolchain go1.23.4
+go 1.24.0
 
 require (
-	github.com/AlphaOne1/midgard v0.0.0-20250130005218-c823900300aa
+	github.com/AlphaOne1/midgard v0.0.0-20250222075459-9848954119d6
 	github.com/corazawaf/coraza/v3 v3.3.2
 	github.com/google/uuid v1.6.0
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
 	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.34.0
@@ -29,8 +27,8 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.0 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/magefile/mage v1.15.1-0.20241126214340-bdc92f694516 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/petar-dambovaliev/aho-corasick v0.0.0-20240411101913-e07a1f0e8eb4 // indirect
@@ -46,12 +44,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250204164813-702378808489 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250204164813-702378808489 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect

@@ -130,10 +130,17 @@ func generateFileHandler(
 			return http.StripPrefix(basePath, next)
 		})
 
+	root, rootErr := os.OpenRoot(rootPath)
+
+	if rootErr != nil {
+		slog.Error("could not open root", slog.String("error", rootErr.Error()))
+		exitFunc(1)
+	}
+
 	return midgard.StackMiddlewareHandler(
 		mwStack,
 		http.FileServerFS(
-			os.DirFS(rootPath),
+			root.FS(),
 		),
 	)
 }
