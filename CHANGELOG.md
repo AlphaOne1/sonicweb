@@ -1,5 +1,12 @@
+Release 1.2.0
+=============
+
+- update to Go 1.24
+- use os.Root for file access protection
+- update dependencies
+
 Release 1.1.0
-====================
+=============
 
 - add Dockerfile
 - added packaging for deb and rpm
