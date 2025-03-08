@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -135,6 +136,7 @@ func generateFileHandler(
 	if rootErr != nil {
 		slog.Error("could not open root", slog.String("error", rootErr.Error()))
 		exitFunc(1)
+		return nil // silencing the static checker, unreachable
 	}
 
 	return midgard.StackMiddlewareHandler(
@@ -165,7 +167,7 @@ func main() {
 
 	if *printVersion {
 		// we already printed the logo, that contains all the necessary information
-		os.Exit(0)
+		exitFunc(0)
 	}
 
 	setupLogging(*logLevel, *logStyle)
@@ -177,19 +179,7 @@ func main() {
 	termReceived := make(chan os.Signal, 1)
 	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		<-termReceived
-		slog.Info("received termination signal")
-		exitFunc(0)
-	}()
-
-	// file path to serve from
-	if rootPath != nil {
-		slog.Info("using root directory", slog.String("root", *rootPath))
-	} else {
-		slog.Error("no root directory")
-		exitFunc(1)
-	}
+	slog.Info("using root directory", slog.String("root", *rootPath))
 
 	if _, statErr := os.Stat(*rootPath); statErr != nil {
 		slog.Error("could not get info of root path",
@@ -198,13 +188,7 @@ func main() {
 		exitFunc(1)
 	}
 
-	// base path in the URL to serve to
-	if basePath != nil {
-		slog.Info("using base path", slog.String("path", *basePath))
-	} else {
-		slog.Error("no basepath directory")
-		exitFunc(1)
-	}
+	slog.Info("using base path", slog.String("path", *basePath))
 
 	if len(*traceEndpoint) > 0 {
 		if _, err := initTracer(*traceEndpoint); err != nil {
@@ -222,18 +206,28 @@ func main() {
 
 	slog.Info("registering handler for FileServer")
 
-	// remove all implicitly registered handlers
-	http.DefaultServeMux = http.NewServeMux()
+	server := http.Server{
+		Addr: *listenAddress + ":" + *listenPort,
+	}
+
+	go func() {
+		<-termReceived
+		slog.Info("received termination signal")
+		_ = server.Shutdown(context.Background())
+	}()
 
 	handler := generateFileHandler(*enableTelemetry, len(*traceEndpoint) > 0, *basePath, *rootPath)
 
+	// remove all implicitly registered handlers
+	http.DefaultServeMux = http.NewServeMux()
 	http.Handle("GET "+*basePath, handler)
 
 	slog.Info("starting server")
-	if err := http.ListenAndServe(*listenAddress+":"+*listenPort, nil); err != nil {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("error listening", slog.String("error", err.Error()))
 		exitFunc(1)
 	}
 
+	slog.Info("server shutdown")
 	exitFunc(0)
 }

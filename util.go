@@ -54,25 +54,21 @@ func ToPointer[T any](v T) *T {
 //   - VcsModified
 //   - GoVersion
 //
-// these can be referenced in the template, e.g. using {{ .VcsRevision }}
-func PrintLogo(tmpl string, custom map[string]string) {
+// these can be referenced in the template, e.g. using {{ .VcsRevision }}.
+// An additional custom value map can be accessed via the Values field.
+func PrintLogo(tmpl string, custom any) {
 	revData := struct {
 		VcsRevision string
 		VcsTime     string
 		VcsModified string
 		GoVersion   string
-		Values      map[string]string
+		Values      any
 	}{
 		VcsRevision: "unknown",
 		VcsTime:     "unknown",
 		VcsModified: "",
 		GoVersion:   "unknown",
-		Values: func() map[string]string {
-			if custom != nil {
-				return custom
-			}
-			return make(map[string]string)
-		}(),
+		Values:      custom,
 	}
 
 	if bi, biOK := debug.ReadBuildInfo(); biOK {

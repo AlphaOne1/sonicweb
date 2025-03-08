@@ -1,5 +1,5 @@
-github.com/AlphaOne1/midgard v0.0.0-20250302010408-4ff85cbd8995 h1:UxiauNDmins17ubjlGCo2xFjEtZKiZKTkc4fdWrk5oY=
-github.com/AlphaOne1/midgard v0.0.0-20250302010408-4ff85cbd8995/go.mod h1:Pq3wKf1G5m2gTHF3I2qNouB1Wid+qEl0lKF2c7hh0lk=
+github.com/AlphaOne1/midgard v0.0.0-20250308004551-149774fd89dd h1:YD49pLYWuU45gMXnk7rl5K5JIn+QcChvvr0SPBjVJCM=
+github.com/AlphaOne1/midgard v0.0.0-20250308004551-149774fd89dd/go.mod h1:Pq3wKf1G5m2gTHF3I2qNouB1Wid+qEl0lKF2c7hh0lk=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=

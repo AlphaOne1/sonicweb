@@ -6,7 +6,7 @@ module sonic
 go 1.24.0
 
 require (
-	github.com/AlphaOne1/midgard v0.0.0-20250302010408-4ff85cbd8995
+	github.com/AlphaOne1/midgard v0.0.0-20250308004551-149774fd89dd
 	github.com/corazawaf/coraza/v3 v3.3.2
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.21.1
