@@ -4,6 +4,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log/slog"
@@ -11,30 +12,94 @@ import (
 	"net/http/httptest"
 	"os"
 	"runtime"
+	"syscall"
 	"testing"
 	"time"
 )
 
-func TestSonicMain(t *testing.T) {
+func sendMe(t *testing.T, sig os.Signal) {
+	currentPID := os.Getpid()
+	currentProcess, currentProcessErr := os.FindProcess(currentPID)
+
+	if currentProcessErr != nil {
+		t.Errorf("could not get process id")
+		return
+	}
+
+	if signalErr := currentProcess.Signal(sig); signalErr != nil {
+		t.Errorf("could not send SIGTERM")
+	}
+}
+
+func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
+	// exitFunc replaces os.Exit with this function that will end main and we can catch the error here
 	exitFunc = func(code int) {
 		if code == 0 {
-			return
+			panic(code)
 		} else {
-			os.Exit(code)
+			panic(code)
 		}
 	}
 
+	buildInfoTag = "test"
+
+	// mainResult will hold the result of main
+	mainReturn := make(chan int, 1)
+	mainStart := make(chan struct{}, 1)
+
+	slog.Info("starting main")
 	go func() {
-		os.Args = []string{
-			"sonicmain.exe",
-			"-root", "./testroot",
-		}
+		os.Args = args
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
+		defer func() {
+			if r := recover(); r != nil {
+				if msg, msgConv := r.(int); msgConv {
+					mainReturn <- msg
+				}
+			}
+		}()
+
+		mainStart <- struct{}{}
 		main()
+
+		// we can just come here, if main did not call anyhow the exit function
+		// normal returns from main signalize no error --> 0
+		mainReturn <- 0
 	}()
+
+	<-mainStart
+
+	slog.Info("setting exit timeout")
+	afterTimer := time.AfterFunc(2*time.Second, func() {
+		sendMe(t, syscall.SIGTERM)
+	})
+
+	return afterTimer, mainReturn
+}
+
+func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
+	slog.Info("stoping exit timer")
+
+	if afterTimer.Stop() {
+		sendMe(t, syscall.SIGTERM)
+	}
+
+	return <-result
+}
+
+func TestSonicMain(t *testing.T) {
+
+	afterTimer, mainReturn := startMain(t,
+		"sonicweb",
+		"-root", "./testroot",
+		"-address", "localhost",
+		"-iaddress", "localhost",
+	)
 
 	couldRequest := false
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 10 && !couldRequest; i++ {
 		res, err := http.Get("http://localhost:8080/")
 
 		if err != nil {
@@ -51,12 +116,44 @@ func TestSonicMain(t *testing.T) {
 		} else {
 			slog.Info("request result", slog.Int("statusCode", res.StatusCode))
 		}
-
-		break
 	}
 
 	if !couldRequest {
 		t.Errorf("could not send any request")
+	}
+
+	result := finalizeMain(t, afterTimer, mainReturn)
+
+	slog.Info("main returned", slog.Int("result", result))
+}
+
+func TestSonicMainVersion(t *testing.T) {
+	afterTimer, mainReturn := startMain(t,
+		"sonicweb", "-version",
+	)
+
+	runtime.Gosched()
+
+	afterTimer.Stop()
+	result := <-mainReturn
+
+	if result != 0 {
+		t.Errorf("expected successful return, but got %v", result)
+	}
+}
+
+func TestSonicMainInvalidRoot(t *testing.T) {
+	afterTimer, mainReturn := startMain(t,
+		"sonicweb", "-root", "/noentry",
+	)
+
+	runtime.Gosched()
+
+	afterTimer.Stop()
+	result := <-mainReturn
+
+	if result != 1 {
+		t.Errorf("expected failure return, but got %v", result)
 	}
 }
 
