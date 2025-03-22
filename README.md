@@ -77,5 +77,5 @@ make
 If your operating system does not provide a usable form of `make`, you can also do:
 
 ```sh
-CGO_ENABLED=0 go build -trimpath-ldflags "-s -w"
+CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
 ```
