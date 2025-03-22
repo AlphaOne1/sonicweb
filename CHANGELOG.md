@@ -1,3 +1,11 @@
+Release 1.2.1
+=============
+
+- use AlphaOne1/geany for logo output
+- dependency updates
+- source location logging only for DEBUG log level
+- removed unused utility functions
+
 Release 1.2.0
 =============
 

@@ -18,6 +18,7 @@ import (
 
 	"go.uber.org/automaxprocs/maxprocs"
 
+	"github.com/AlphaOne1/geany"
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/defs"
 	"github.com/AlphaOne1/midgard/handler/access_log"
@@ -38,21 +39,19 @@ var exitFunc = os.Exit
 var logoTmpl string
 
 func setupLogging(logLevel string, logStyle string) {
+	var parsedLogLevel slog.Level
+
+	if levelErr := (&parsedLogLevel).UnmarshalText([]byte(logLevel)); levelErr != nil {
+		slog.Error("invalid loglevel",
+			slog.String("error", levelErr.Error()),
+			slog.String("given", logLevel))
+
+		exitFunc(1)
+	}
+
 	options := slog.HandlerOptions{
-		AddSource: true,
-		Level: func() slog.Level {
-			var tmp slog.Level
-
-			if levelErr := (&tmp).UnmarshalText([]byte(logLevel)); levelErr != nil {
-				slog.Error("invalid loglevel",
-					slog.String("error", levelErr.Error()),
-					slog.String("given", logLevel))
-
-				exitFunc(1)
-			}
-
-			return tmp
-		}(),
+		AddSource: func() bool { return parsedLogLevel <= slog.LevelDebug }(),
+		Level:     parsedLogLevel,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000"))
@@ -148,7 +147,7 @@ func generateFileHandler(
 }
 
 func main() {
-	PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
+	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
@@ -222,7 +221,7 @@ func main() {
 	http.DefaultServeMux = http.NewServeMux()
 	http.Handle("GET "+*basePath, handler)
 
-	slog.Info("starting server")
+	slog.Info("starting server", slog.String("address", server.Addr))
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("error listening", slog.String("error", err.Error()))
 		exitFunc(1)

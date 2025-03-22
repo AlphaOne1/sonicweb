@@ -9,7 +9,7 @@
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: {{ if .Values.Tag }} {{- .Values.Tag }}{{ .VcsModified -}} {{ else }} {{- .VcsRevision }}{{ .VcsModified -}} {{ end }}
-         \  |              of: {{ .VcsTime }}
-          \ |           using: {{ .GoVersion }}
+   |/   \    _______\ Version: {{ if .Values.Tag }} {{- .Values.Tag }}{{ .Geany.VcsModified -}} {{ else }} {{- .Geany.VcsRevision }}{{ .Geany.VcsModified -}} {{ end }}
+         \  |              of: {{ .Geany.VcsTime }}
+          \ |           using: {{ .Geany.GoVersion }}
            \|

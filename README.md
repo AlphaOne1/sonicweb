@@ -38,7 +38,7 @@ Usage
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```
-$ ./sonic-linux-amd64 --root testroot
+$ ./sonic-linux-amd64 --root testroot/
            |\
            ||\
   _________||\\
@@ -50,19 +50,19 @@ $ ./sonic-linux-amd64 --root testroot
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.1.0
-         \  |              of: 2024-12-25T20:57:06Z
-          \ |           using: go1.23.4
+   |/   \    _______\ Version: v1.2.1
+         \  |              of: 2025-03-21T22:57:06Z
+          \ |           using: go1.24.1
            \|
-time=2024-12-25T22:03:53.295799 level=INFO source=sonic/main.go:80 msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2024-12-25T22:03:53.296113 level=INFO source=sonic/main.go:167 msg=logging level=info
-time=2024-12-25T22:03:53.297680 level=INFO source=sonic/main.go:181 msg="using root directory" root=testroot
-time=2024-12-25T22:03:53.297771 level=INFO source=sonic/main.go:196 msg="using base path" path=/
-time=2024-12-25T22:03:53.297797 level=INFO source=sonic/main.go:210 msg="tracing disabled"
-time=2024-12-25T22:03:53.298090 level=INFO source=sonic/main.go:216 msg="registering handler for FileServer"
-time=2024-12-25T22:03:53.298260 level=INFO source=sonic/instrumentation.go:110 msg="serving pprof disabled"
-time=2024-12-25T22:03:53.298355 level=INFO source=sonic/instrumentation.go:114 msg="serving telemetry" address=:8081/metrics
-time=2024-12-25T22:03:53.299414 level=INFO source=sonic/main.go:225 msg="starting server"
+time=2025-03-22T00:54:37.701993 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2025-03-22T00:54:37.702252 level=INFO msg=logging level=info
+time=2025-03-22T00:54:37.702714 level=INFO msg="using root directory" root=testroot
+time=2025-03-22T00:54:37.702760 level=INFO msg="using base path" path=/
+time=2025-03-22T00:54:37.702775 level=INFO msg="tracing disabled"
+time=2025-03-22T00:54:37.703103 level=INFO msg="registering handler for FileServer"
+time=2025-03-22T00:54:37.703381 level=INFO msg="serving pprof disabled"
+time=2025-03-22T00:54:37.703521 level=INFO msg="serving telemetry" address=:8081/metrics
+time=2025-03-22T00:54:37.705278 level=INFO msg="starting server" address=:8080
 ```
 
 Building
