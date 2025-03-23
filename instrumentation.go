@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -117,8 +118,27 @@ func serveMetrics(address string, port int, enableTelemetry, enablePprof bool) {
 		slog.Info("serving telemetry disabled")
 	}
 
-	if err := http.ListenAndServe(listenAddress, mux); err != nil {
+	server := http.Server{
+		Addr:    listenAddress,
+		Handler: mux,
+	}
+
+	defer func() { _ = server.Close() }()
+
+	termReceived := make(chan os.Signal, 1)
+
+	go func() {
+		<-termReceived
+		slog.Info("metrics received termination signal")
+		_ = server.Shutdown(context.Background())
+	}()
+
+	registerServer(METRICS_SERVER, &server, &termReceived)
+
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("error serving metrics", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
+
+	slog.Info("metrics server shutdown")
 }

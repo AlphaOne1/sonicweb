@@ -143,8 +143,14 @@ func main() {
 	slog.Info("logging", slog.String("level", *logLevel))
 
 	// termination handling
-	termReceived := make(chan os.Signal, 1)
-	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
+	termReceivedGlobal := make(chan os.Signal, 1)
+	signal.Notify(termReceivedGlobal, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		s := <-termReceivedGlobal
+		slog.Info("received termination signal")
+		signalizeAll(s)
+	}()
 
 	slog.Info("using root directory", slog.String("root", *rootPath))
 
@@ -177,11 +183,17 @@ func main() {
 		Addr: *listenAddress + ":" + *listenPort,
 	}
 
+	defer func() { _ = server.Close() }()
+
+	termReceived := make(chan os.Signal, 1)
+
 	go func() {
 		<-termReceived
-		slog.Info("received termination signal")
+		slog.Info("file server received termination signal")
 		_ = server.Shutdown(context.Background())
 	}()
+
+	registerServer(FILE_SERVER, &server, &termReceived)
 
 	handler := generateFileHandler(
 		*enableTelemetry,
@@ -195,6 +207,7 @@ func main() {
 	http.Handle("GET "+*basePath, handler)
 
 	slog.Info("starting server", slog.String("address", server.Addr))
+
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("error listening", slog.String("error", err.Error()))
 		exitFunc(1)
