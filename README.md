@@ -90,6 +90,9 @@ The file should be formatted as follows:
  <nextLine, if multi-line, starts with space>
 ```
 
+Headers can be named multiple times, the last entry wins. *SonicWeb* sets the `Server` header to its name and version.
+By providing an own version of the `Server` header, it can be replaced, e.g. to misguide potential attackers.
+
 Building
 --------
 
