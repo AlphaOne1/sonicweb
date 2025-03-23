@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
@@ -133,7 +135,8 @@ func serveMetrics(address string, port int, enableTelemetry, enablePprof bool) {
 		_ = server.Shutdown(context.Background())
 	}()
 
-	registerServer(METRICS_SERVER, &server, &termReceived)
+	// termination handling
+	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
 
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("error serving metrics", slog.String("error", err.Error()))

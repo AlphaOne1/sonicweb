@@ -142,16 +142,6 @@ func main() {
 
 	slog.Info("logging", slog.String("level", *logLevel))
 
-	// termination handling
-	termReceivedGlobal := make(chan os.Signal, 1)
-	signal.Notify(termReceivedGlobal, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		s := <-termReceivedGlobal
-		slog.Info("received termination signal")
-		signalizeAll(s)
-	}()
-
 	slog.Info("using root directory", slog.String("root", *rootPath))
 
 	if _, statErr := os.Stat(*rootPath); statErr != nil {
@@ -193,7 +183,8 @@ func main() {
 		_ = server.Shutdown(context.Background())
 	}()
 
-	registerServer(FILE_SERVER, &server, &termReceived)
+	// termination handling
+	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
 
 	handler := generateFileHandler(
 		*enableTelemetry,
