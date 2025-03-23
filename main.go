@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	_ "time/tzdata"
 
@@ -25,53 +26,19 @@ import (
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/util"
 
-	"github.com/corazawaf/coraza/v3"
-	corhttp "github.com/corazawaf/coraza/v3/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+// ServerName is the reported server name in the header
 const ServerName = "SonicWeb"
 
-var buildInfoTag = ""
-var exitFunc = os.Exit
+var buildInfoTag = ""  // buildInfoTag holds the tag information of the version control system
+var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is overridden for testing
 
 //go:embed logo.tmpl
 var logoTmpl string
 
-func setupLogging(logLevel string, logStyle string) {
-	var parsedLogLevel slog.Level
-
-	if levelErr := (&parsedLogLevel).UnmarshalText([]byte(logLevel)); levelErr != nil {
-		slog.Error("invalid loglevel",
-			slog.String("error", levelErr.Error()),
-			slog.String("given", logLevel))
-
-		exitFunc(1)
-	}
-
-	options := slog.HandlerOptions{
-		AddSource: func() bool { return parsedLogLevel <= slog.LevelDebug }(),
-		Level:     parsedLogLevel,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000"))
-			}
-			return a
-		},
-	}
-
-	ppid := os.Getppid()
-
-	if (logStyle == "auto" && ppid > 1) || logStyle == "text" {
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &options)))
-	} else if logStyle == "auto" || logStyle == "json" {
-		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
-	} else {
-		slog.Error("unsupported log style", slog.String("logStyle", logStyle))
-		exitFunc(1)
-	}
-}
-
+// setupMaxProcs sets the maximum count of processors to use for scheduling
 func setupMaxProcs() {
 	if _, mpFound := os.LookupEnv("GOMAXPROCS"); !mpFound {
 		if _, err := maxprocs.Set(maxprocs.Logger(func(format string, args ...any) {
@@ -87,20 +54,13 @@ func setupMaxProcs() {
 	}
 }
 
+// generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
 	enableTelemetry bool,
 	enableTracing bool,
 	basePath string,
-	rootPath string) http.Handler {
-
-	// First we initialize our waf and our seclang parser
-	waf, wafErr := coraza.NewWAF(coraza.NewWAFConfig())
-
-	// Now we parse our rules
-	if wafErr != nil {
-		slog.Error("could not initialize waf", slog.String("error", wafErr.Error()))
-		exitFunc(1)
-	}
+	rootPath string,
+	additionalHeaders [][2]string) http.Handler {
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
@@ -109,21 +69,8 @@ func generateFileHandler(
 	}
 
 	mwStack = append(mwStack,
-		func(next http.Handler) http.Handler {
-			return corhttp.WrapHandler(waf, next)
-		},
-		func(next http.Handler) http.Handler {
-			serverVal := ServerName
-
-			if len(buildInfoTag) > 0 {
-				serverVal = serverVal + "/" + buildInfoTag
-			}
-
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Server", serverVal)
-				next.ServeHTTP(w, r)
-			})
-		},
+		wafMiddleware(nil),
+		addHeaders(additionalHeaders),
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
 		func(next http.Handler) http.Handler {
@@ -146,13 +93,34 @@ func generateFileHandler(
 	)
 }
 
+// MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences
+type MultiStringValue []string
+
+// String returns the content as one string separated by comma, be careful, this is not a safe operation,
+// if the parameters may contain comma themselves
+func (m *MultiStringValue) String() string {
+	return strings.Join(*m, ",")
+}
+
+// Set adds a new value.
+func (m *MultiStringValue) Set(value string) error {
+	*m = append(*m, value)
+	return nil
+}
+
+// main initializes all necessary parts and starts the server.
 func main() {
 	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
+
+	headersParam := &MultiStringValue{}
+	headersFileParam := &MultiStringValue{}
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
 	listenPort := flag.String("port", "8080", "port to listen on")
 	listenAddress := flag.String("address", "", "address to listen on")
+	flag.Var(headersParam, "header", "additional HTTP header")
+	flag.Var(headersFileParam, "headerFile", "file containing additional HTTP headers")
 	instrumentPort := flag.Int("iport", 8081, "port to listen on for instrumentation")
 	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
 	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
@@ -215,7 +183,12 @@ func main() {
 		_ = server.Shutdown(context.Background())
 	}()
 
-	handler := generateFileHandler(*enableTelemetry, len(*traceEndpoint) > 0, *basePath, *rootPath)
+	handler := generateFileHandler(
+		*enableTelemetry,
+		len(*traceEndpoint) > 0,
+		*basePath,
+		*rootPath,
+		append(headerParamToHeaders(*headersParam), headerFilesToHeaders(*headersFileParam)...))
 
 	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()

@@ -14,8 +14,8 @@ Features
   [Jaeger Tracing](jaegertracing.io)
 * no complications with configuration files
 
-Usage
------
+Getting Started
+---------------
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
@@ -25,6 +25,8 @@ Usage
 | -base           \<path\>     | base path to publish the content            | `/`     |
 | -port           \<port\>     | port to listen on for web requests          | `8080`  |
 | -address        \<address\>  | address to listen on for web requests       | all     |
+| -header         \<header\>   | additional header                           | n/a     |
+| -headerFile     \<file\>     | file containing additional headers          | n/a     |
 | -iport          \<port\>     | port to listen on for telemetry requests    | `8081`  |
 | -iaddress       \<address\>  | address to listen on for telemetry requests | all     |
 | -telemetry      {true,false} | enable/disable telemetry support            | `true`  |
@@ -37,7 +39,7 @@ Usage
 
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
-```
+```text
 $ ./sonic-linux-amd64 --root testroot/
            |\
            ||\
@@ -63,6 +65,29 @@ time=2025-03-22T00:54:37.703103 level=INFO msg="registering handler for FileServ
 time=2025-03-22T00:54:37.703381 level=INFO msg="serving pprof disabled"
 time=2025-03-22T00:54:37.703521 level=INFO msg="serving telemetry" address=:8081/metrics
 time=2025-03-22T00:54:37.705278 level=INFO msg="starting server" address=:8080
+```
+
+Additional Headers
+------------------
+
+Some situations require to add some HTTP headers to the response. *SonicWeb* provides the `-header` parameter
+to facilitate this.
+
+```shell
+$ ./sonic-linux-amd64 --root testroot/ -header "Environment: production"
+```
+
+To add a huge amount of headers the `-headerFile` parameter can be used:
+
+```shell
+$ ./sonic-linux-amd64 --root testroot/ -headerFile additional_headers.conf
+```
+
+The file should be formatted as follows:
+
+```text
+<HeaderKey>: <HeaderValue>
+ <nextLine, if multi-line, starts with space>
 ```
 
 Building

@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func sendMe(t *testing.T, sig os.Signal) {
@@ -93,6 +95,9 @@ func TestSonicMain(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
 		"sonicweb",
 		"-root", "./testroot",
+		"-header", "X-Test-Header: testHeaderContent",
+		"-header", "X-Empty",
+		"-headerFile", "testroot/testHeaders.conf",
 		"-address", "localhost",
 		"-iaddress", "localhost",
 	)
@@ -111,16 +116,26 @@ func TestSonicMain(t *testing.T) {
 
 		couldRequest = true
 
-		if res.StatusCode != 200 {
-			t.Errorf("Status code is not 200: %d", res.StatusCode)
-		} else {
-			slog.Info("request result", slog.Int("statusCode", res.StatusCode))
-		}
+		assert.Equal(t, http.StatusOK, res.StatusCode, "status code should be 200")
+		assert.Equal(t,
+			"testHeaderContent",
+			res.Header.Get("X-Test-Header"),
+			"header should contain X-Test-Header with testHeaderContent")
+		assert.Contains(t,
+			res.Header,
+			"X-Empty",
+			"X-Empty header not found")
+		assert.Equal(t,
+			"line0 line1",
+			res.Header.Get("X-File-Test-0"),
+			"header should contain X-File-Test-0")
+		assert.Equal(t,
+			"line2",
+			res.Header.Get("X-File-Test-1"),
+			"header should contain X-File-Test-1")
 	}
 
-	if !couldRequest {
-		t.Errorf("could not send any request")
-	}
+	assert.True(t, couldRequest, "could not send any request")
 
 	result := finalizeMain(t, afterTimer, mainReturn)
 
@@ -137,9 +152,7 @@ func TestSonicMainVersion(t *testing.T) {
 	afterTimer.Stop()
 	result := <-mainReturn
 
-	if result != 0 {
-		t.Errorf("expected successful return, but got %v", result)
-	}
+	assert.Equal(t, 0, result, "expected successful return")
 }
 
 func TestSonicMainInvalidRoot(t *testing.T) {
@@ -152,9 +165,20 @@ func TestSonicMainInvalidRoot(t *testing.T) {
 	afterTimer.Stop()
 	result := <-mainReturn
 
-	if result != 1 {
-		t.Errorf("expected failure return, but got %v", result)
-	}
+	assert.Equal(t, 1, result, "main should exit with 1")
+}
+
+func TestSonicMainInvalidHeaderFile(t *testing.T) {
+	afterTimer, mainReturn := startMain(t,
+		"sonicweb", "-root", "testroot/", "-headerFile", "/noexist",
+	)
+
+	runtime.Gosched()
+
+	afterTimer.Stop()
+	result := <-mainReturn
+
+	assert.Equal(t, 1, result, "main should exit with 1")
 }
 
 func BenchmarkHandler(b *testing.B) {
@@ -163,7 +187,10 @@ func BenchmarkHandler(b *testing.B) {
 			false,
 			false,
 			"/",
-			"testroot/"))
+			"testroot/",
+			nil))
+
+	defer server.Close()
 
 	client := &http.Client{}
 
