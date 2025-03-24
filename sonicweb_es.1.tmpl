@@ -13,6 +13,9 @@ sonicweb \- Pequeño servidor seguro de archivos estáticos.
 [\-base ruta]
 [\-port número]
 [\-address dirección]
+[\-header encabezado]
+[\-headerfile archivo]
+[\-wafcfg archivo-glob]
 [\-iport número]
 [\-iaddress dirección]
 [\-telemetry {true,false}]
@@ -22,7 +25,7 @@ sonicweb \- Pequeño servidor seguro de archivos estáticos.
 [\-logstyle {auto,text,json}]
 .\"NODE "DESCRIPCIÓN"
 .SH "DESCRIPCIÓN"
-SonicWeb es un pequeño servidor de archivos estáticos que tiene integrado el firewall de aplicaciones web de corasa.
+SonicWeb es un pequeño servidor de archivos estáticos que integra el firewall de aplicaciones web de Coraza.
 .\"NODE "OPCIONES"
 .\"DONT_SPLIT"
 .SH "OPCIONES"
@@ -49,8 +52,8 @@ Añade el encabezado HTTP especificado a las respuestas; se puede indicar varias
 .I \-headerfile <archivo>
 Añade los encabezados HTTP de un archivo especificado a las respuestas; se puede indicar varias veces.
 .TP
-.I \-wafcfg <archivo>
-Añade la configuración para el Firewall de Aplicaciones Web; se puede indicar varias veces.
+.I \-wafcfg <archivo-glob>
+Añade el archivo de configuración del Firewall de Aplicaciones Web; se puede indicar varias veces.
 .TP
 .I \-iport número
 Establece el puerto de escucha para las solicitudes de telemetría. Por defecto en
@@ -98,11 +101,11 @@ Los autores y colaboradores están listados en el archivo AUTHORS en la distribu
 de código fuente.
 .\"NODE "PROBLEMAS"
 .SH "PROBLEMAS"
-Si deseas reportar un problema con el programa, por favor crea un reporte de errores
+Si deseas reportar un problema con el programa, por favor crea un informe de errores
 en https://github.com/AlphaOne1/sonicweb/issues.
 .PP
 Proporciona una descripción detallada del error, la versión del programa
 que estás utilizando
 .RI ( "sonicweb \-version"
 muestra esta información) y el sistema operativo en el que estás ejecutando el
-programa. Si el programa falla, agradeceríamos un seguimiento de pila.
+programa. Si el programa falla, se agradecerá un volcado de pila.

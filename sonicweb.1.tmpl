@@ -5,7 +5,7 @@
 .TH SONICWEB 1 "${GIT_REF_DATE}" "SonicWeb Version ${GIT_TAG}" "SonicWeb"
 .\"SKIP_SECTION"
 .SH "NAME"
-sonicweb \- Small secure static file server.
+sonicweb \- Small, secure static file server.
 .\"SKIP_SECTION"
 .SH "SYNOPSIS"
 .B sonicweb
@@ -13,6 +13,9 @@ sonicweb \- Small secure static file server.
 [\-base path]
 [\-port number]
 [\-address address]
+[\-header header]
+[\-headerfile file]
+[\-wafcfg fileglob]
 [\-iport number]
 [\-iaddress address]
 [\-telemetry {true,false}]
@@ -22,35 +25,35 @@ sonicweb \- Small secure static file server.
 [\-logstyle {auto,text,json}]
 .\"NODE "DESCRIPTION"
 .SH "DESCRIPTION"
-SonicWeb is a small static fileserver that has the web application firewall of corasa integrated.
+SonicWeb is a small static file server that integrates the Coraza web application firewall.
 .\"NODE "OPTIONS"
 .\"DONT_SPLIT"
 .SH "OPTIONS"
 .TP
 .I \-root path
-Set the root path for served files in the filesystem. Defaults to
+Set the root path for files to be served from the filesystem. Defaults to
 .BR /www
 .TP
 .I \-base path
-Set the base path in the URLs to be that. Defaults to
+Set the base path used in the URLs. Defaults to
 .BR /
 .TP
 .I \-port number
-Set the listen port to number. Defaults to
+Set the port number to listen on. Defaults to
 .BR 8080
 .TP
 .I \-address address
-Set the listen address. Defaults to
+Set the address to listen on. Defaults to
 .BR "all\ addresses".
 .TP
 .I \-header <header>
-Add given HTTP header to responses, may be repeated
+Add the specified HTTP header to responses. This option may be repeated.
 .TP
 .I \-headerfile <file>
-Add HTTP headers from given file to responses, may be repeated
+Add HTTP headers from given file to responses. This option may be repeated.
 .TP
-.I \-wafcfg <file>
-Add Web Application Firewall configuration, may be repeated
+.I \-wafcfg <fileglob>
+Add a Web Application Firewall configuration file. This option may be repeated.
 .TP
 .I \-iport number
 Set the listen port for telemetry requests. Defaults to
@@ -98,11 +101,11 @@ Authors and contributors are listed in the AUTHORS file in the source
 distribution.
 .\"NODE "BUGS"
 .SH "BUGS"
-If you want to report a problem with the program, please create bugreport
+If you want to report a problem with the program, please create a bug report
 at https://github.com/AlphaOne1/sonicweb/issues.
 .PP
 Provide a detailed description of the bug, the version of the program
-you are running
-.RI ( "sonicweb \-version"
-displays this information) and the operating system you are running the
-program on. If the program crashes, we would appreciate a stack trace.
+you are running (use
+.RI "sonicweb \-version"
+to display this information), and the operating system on which the program is running.
+If the program crashes, a stack trace would be appreciated.

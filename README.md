@@ -6,7 +6,7 @@ SonicWeb
 Features
 --------
 
-* statically linked, apt to be used in scratch containers (~13MB)
+* statically linked, suitable for use in scratch containers (~13MB)
 * focused purpose, thus little attack surface
 * usage of OWASP [coraza](https://github.com/corazawaf/coraza) middleware
   to follow best security practises
@@ -19,7 +19,7 @@ Getting Started
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
-| Paraeter                     | Description                                 | Default |
+| Parameter                    | Description                                 | Default |
 |------------------------------|---------------------------------------------|---------|
 | -root           \<path\>     | root directory of content                   | `/www`  |
 | -base           \<path\>     | base path to publish the content            | `/`     |
@@ -71,8 +71,8 @@ time=2025-03-22T00:54:37.705278 level=INFO msg="starting server" address=:8080
 Additional Headers
 ------------------
 
-Some situations require to add some HTTP headers to the response. *SonicWeb* provides the `-header` parameter
-to facilitate this.
+In some situations, it is necessary to add HTTP headers to the response.
+*SonicWeb* provides the `-header` parameter to facilitate this.
 
 ```shell
 $ ./sonic-linux-amd64 --root testroot/ -header "Environment: production"
@@ -91,8 +91,9 @@ The file should be formatted as follows:
  <nextLine, if multi-line, starts with space>
 ```
 
-Headers can be named multiple times, the last entry wins. *SonicWeb* sets the `Server` header to its name and version.
-By providing an own version of the `Server` header, it can be replaced, e.g. to misguide potential attackers.
+Headers can be specified multiple times, with the last entry taking precedence.
+*SonicWeb* sets the `Server` header to its name and version. By providing an own version of the `Server` header,
+it can be replaced, e.g. to misguide potential attackers.
 
 Web Application Firewall
 ------------------------
@@ -101,7 +102,7 @@ Web Application Firewall
 rules to determine actions on the incoming (and outgoing) HTTP traffic. This project does not include the rulesets.
 The rules can be activated using the `-wafcfg` parameter. It expects, for each invocation, a file containing a coraza
 configuration file. A good base ruleset can be obtained from [coreruleset.org](https://coreruleset.org).
-There is also an extensive documentation as to how to write new rules.
+There is also extensive documentation on how to write new rules.
 
 *SonicWeb* can be started as follows:
 
@@ -117,7 +118,7 @@ $ ./sonic-linux-amd64 -root testroot/                          \
 Building
 --------
 
-For easier management a `Makefile` is included, using it, the build is as easy as:
+For easier management, a `Makefile` is included, using it, the build is as easy as:
 
 ```sh
 make

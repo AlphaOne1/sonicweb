@@ -13,6 +13,9 @@ sonicweb \- Kleiner, sicherer statischer Dateiserver.
 [\-base pfad]
 [\-port nummer]
 [\-address adresse]
+[\-header header]
+[\-headerfile datei]
+[\-wafcfg dateiglob]
 [\-iport nummer]
 [\-iaddress adresse]
 [\-telemetry {true,false}]
@@ -22,7 +25,7 @@ sonicweb \- Kleiner, sicherer statischer Dateiserver.
 [\-logstyle {auto,text,json}]
 .\"NODE "BESCHREIBUNG"
 .SH "BESCHREIBUNG"
-SonicWeb ist ein kleiner statischer Dateiserver, der die Web Application Firewall von corasa integriert hat.
+SonicWeb ist ein kleiner statischer Dateiserver, der die Web Application Firewall von Coraza integriert hat.
 .\"NODE "OPTIONEN"
 .\"DONT_SPLIT"
 .SH "OPTIONEN"
@@ -44,13 +47,13 @@ Setzt die eingehende Adresse. Standardmäßig auf
 .BR "alle\ Adressen".
 .TP
 .I \-header <header>
-Fügt den gegeenen HTTP Header zu Antworten hinzu, darf mehrfach angegeben werden
+Fügt den angegebenen HTTP-Header zu Antworten hinzu. Diese Option darf mehrfach angegeben werden.
 .TP
 .I \-headerfile <datei>
-Fügt die HTTP Header aus der angegebenen Datei zu Antworten hinzu, darf mehrfach angegeben werden
+Fügt die HTTP-Header aus der angegebenen Datei zu Antworten hinzu. Diese Option darf mehrfach angegeben werden.
 .TP
 .I \-wafcfg <file>
-Konfiguration für Web Application Firewall hinzufügen, darf mehrfach angegeben werden
+Fügt die Konfiguration für die Web Application Firewall hinzu. Diese Option darf mehrfach angegeben werden.
 .TP
 .I \-iport nummer
 Setzt den eingehenden Port für Telemetrieanfragen. Standardmäßig auf
@@ -73,7 +76,7 @@ Aktiviert oder deaktiviert die pprof-Unterstützung für Remote-Debugging. Stand
 .BR false
 .TP
 .I \-log level {debug,info,warn,error}
-Setzt das Logstufe. Standardmäßig auf
+Setzt die Logstufe. Standardmäßig auf
 .BR info
 .TP
 .I \-logstyle {auto,text,json}
@@ -100,8 +103,7 @@ Autoren und Mitwirkende sind in der AUTHORS-Datei in der Quellcode-Verteilung au
 Wenn du ein Problem mit dem Programm melden möchtest, erstelle bitte einen Bugreport
 unter https://github.com/AlphaOne1/sonicweb/issues.
 .PP
-Gib eine detaillierte Beschreibung des Fehlers, die Version des Programms
-die du verwendest
-.RI ( "sonicweb \-version"
-zeigt diese Informationen an) und das Betriebssystem, auf dem du das Programm
-ausführst. Wenn das Programm abstürzt, wäre ein Stack-Trace hilfreich.
+Gib eine detaillierte Beschreibung des Fehlers, die Version des Programms (verwende
+.RI "sonicweb \-version",
+um diese Informationen anzuzeigen) sowie das Betriebssystem, auf dem du das Programm
+ausführst, an. Wenn das Programm abstürzt, wäre ein Stack-Trace hilfreich.
