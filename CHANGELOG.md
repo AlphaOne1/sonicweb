@@ -3,6 +3,7 @@ Release 1.3.0
 
 - additional-header parameter `-header`
 - additional-header-from-file parameter `-headerFile`
+- parameter `-wafcfg` to add configurations to the Coraza Web Application Firewall
 
 Release 1.2.1
 =============

@@ -6,7 +6,7 @@ SonicWeb
 Features
 --------
 
-* statically linked, apt to be used in scratch containers (~13MB)
+* statically linked, suitable for use in scratch containers (~13MB)
 * focused purpose, thus little attack surface
 * usage of OWASP [coraza](https://github.com/corazawaf/coraza) middleware
   to follow best security practises
@@ -19,14 +19,15 @@ Getting Started
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
-| Paraeter                     | Description                                 | Default |
+| Parameter                    | Description                                 | Default |
 |------------------------------|---------------------------------------------|---------|
 | -root           \<path\>     | root directory of content                   | `/www`  |
 | -base           \<path\>     | base path to publish the content            | `/`     |
 | -port           \<port\>     | port to listen on for web requests          | `8080`  |
 | -address        \<address\>  | address to listen on for web requests       | all     |
 | -header         \<header\>   | additional header                           | n/a     |
-| -headerFile     \<file\>     | file containing additional headers          | n/a     |
+| -headerfile     \<file\>     | file containing additional headers          | n/a     |
+| -wafcfg         \<file-glob> | configuration for Web Application Firewall  | n/a     |
 | -iport          \<port\>     | port to listen on for telemetry requests    | `8081`  |
 | -iaddress       \<address\>  | address to listen on for telemetry requests | all     |
 | -telemetry      {true,false} | enable/disable telemetry support            | `true`  |
@@ -52,35 +53,35 @@ $ ./sonic-linux-amd64 --root testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.2.1
-         \  |              of: 2025-03-21T22:57:06Z
+   |/   \    _______\ Version: v1.3.0
+         \  |              of: 2025-03-24T10:34:12Z
           \ |           using: go1.24.1
            \|
-time=2025-03-22T00:54:37.701993 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2025-03-22T00:54:37.702252 level=INFO msg=logging level=info
-time=2025-03-22T00:54:37.702714 level=INFO msg="using root directory" root=testroot
-time=2025-03-22T00:54:37.702760 level=INFO msg="using base path" path=/
-time=2025-03-22T00:54:37.702775 level=INFO msg="tracing disabled"
-time=2025-03-22T00:54:37.703103 level=INFO msg="registering handler for FileServer"
-time=2025-03-22T00:54:37.703381 level=INFO msg="serving pprof disabled"
-time=2025-03-22T00:54:37.703521 level=INFO msg="serving telemetry" address=:8081/metrics
-time=2025-03-22T00:54:37.705278 level=INFO msg="starting server" address=:8080
+time=2025-03-24T11:53:38.789677 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2025-03-24T11:53:38.790198 level=INFO msg=logging level=info
+time=2025-03-24T11:53:38.790235 level=INFO msg="using root directory" root=testroot/
+time=2025-03-24T11:53:38.790268 level=INFO msg="using base path" path=/
+time=2025-03-24T11:53:38.790285 level=INFO msg="tracing disabled"
+time=2025-03-24T11:53:38.790815 level=INFO msg="registering handler for FileServer"
+time=2025-03-24T11:53:38.792743 level=INFO msg="serving pprof disabled"
+time=2025-03-24T11:53:38.793455 level=INFO msg="serving telemetry" address=:8081/metrics
+time=2025-03-24T11:53:38.795349 level=INFO msg="starting server" address=:8080 t_init=6.141082ms
 ```
 
 Additional Headers
 ------------------
 
-Some situations require to add some HTTP headers to the response. *SonicWeb* provides the `-header` parameter
-to facilitate this.
+In some situations, it is necessary to add HTTP headers to the response.
+*SonicWeb* provides the `-header` parameter to facilitate this.
 
 ```shell
 $ ./sonic-linux-amd64 --root testroot/ -header "Environment: production"
 ```
 
-To add a huge amount of headers the `-headerFile` parameter can be used:
+To add a huge amount of headers the `-headerfile` parameter can be used:
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -headerFile additional_headers.conf
+$ ./sonic-linux-amd64 --root testroot/ -headerfile additional_headers.conf
 ```
 
 The file should be formatted as follows:
@@ -90,13 +91,34 @@ The file should be formatted as follows:
  <nextLine, if multi-line, starts with space>
 ```
 
-Headers can be named multiple times, the last entry wins. *SonicWeb* sets the `Server` header to its name and version.
-By providing an own version of the `Server` header, it can be replaced, e.g. to misguide potential attackers.
+Headers can be specified multiple times, with the last entry taking precedence.
+*SonicWeb* sets the `Server` header to its name and version. By providing an own version of the `Server` header,
+it can be replaced, e.g. to misguide potential attackers.
+
+Web Application Firewall
+------------------------
+
+*SonicWeb* integrates the [coraza](https://github.com/corazawaf/coraza) Web Application Firewall middleware. It uses
+rules to determine actions on the incoming (and outgoing) HTTP traffic. This project does not include the rulesets.
+The rules can be activated using the `-wafcfg` parameter. It expects, for each invocation, a file containing a coraza
+configuration file. A good base ruleset can be obtained from [coreruleset.org](https://coreruleset.org).
+There is also extensive documentation on how to write new rules.
+
+*SonicWeb* can be started as follows:
+
+```shell
+$ ./sonic-linux-amd64 -root testroot/                          \
+                      -wafcfg /etc/crs4/crs-setup.conf         \
+                      -wafcfg /etc/crs4/plugins/\*-config.conf \
+                      -wafcfg /etc/crs4/plugins/\*-before.conf \
+                      -wafcfg /etc/crs4/rules/\*.conf          \
+                      -wafcfg /etc/crs4/plugins/\*-after.conf
+```
 
 Building
 --------
 
-For easier management a `Makefile` is included, using it, the build is as easy as:
+For easier management, a `Makefile` is included, using it, the build is as easy as:
 
 ```sh
 make
