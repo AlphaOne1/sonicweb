@@ -27,7 +27,7 @@ Getting Started
 | -address        \<address\>  | address to listen on for web requests       | all     |
 | -header         \<header\>   | additional header                           | n/a     |
 | -headerfile     \<file\>     | file containing additional headers          | n/a     |
-| -wafcfg         \<file>      | configuration for Web Application Firewall  | n/a     |
+| -wafcfg         \<file-glob> | configuration for Web Application Firewall  | n/a     |
 | -iport          \<port\>     | port to listen on for telemetry requests    | `8081`  |
 | -iaddress       \<address\>  | address to listen on for telemetry requests | all     |
 | -telemetry      {true,false} | enable/disable telemetry support            | `true`  |
