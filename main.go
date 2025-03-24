@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 	_ "time/tzdata"
 
 	"go.uber.org/automaxprocs/maxprocs"
@@ -60,7 +61,8 @@ func generateFileHandler(
 	enableTracing bool,
 	basePath string,
 	rootPath string,
-	additionalHeaders [][2]string) http.Handler {
+	additionalHeaders [][2]string,
+	wafCfg []string) http.Handler {
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
@@ -69,7 +71,7 @@ func generateFileHandler(
 	}
 
 	mwStack = append(mwStack,
-		wafMiddleware(nil),
+		wafMiddleware(wafCfg),
 		addHeaders(additionalHeaders),
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
@@ -110,17 +112,20 @@ func (m *MultiStringValue) Set(value string) error {
 
 // main initializes all necessary parts and starts the server.
 func main() {
+	startInit := time.Now()
 	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
 	headersParam := &MultiStringValue{}
 	headersFileParam := &MultiStringValue{}
+	wafCfg := &MultiStringValue{}
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
 	listenPort := flag.String("port", "8080", "port to listen on")
 	listenAddress := flag.String("address", "", "address to listen on")
 	flag.Var(headersParam, "header", "additional HTTP header")
-	flag.Var(headersFileParam, "headerFile", "file containing additional HTTP headers")
+	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
+	flag.Var(wafCfg, "wafcfg", "waf configuration file")
 	instrumentPort := flag.Int("iport", 8081, "port to listen on for instrumentation")
 	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
 	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
@@ -191,13 +196,16 @@ func main() {
 		len(*traceEndpoint) > 0,
 		*basePath,
 		*rootPath,
-		append(headerParamToHeaders(*headersParam), headerFilesToHeaders(*headersFileParam)...))
+		append(headerParamToHeaders(*headersParam), headerFilesToHeaders(*headersFileParam)...),
+		*wafCfg)
 
 	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()
 	http.Handle("GET "+*basePath, handler)
 
-	slog.Info("starting server", slog.String("address", server.Addr))
+	slog.Info("starting server",
+		slog.String("address", server.Addr),
+		slog.Duration("t_init", time.Since(startInit)))
 
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("error listening", slog.String("error", err.Error()))

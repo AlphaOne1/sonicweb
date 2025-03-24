@@ -44,10 +44,13 @@ Establece la dirección de escucha. Por defecto en
 .BR "todas\ las\ direcciones".
 .TP
 .I \-header <encabezado>
-Añade el encabezado HTTP especificado a las respuestas; se puede proporcionar varias veces.
+Añade el encabezado HTTP especificado a las respuestas; se puede indicar varias veces.
 .TP
-.I \-headerFile <archivo>
-Añade los encabezados HTTP de un archivo especificado a las respuestas; se puede proporcionar varias veces.
+.I \-headerfile <archivo>
+Añade los encabezados HTTP de un archivo especificado a las respuestas; se puede indicar varias veces.
+.TP
+.I \-wafcfg <archivo>
+Añade la configuración para el Firewall de Aplicaciones Web; se puede indicar varias veces.
 .TP
 .I \-iport número
 Establece el puerto de escucha para las solicitudes de telemetría. Por defecto en

@@ -23,6 +23,7 @@ func wafMiddleware(configs []string) func(http.Handler) http.Handler {
 	wafConfig := coraza.NewWAFConfig()
 
 	for _, config := range configs {
+		slog.Info("adding waf configuration", slog.String("config", config))
 		wafConfig = wafConfig.WithDirectivesFromFile(config)
 	}
 

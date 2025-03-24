@@ -26,7 +26,8 @@ Getting Started
 | -port           \<port\>     | port to listen on for web requests          | `8080`  |
 | -address        \<address\>  | address to listen on for web requests       | all     |
 | -header         \<header\>   | additional header                           | n/a     |
-| -headerFile     \<file\>     | file containing additional headers          | n/a     |
+| -headerfile     \<file\>     | file containing additional headers          | n/a     |
+| -wafcfg         \<file>      | configuration for Web Application Firewall  | n/a     |
 | -iport          \<port\>     | port to listen on for telemetry requests    | `8081`  |
 | -iaddress       \<address\>  | address to listen on for telemetry requests | all     |
 | -telemetry      {true,false} | enable/disable telemetry support            | `true`  |
@@ -77,10 +78,10 @@ to facilitate this.
 $ ./sonic-linux-amd64 --root testroot/ -header "Environment: production"
 ```
 
-To add a huge amount of headers the `-headerFile` parameter can be used:
+To add a huge amount of headers the `-headerfile` parameter can be used:
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -headerFile additional_headers.conf
+$ ./sonic-linux-amd64 --root testroot/ -headerfile additional_headers.conf
 ```
 
 The file should be formatted as follows:
@@ -92,6 +93,26 @@ The file should be formatted as follows:
 
 Headers can be named multiple times, the last entry wins. *SonicWeb* sets the `Server` header to its name and version.
 By providing an own version of the `Server` header, it can be replaced, e.g. to misguide potential attackers.
+
+Web Application Firewall
+------------------------
+
+*SonicWeb* integrates the [coraza](https://github.com/corazawaf/coraza) Web Application Firewall middleware. It uses
+rules to determine actions on the incoming (and outgoing) HTTP traffic. This project does not include the rulesets.
+The rules can be activated using the `-wafcfg` parameter. It expects, for each invocation, a file containing a coraza
+configuration file. A good base ruleset can be obtained from [coreruleset.org](https://coreruleset.org).
+There is also an extensive documentation as to how to write new rules.
+
+*SonicWeb* can be started as follows:
+
+```shell
+$ ./sonic-linux-amd64 -root testroot/                          \
+                      -wafcfg /etc/crs4/crs-setup.conf         \
+                      -wafcfg /etc/crs4/plugins/\*-config.conf \
+                      -wafcfg /etc/crs4/plugins/\*-before.conf \
+                      -wafcfg /etc/crs4/rules/\*.conf          \
+                      -wafcfg /etc/crs4/plugins/\*-after.conf
+```
 
 Building
 --------

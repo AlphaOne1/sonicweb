@@ -97,7 +97,7 @@ func TestSonicMain(t *testing.T) {
 		"-root", "./testroot",
 		"-header", "X-Test-Header: testHeaderContent",
 		"-header", "X-Empty",
-		"-headerFile", "testroot/testHeaders.conf",
+		"-headerfile", "testroot/testHeaders.conf",
 		"-address", "localhost",
 		"-iaddress", "localhost",
 	)
@@ -170,7 +170,7 @@ func TestSonicMainInvalidRoot(t *testing.T) {
 
 func TestSonicMainInvalidHeaderFile(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb", "-root", "testroot/", "-headerFile", "/noexist",
+		"sonicweb", "-root", "testroot/", "-headerfile", "/noexist",
 	)
 
 	runtime.Gosched()
@@ -188,6 +188,7 @@ func BenchmarkHandler(b *testing.B) {
 			false,
 			"/",
 			"testroot/",
+			nil,
 			nil))
 
 	defer server.Close()
