@@ -53,19 +53,19 @@ $ ./sonic-linux-amd64 --root testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.2.1
-         \  |              of: 2025-03-21T22:57:06Z
+   |/   \    _______\ Version: v1.3.0
+         \  |              of: 2025-03-24T10:34:12Z
           \ |           using: go1.24.1
            \|
-time=2025-03-22T00:54:37.701993 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2025-03-22T00:54:37.702252 level=INFO msg=logging level=info
-time=2025-03-22T00:54:37.702714 level=INFO msg="using root directory" root=testroot
-time=2025-03-22T00:54:37.702760 level=INFO msg="using base path" path=/
-time=2025-03-22T00:54:37.702775 level=INFO msg="tracing disabled"
-time=2025-03-22T00:54:37.703103 level=INFO msg="registering handler for FileServer"
-time=2025-03-22T00:54:37.703381 level=INFO msg="serving pprof disabled"
-time=2025-03-22T00:54:37.703521 level=INFO msg="serving telemetry" address=:8081/metrics
-time=2025-03-22T00:54:37.705278 level=INFO msg="starting server" address=:8080
+time=2025-03-24T11:53:38.789677 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2025-03-24T11:53:38.790198 level=INFO msg=logging level=info
+time=2025-03-24T11:53:38.790235 level=INFO msg="using root directory" root=testroot/
+time=2025-03-24T11:53:38.790268 level=INFO msg="using base path" path=/
+time=2025-03-24T11:53:38.790285 level=INFO msg="tracing disabled"
+time=2025-03-24T11:53:38.790815 level=INFO msg="registering handler for FileServer"
+time=2025-03-24T11:53:38.792743 level=INFO msg="serving pprof disabled"
+time=2025-03-24T11:53:38.793455 level=INFO msg="serving telemetry" address=:8081/metrics
+time=2025-03-24T11:53:38.795349 level=INFO msg="starting server" address=:8080 t_init=6.141082ms
 ```
 
 Additional Headers
