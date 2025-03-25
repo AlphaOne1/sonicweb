@@ -100,12 +100,11 @@ Try Files
 ---------
 
 The `-tryfile` option is specially aimed at single-page applications that use URIs to encode functionality.
-When used, *SonicWeb* tries the given file expressions in order. There are two special values that can be used:
+When used, *SonicWeb* tries the given file expressions in order. There is a special value that can be used:
 
-| Value         | Description                     |
-|---------------|---------------------------------|
-| $uri          | URI of the request              |
-| $query_params | Query parameters of the request |
+| Value         | Description        |
+|---------------|--------------------|
+| $uri          | URI of the request |
 
 If none of the expressions matches a real file, a 404 is returned. If one of the expressions ends with `/index.html`,
 that suffix is truncated—replaced by the final `/`—to prevent redirection loops caused by Go's handling of

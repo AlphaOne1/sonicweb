@@ -140,8 +140,8 @@ func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 				switch s {
 				case "uri":
 					return r.URL.Path
-				case "query_params":
-					return r.URL.RawQuery
+					// case "query_params":
+					//		return r.URL.RawQuery
 				}
 				return ""
 			}

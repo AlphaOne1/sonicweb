@@ -29,7 +29,7 @@ func sendMe(t *testing.T, sig os.Signal) {
 	}
 
 	if signalErr := currentProcess.Signal(sig); signalErr != nil {
-		t.Errorf("could not send SIGTERM")
+		t.Errorf("could not send signal")
 	}
 }
 
@@ -87,6 +87,9 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 		sendMe(t, syscall.SIGTERM)
 	}
 
+	runtime.Gosched()
+	time.Sleep(10 * time.Millisecond)
+
 	return <-result
 }
 
@@ -98,6 +101,8 @@ func TestSonicMain(t *testing.T) {
 		"-header", "X-Test-Header: testHeaderContent",
 		"-header", "X-Empty",
 		"-headerfile", "testroot/testHeaders.conf",
+		"-tryfile", "$uri",
+		"-tryfile", "/index.html",
 		"-address", "localhost",
 		"-iaddress", "localhost",
 	)
@@ -105,7 +110,7 @@ func TestSonicMain(t *testing.T) {
 	couldRequest := false
 
 	for i := 0; i < 10 && !couldRequest; i++ {
-		res, err := http.Get("http://localhost:8080/")
+		res, err := http.Get("http://localhost:8080/index.html")
 
 		if err != nil {
 			runtime.Gosched()
@@ -149,34 +154,54 @@ func TestSonicMainVersion(t *testing.T) {
 
 	runtime.Gosched()
 
-	afterTimer.Stop()
-	result := <-mainReturn
+	result := finalizeMain(t, afterTimer, mainReturn)
 
 	assert.Equal(t, 0, result, "expected successful return")
 }
 
 func TestSonicMainInvalidRoot(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb", "-root", "/noentry",
+		"sonicweb",
+		"-root", "/noentry",
+		"-address", "localhost",
+		"-iaddress", "localhost",
 	)
 
 	runtime.Gosched()
 
-	afterTimer.Stop()
-	result := <-mainReturn
+	result := finalizeMain(t, afterTimer, mainReturn)
 
 	assert.Equal(t, 1, result, "main should exit with 1")
 }
 
 func TestSonicMainInvalidHeaderFile(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb", "-root", "testroot/", "-headerfile", "/noexist",
+		"sonicweb",
+		"-root", "testroot/",
+		"-headerfile", "/noexist",
+		"-address", "localhost",
+		"-iaddress", "localhost",
 	)
 
 	runtime.Gosched()
 
-	afterTimer.Stop()
-	result := <-mainReturn
+	result := finalizeMain(t, afterTimer, mainReturn)
+
+	assert.Equal(t, 1, result, "main should exit with 1")
+}
+
+func TestSonicMainInvalidWAFFile(t *testing.T) {
+	afterTimer, mainReturn := startMain(t,
+		"sonicweb",
+		"-root", "testroot/",
+		"-wafcfg", "/noexist",
+		"-address", "localhost",
+		"-iaddress", "localhost",
+	)
+
+	runtime.Gosched()
+
+	result := finalizeMain(t, afterTimer, mainReturn)
 
 	assert.Equal(t, 1, result, "main should exit with 1")
 }
@@ -188,6 +213,7 @@ func BenchmarkHandler(b *testing.B) {
 			false,
 			"/",
 			"testroot/",
+			nil,
 			nil,
 			nil))
 
