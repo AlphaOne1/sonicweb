@@ -167,7 +167,6 @@ func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 
 			slog.Debug("no try-files matched")
 			next.ServeHTTP(w, r)
-			return
 		})
 	}
 }
