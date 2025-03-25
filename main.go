@@ -127,6 +127,8 @@ func main() {
 	basePath := flag.String("base", "/", "base path for serving")
 	listenPort := flag.String("port", "8080", "port to listen on")
 	listenAddress := flag.String("address", "", "address to listen on")
+	tlsCert := flag.String("tlscert", "", "tls certificate file")
+	tlsKey := flag.String("tlskey", "", "tls certificate key file")
 	flag.Var(headersParam, "header", "additional HTTP header")
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
 	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
@@ -209,12 +211,26 @@ func main() {
 	http.DefaultServeMux = http.NewServeMux()
 	http.Handle("GET "+*basePath, handler)
 
-	slog.Info("starting server",
-		slog.String("address", server.Addr),
-		slog.Duration("t_init", time.Since(startInit)))
+	var listenErr error
 
-	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("error listening", slog.String("error", err.Error()))
+	if len(*tlsCert) > 0 && len(*tlsKey) > 0 {
+		slog.Info("starting tls server",
+			slog.String("address", server.Addr),
+			slog.Duration("t_init", time.Since(startInit)),
+			slog.String("cert", *tlsCert),
+			slog.String("key", *tlsKey))
+
+		listenErr = server.ListenAndServeTLS(*tlsCert, *tlsKey)
+	} else {
+		slog.Info("starting server",
+			slog.String("address", server.Addr),
+			slog.Duration("t_init", time.Since(startInit)))
+
+		listenErr = server.ListenAndServe()
+	}
+
+	if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+		slog.Error("error listening", slog.String("error", listenErr.Error()))
 		exitFunc(1)
 	}
 
