@@ -1,3 +1,9 @@
+Release 1.4.0
+=============
+
+- added `-tryfile` option, to replace original URI with a given list of
+  files to try first
+
 Release 1.3.0
 =============
 

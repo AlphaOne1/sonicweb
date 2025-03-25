@@ -9,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -62,6 +63,7 @@ func generateFileHandler(
 	basePath string,
 	rootPath string,
 	additionalHeaders [][2]string,
+	tryFiles []string,
 	wafCfg []string) http.Handler {
 
 	mwStack := make([]defs.Middleware, 0, 4)
@@ -70,15 +72,6 @@ func generateFileHandler(
 		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+basePath))
 	}
 
-	mwStack = append(mwStack,
-		wafMiddleware(wafCfg),
-		addHeaders(additionalHeaders),
-		util.Must(correlation.New()),
-		util.Must(access_log.New()),
-		func(next http.Handler) http.Handler {
-			return http.StripPrefix(basePath, next)
-		})
-
 	root, rootErr := os.OpenRoot(rootPath)
 
 	if rootErr != nil {
@@ -86,6 +79,16 @@ func generateFileHandler(
 		exitFunc(1)
 		return nil // silencing the static checker, unreachable
 	}
+
+	mwStack = append(mwStack,
+		wafMiddleware(wafCfg),
+		addHeaders(additionalHeaders),
+		util.Must(correlation.New()),
+		util.Must(access_log.New()),
+		addTryFiles(tryFiles, root.FS().(fs.StatFS)),
+		func(next http.Handler) http.Handler {
+			return http.StripPrefix(basePath, next)
+		})
 
 	return midgard.StackMiddlewareHandler(
 		mwStack,
@@ -117,6 +120,7 @@ func main() {
 
 	headersParam := &MultiStringValue{}
 	headersFileParam := &MultiStringValue{}
+	tryFiles := &MultiStringValue{}
 	wafCfg := &MultiStringValue{}
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
@@ -125,6 +129,7 @@ func main() {
 	listenAddress := flag.String("address", "", "address to listen on")
 	flag.Var(headersParam, "header", "additional HTTP header")
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
+	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
 	flag.Var(wafCfg, "wafcfg", "waf configuration file")
 	instrumentPort := flag.Int("iport", 8081, "port to listen on for instrumentation")
 	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
@@ -197,6 +202,7 @@ func main() {
 		*basePath,
 		*rootPath,
 		append(headerParamToHeaders(*headersParam), headerFilesToHeaders(*headersFileParam)...),
+		*tryFiles,
 		*wafCfg)
 
 	// remove all implicitly registered handlers
