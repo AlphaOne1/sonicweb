@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -116,4 +117,56 @@ func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 			append([][2]string{{"Server", serverVal}}, headers...),
 		),
 	))
+}
+
+// addTryFiles looks of the given URI matches an existing file.
+// If there is not file, a series of other files is tried instead.
+func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
+	tryFiles := make([]string, 0, len(tries))
+
+	for _, v := range tries {
+		slog.Info("registering try files", slog.String("pattern", v))
+
+		if strings.HasSuffix(v, "/index.html") {
+			v = v[:len(v)-len("index.html")]
+		}
+
+		tryFiles = append(tryFiles, v)
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expandFunc := func(s string) string {
+				switch s {
+				case "uri":
+					return r.URL.Path
+					// case "query_params":
+					//		return r.URL.RawQuery
+				}
+				return ""
+			}
+
+			for _, t := range tryFiles {
+				path := os.Expand(t, expandFunc)
+
+				slog.Debug("try-file",
+					slog.String("pattern", t),
+					slog.String("path", path))
+
+				if _, statErr := fs.Stat(strings.TrimPrefix(path, "/")); statErr == nil {
+					slog.Debug("using try file",
+						slog.String("pattern", t),
+						slog.String("path", path))
+
+					r.URL.Path = path
+
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			slog.Debug("no try-files matched")
+			next.ServeHTTP(w, r)
+		})
+	}
 }

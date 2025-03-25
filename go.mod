@@ -6,7 +6,7 @@ module sonic
 go 1.24.0
 
 require (
-	github.com/AlphaOne1/geany v0.0.0-20250317161244-4c95360d3dc6
+	github.com/AlphaOne1/geany v0.0.0-20250324231128-a4a5066e8882
 	github.com/AlphaOne1/midgard v0.1.1
 	github.com/corazawaf/coraza/v3 v3.3.3
 	github.com/prometheus/client_golang v1.21.1
@@ -52,10 +52,10 @@ require (
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
 	google.golang.org/grpc v1.71.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect
 )

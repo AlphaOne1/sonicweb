@@ -8,7 +8,7 @@ Features
 
 * statically linked, suitable for use in scratch containers (~13MB)
 * focused purpose, thus little attack surface
-* usage of OWASP [coraza](https://github.com/corazawaf/coraza) middleware
+* usage of OWASP [Coraza](https://github.com/corazawaf/coraza) middleware
   to follow best security practises
 * easy integration in monitoring using [Prometheus](prometheus.io) and/or
   [Jaeger Tracing](jaegertracing.io)
@@ -27,6 +27,7 @@ Getting Started
 | -address        \<address\>  | address to listen on for web requests       | all     |
 | -header         \<header\>   | additional header                           | n/a     |
 | -headerfile     \<file\>     | file containing additional headers          | n/a     |
+| -tryfile        \<fileexp\>  | always try to load file expression first    | n/a     |
 | -wafcfg         \<file-glob> | configuration for Web Application Firewall  | n/a     |
 | -iport          \<port\>     | port to listen on for telemetry requests    | `8081`  |
 | -iaddress       \<address\>  | address to listen on for telemetry requests | all     |
@@ -95,12 +96,33 @@ Headers can be specified multiple times, with the last entry taking precedence.
 *SonicWeb* sets the `Server` header to its name and version. By providing an own version of the `Server` header,
 it can be replaced, e.g. to misguide potential attackers.
 
+Try Files
+---------
+
+The `-tryfile` option is specially aimed at single-page applications that use URIs to encode functionality.
+When used, *SonicWeb* tries the given file expressions in order. There is a special value that can be used:
+
+| Value         | Description        |
+|---------------|--------------------|
+| $uri          | URI of the request |
+
+If none of the expressions matches a real file, a 404 is returned. If one of the expressions ends with `/index.html`,
+that suffix is truncated—replaced by the final `/`—to prevent redirection loops caused by Go's handling of
+`/index.html`. (Go’s FileHandler redirects to `/` when it encounters `/index.html`; therefore, attempting to load
+`/index.html` would trigger a redirect and repeatedly try to load `/index.html` instead of `/`, resulting in a loop.)
+
+An invocation of *SonicWeb* could then be as follows:
+
+```shell
+$ ./sonic-linux-amd64 --root testroot/ -tryfile \$uri -tryfile /
+```
+
 Web Application Firewall
 ------------------------
 
-*SonicWeb* integrates the [coraza](https://github.com/corazawaf/coraza) Web Application Firewall middleware. It uses
+*SonicWeb* integrates the [Coraza](https://github.com/corazawaf/coraza) Web Application Firewall middleware. It uses
 rules to determine actions on the incoming (and outgoing) HTTP traffic. This project does not include the rulesets.
-The rules can be activated using the `-wafcfg` parameter. It expects, for each invocation, a file containing a coraza
+The rules can be activated using the `-wafcfg` parameter. It expects, for each invocation, a file containing a Coraza
 configuration file. A good base ruleset can be obtained from [coreruleset.org](https://coreruleset.org).
 There is also extensive documentation on how to write new rules.
 
