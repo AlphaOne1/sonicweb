@@ -28,32 +28,32 @@ import (
 )
 
 func generateCertAndKey() (string, string) {
-	// Private Key erstellen
+	// generate private key
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		panic(err)
 	}
 
-	// Zertifikatsinformationen
+	// certificate information
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
 			Organization: []string{"Example Organization"},
 		},
 		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(365 * 24 * time.Hour), // Gültigkeit: 1 Jahr
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour), // validity: 1 year
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
 
-	// Selbstsigniertes Zertifikat erstellen
+	// generate self-signed certificate
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
 	if err != nil {
 		panic(err)
 	}
 
-	// Zertifikat speichern
+	// save certificate
 	certFile, err := os.CreateTemp("", "cert")
 	if err != nil {
 		panic(err)
@@ -62,7 +62,7 @@ func generateCertAndKey() (string, string) {
 
 	_ = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
-	// Privaten Schlüssel speichern
+	// save private key
 	keyFile, err := os.CreateTemp("", "key")
 	if err != nil {
 		panic(err)
