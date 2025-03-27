@@ -128,7 +128,7 @@ func main() {
 	listenPort := flag.String("port", "8080", "port to listen on")
 	listenAddress := flag.String("address", "", "address to listen on")
 	tlsCert := flag.String("tlscert", "", "tls certificate file")
-	tlsKey := flag.String("tlskey", "", "tls certificate key file")
+	tlsKey := flag.String("tlskey", "", "tls key file")
 	flag.Var(headersParam, "header", "additional HTTP header")
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
 	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
