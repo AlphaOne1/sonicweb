@@ -8,9 +8,9 @@ IGOARCH=     $(shell go env GOARCH)
 ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 IBUILDTAG=   $(shell git describe --tags)
 PATH:=       $(PATH):$(shell go env GOPATH)/bin
-MANPAGES=	 sonicweb.1.gz		\
-             sonicweb_de.1.gz	\
-             sonicweb_es.1.gz
+MANPAGES=	 man/sonicweb.1.gz		\
+             man/sonicweb_de.1.gz	\
+             man/sonicweb_es.1.gz
 
 .PHONY: all clean docker test tls
 
@@ -64,10 +64,10 @@ test:
 	go test ./...
 
 clean:
-	@-rm -vf	sonic-*-*		\
-				nfpm-*.yaml		\
-				server.crt		\
-				server.key		\
-				sonicweb*.1.gz	\
-				sonicweb*.1		\
+	@-rm -vf	sonic-*-*			\
+				nfpm-*.yaml			\
+				server.crt			\
+				server.key			\
+				man/sonicweb*.1.gz	\
+				man/sonicweb*.1		\
 				SonicWeb-*.* | sed -r s/"(.*)"/"cleaning \\1"/
