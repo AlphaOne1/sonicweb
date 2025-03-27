@@ -5,6 +5,17 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Toggle Buttons with Session Cookie</title>
         <style>
+            #buttonArea {
+                background-color: lightblue;
+                padding: 10px;
+                margin: 0;
+                border-radius: 7px;
+                display: inline-flex;
+                flex-wrap: wrap;
+                align-items:  center;
+                justify-content:  center;
+            }
+
             a.button {
                 display: inline-block; /* Makes the link behave like a block, so it looks like a button */
                 padding: 10px 20px;    /* Size of the "button" */
@@ -59,6 +70,36 @@
                 return null;
             }
 
+            // Create buttons in body
+            function createButtons(num) {
+                const body = document.getElementById('buttonArea')
+
+                for (let i = 0; i < num; i++) {
+                    const button = document.createElement('a');
+                    button.id = `button${i}`;
+                    button.href = `/backend/button${i}`;
+                    button.className = 'button inactive';
+                    button.textContent = `Button ${i}`;
+                    button.role = 'button';
+
+                    body.appendChild(button);
+                }
+            }
+
+            // update the number of buttons
+            function updateButtons(num) {
+                buttonArea = document.getElementById("buttonArea")
+                buttonArea.innerHTML = ""
+
+                if (![1,2,4].includes(num)) {
+                    num = 2;
+                }
+
+                setCookie("buttonCount", num)
+                createButtons(num)
+                initializeButtonsFromCookies(num)
+            }
+
             // Function for the toggle mechanism
             function toggleButton(buttonId) {
                 const button = document.getElementById(`button${buttonId}`);
@@ -111,21 +152,39 @@
     </head>
     <body>
         <h1>Toggle Buttons with Session Cookie</h1>
-        <a id="button0" href="/backend/button0" class="button inactive">Button 0</a>
-        <a id="button1" href="/backend/button1" class="button inactive">Button 1</a>
+
+        <div id="buttonArea"></div>
+
+        <p> <label for="buttonCount">Wähle die Anzahl der Boxen:</label>
+            <select id="buttonCount" onchange="updateButtons(parseInt(this.value))">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+            </select>
+        </p>
+
         <p> This page is an illustrative example for the use of <em>SonicWeb</em> as
             server for a single page application.
         </p>
         <p> To start the server use the following command:
         </p>
         <code>
-            $ ./sonic-linux-amd64 --root testroot/ -tryfile \$uri -tryfile /spa.html
+            $ ./sonic-linux-amd64 --root testroot -tryfile \$uri -tryfile /spa.html
         </code>
 
         <script>
             // Initialization when the page is loaded
-            initializeButtonsFromCookies(2);
-            handleURLEvent(2);
+            numButtons = parseInt(getCookie('buttonCount')) || 2;
+
+            if (![1,2,4].includes(numButtons)) {
+                numButtons = 2;
+            }
+
+            document.getElementById("buttonCount").value=numButtons;
+
+            createButtons(numButtons)
+            initializeButtonsFromCookies(numButtons);
+            handleURLEvent(numButtons);
         </script>
     </body>
 </html>
