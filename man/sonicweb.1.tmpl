@@ -15,6 +15,7 @@ sonicweb \- Small, secure static file server.
 [\-address address]
 [\-tlscert file]
 [\-tlskey file]
+[\-acmedomain domain]
 [\-header header]
 [\-headerfile file]
 [\-tryfile fileexpr]
@@ -54,6 +55,9 @@ Set the TLS certificate
 .TP
 .I \-tlskey file
 Set the TLS key
+.TP
+.I \-acmedomain domain
+Set allowed domain for automatic certificate retrieval. This option may be repeated.
 .TP
 .I \-header header
 Add the specified HTTP header to responses. This option may be repeated.

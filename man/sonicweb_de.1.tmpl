@@ -15,6 +15,7 @@ sonicweb \- Kleiner, sicherer statischer Dateiserver.
 [\-address adresse]
 [\-tlscert datei]
 [\-tlskey datei]
+[\-acmedomain domain]
 [\-header header]
 [\-headerfile datei]
 [\-tryfile dateiausdruck]
@@ -54,6 +55,9 @@ Setzt das TLS-Zertifikat
 .TP
 .I \-tlskey datei
 Setzt den TLS-Schlüssel
+.TP
+.I \-acmedomain domain
+Setzt erlaubte Domäne für automatische Zertifikatsbeschaffung. Diese Option darf mehrfach angegeben werden.
 .TP
 .I \-header header
 Fügt den angegebenen HTTP-Header zu Antworten hinzu. Diese Option darf mehrfach angegeben werden.

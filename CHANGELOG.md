@@ -5,6 +5,8 @@ Release 1.4.0
   files to try first
 - added single-page application example to illustrate the try-file usage
 - added `-tlscert` and `-tlskey` parameter, enabling serving via TLS
+- fixed manpage headers
+- add support for automatic certificates via Let's Encrypt
 
 Release 1.3.0
 =============

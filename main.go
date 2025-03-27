@@ -122,6 +122,7 @@ func main() {
 	headersFileParam := &MultiStringValue{}
 	tryFiles := &MultiStringValue{}
 	wafCfg := &MultiStringValue{}
+	acmeDomains := &MultiStringValue{}
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
@@ -129,6 +130,7 @@ func main() {
 	listenAddress := flag.String("address", "", "address to listen on")
 	tlsCert := flag.String("tlscert", "", "tls certificate file")
 	tlsKey := flag.String("tlskey", "", "tls key file")
+	flag.Var(acmeDomains, "acmedomain", "domain for automatic certificate retrieval")
 	flag.Var(headersParam, "header", "additional HTTP header")
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
 	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
