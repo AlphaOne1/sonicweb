@@ -13,8 +13,11 @@ sonicweb \- Small, secure static file server.
 [\-base path]
 [\-port number]
 [\-address address]
+[\-tlscert file]
+[\-tlskey file]
 [\-header header]
 [\-headerfile file]
+[\-tryfile fileexpr]
 [\-wafcfg fileglob]
 [\-iport number]
 [\-iaddress address]
@@ -46,16 +49,22 @@ Set the port number to listen on. Defaults to
 Set the address to listen on. Defaults to
 .BR "all\ addresses".
 .TP
-.I \-header <header>
+.I \-tlscert file
+Set the TLS certificate
+.TP
+.I \-tlskey file
+Set the TLS key
+.TP
+.I \-header header
 Add the specified HTTP header to responses. This option may be repeated.
 .TP
-.I \-headerfile <file>
+.I \-headerfile file
 Add HTTP headers from given file to responses. This option may be repeated.
 .TP
-.I \-tryfile <fileexpr>
+.I \-tryfile fileexpr
 Always try to load given file expression first. This option may be repeated.
 .TP
-.I \-wafcfg <fileglob>
+.I \-wafcfg fileglob
 Add a Web Application Firewall configuration file. This option may be repeated.
 .TP
 .I \-iport number

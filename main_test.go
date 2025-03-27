@@ -4,10 +4,18 @@
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,6 +26,58 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func generateCertAndKey() (string, string) {
+	// generate private key
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	// certificate information
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Example Organization"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour), // validity: 1 year
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	// generate self-signed certificate
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		panic(err)
+	}
+
+	// save certificate
+	certFile, err := os.CreateTemp("", "cert")
+	if err != nil {
+		panic(err)
+	}
+	defer func() { _ = certFile.Close() }()
+
+	_ = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+
+	// save private key
+	keyFile, err := os.CreateTemp("", "key")
+	if err != nil {
+		panic(err)
+	}
+	defer func() { _ = keyFile.Close() }()
+
+	privBytes, err := x509.MarshalECPrivateKey(priv)
+	if err != nil {
+		panic(err)
+	}
+
+	_ = pem.Encode(keyFile, &pem.Block{Type: "EC PRIVATE KEY", Bytes: privBytes})
+
+	return certFile.Name(), keyFile.Name()
+}
 
 func sendMe(t *testing.T, sig os.Signal) {
 	currentPID := os.Getpid()
@@ -145,6 +205,73 @@ func TestSonicMain(t *testing.T) {
 	result := finalizeMain(t, afterTimer, mainReturn)
 
 	slog.Info("main returned", slog.Int("result", result))
+}
+
+func TestSonicMainTLS(t *testing.T) {
+	certFile, keyFile := generateCertAndKey()
+
+	afterTimer, mainReturn := startMain(t,
+		"sonicweb",
+		"-root", "./testroot",
+		"-tlscert", certFile,
+		"-tlskey", keyFile,
+		"-header", "X-Test-Header: testHeaderContent",
+		"-header", "X-Empty",
+		"-headerfile", "testroot/testHeaders.conf",
+		"-tryfile", "$uri",
+		"-tryfile", "/index.html",
+		"-address", "localhost",
+		"-iaddress", "localhost",
+	)
+
+	couldRequest := false
+
+	for i := 0; i < 10 && !couldRequest; i++ {
+		client := http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		}
+		res, err := client.Get("https://localhost:8080/index.html")
+
+		if err != nil {
+			runtime.Gosched()
+			fmt.Printf("received error: %v\n", err)
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		couldRequest = true
+
+		assert.Equal(t, http.StatusOK, res.StatusCode, "status code should be 200")
+		assert.Equal(t,
+			"testHeaderContent",
+			res.Header.Get("X-Test-Header"),
+			"header should contain X-Test-Header with testHeaderContent")
+		assert.Contains(t,
+			res.Header,
+			"X-Empty",
+			"X-Empty header not found")
+		assert.Equal(t,
+			"line0 line1",
+			res.Header.Get("X-File-Test-0"),
+			"header should contain X-File-Test-0")
+		assert.Equal(t,
+			"line2",
+			res.Header.Get("X-File-Test-1"),
+			"header should contain X-File-Test-1")
+	}
+
+	assert.True(t, couldRequest, "could not send any request")
+
+	result := finalizeMain(t, afterTimer, mainReturn)
+
+	slog.Info("main returned", slog.Int("result", result))
+
+	_ = os.Remove(certFile)
+	_ = os.Remove(keyFile)
 }
 
 func TestSonicMainVersion(t *testing.T) {

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Toggle Buttons with Session Cookie</title>
+        <style>
+            #buttonArea {
+                background-color: lightblue;
+                padding: 10px;
+                margin: 0;
+                border-radius: 7px;
+                display: inline-flex;
+                flex-wrap: wrap;
+                align-items:  center;
+                justify-content:  center;
+            }
+
+            a.button {
+                display: inline-block; /* Makes the link behave like a block, so it looks like a button */
+                padding: 10px 20px;    /* Size of the "button" */
+                font-size: 16px;
+                margin: 5px;
+                color: white;          /* Text color */
+                text-align: center;    /* Centers the text */
+                text-decoration: none; /* Removes the underline from links */
+                border-radius: 5px;    /* Rounds the corners for the button */
+                cursor: pointer;       /* Changes the mouse cursor on hover to indicate a button */
+            }
+
+            /* Hover effect for interactive buttons */
+            a.button:hover {
+                opacity: 0.9; /* Slight transparency effect on hover */
+            }
+
+            /* Focus effect for accessibility (tab navigation) */
+            a.button:focus {
+                outline: 2px solid yellow; /* Outline for better visual feedback */
+            }
+
+            /* Active state when clicking */
+            a.button:active {
+                transform: scale(0.98); /* Button "presses in" like real buttons */
+            }
+
+            .active {
+                background-color: green;
+            }
+
+            .inactive {
+                background-color: red;
+            }
+        </style>
+        <script>
+            // Function to set cookies
+            function setCookie(name, value) {
+                document.cookie = `${name}=${value}; path=/;`;
+            }
+
+            // Function to read cookies
+            function getCookie(name) {
+                const cookies = document.cookie.split('; ');
+
+                for (const cookie of cookies) {
+                    const [key, value] = cookie.split('=');
+                    if (key === name) {
+                        return value;
+                    }
+                }
+                return null;
+            }
+
+            // Create buttons in body
+            function createButtons(num) {
+                const body = document.getElementById('buttonArea')
+
+                for (let i = 0; i < num; i++) {
+                    const button = document.createElement('a');
+                    button.id = `button${i}`;
+                    button.href = `/backend/button${i}`;
+                    button.className = 'button inactive';
+                    button.textContent = `Button ${i}`;
+                    button.role = 'button';
+
+                    body.appendChild(button);
+                }
+            }
+
+            // update the number of buttons
+            function updateButtons(num) {
+                buttonArea = document.getElementById("buttonArea")
+                buttonArea.innerHTML = ""
+
+                if (![1,2,4].includes(num)) {
+                    num = 2;
+                }
+
+                setCookie("buttonCount", num)
+                createButtons(num)
+                initializeButtonsFromCookies(num)
+            }
+
+            // Function for the toggle mechanism
+            function toggleButton(buttonId) {
+                const button = document.getElementById(`button${buttonId}`);
+
+                if (button.classList.contains("inactive")) {
+                    button.classList.remove("inactive");
+                    button.classList.add("active");
+                    setCookie(`button${buttonId}`, 'active');
+                } else {
+                    button.classList.remove("active");
+                    button.classList.add("inactive");
+                    setCookie(`button${buttonId}`, 'inactive');
+                }
+            }
+
+            // Event function based on the URL
+            function handleURLEvent(num) {
+                const currentPath = window.location.pathname;
+
+                for (let i = 0; i < num; i++) {
+                    switch (currentPath) {
+                        case `/backend/button${i}`:
+                            toggleButton(i);
+                            break;
+                        default:
+                            console.log(`No action for the URL: ${currentPath}`);
+                            break;
+                    }
+                }
+            }
+
+            // Function to initialize buttons based on cookies
+            function initializeButtonsFromCookies(num) {
+                currentPath = window.location.pathname;
+
+                for (let i = 0; i < num; i++) {
+                    const buttonState = getCookie(`button${i}`); // State for button i
+                    const button = document.getElementById(`button${i}`);
+
+                    if (buttonState === 'active') {
+                        button.classList.remove("inactive");
+                        button.classList.add("active");
+                    } else {
+                        button.classList.remove("active");
+                        button.classList.add("inactive");
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Toggle Buttons with Session Cookie</h1>
+
+        <div id="buttonArea"></div>
+
+        <p> <label for="buttonCount">Wähle die Anzahl der Boxen:</label>
+            <select id="buttonCount" onchange="updateButtons(parseInt(this.value))">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+            </select>
+        </p>
+
+        <p> This page is an illustrative example for the use of <em>SonicWeb</em> as
+            server for a single page application.
+        </p>
+        <p> To start the server use the following command:
+        </p>
+        <code>
+            $ ./sonic-linux-amd64 --root testroot -tryfile \$uri -tryfile /spa.html
+        </code>
+
+        <script>
+            // Initialization when the page is loaded
+            numButtons = parseInt(getCookie('buttonCount')) || 2;
+
+            if (![1,2,4].includes(numButtons)) {
+                numButtons = 2;
+            }
+
+            document.getElementById("buttonCount").value=numButtons;
+
+            createButtons(numButtons)
+            initializeButtonsFromCookies(numButtons);
+            handleURLEvent(numButtons);
+        </script>
+    </body>
+</html>

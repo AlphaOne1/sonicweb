@@ -13,8 +13,11 @@ sonicweb \- Kleiner, sicherer statischer Dateiserver.
 [\-base pfad]
 [\-port nummer]
 [\-address adresse]
+[\-tlscert datei]
+[\-tlskey datei]
 [\-header header]
 [\-headerfile datei]
+[\-tryfile dateiausdruck]
 [\-wafcfg dateiglob]
 [\-iport nummer]
 [\-iaddress adresse]
@@ -46,16 +49,22 @@ Setzt den eingehenden Port auf die angegebene Nummer. Standardmäßig auf
 Setzt die eingehende Adresse. Standardmäßig auf
 .BR "alle\ Adressen".
 .TP
-.I \-header <header>
+.I \-tlscert datei
+Setzt das TLS-Zertifikat
+.TP
+.I \-tlskey datei
+Setzt den TLS-Schlüssel
+.TP
+.I \-header header
 Fügt den angegebenen HTTP-Header zu Antworten hinzu. Diese Option darf mehrfach angegeben werden.
 .TP
-.I \-headerfile <datei>
+.I \-headerfile datei
 Fügt die HTTP-Header aus der angegebenen Datei zu Antworten hinzu. Diese Option darf mehrfach angegeben werden.
 .TP
-.I \-tryfile <fileexpr>
+.I \-tryfile dateiausdruck
 Versucht immer, den angegebenen Dateiausdruck zuerst zu laden. Diese Option darf mehrfach angegeben werden.
 .TP
-.I \-wafcfg <file>
+.I \-wafcfg dateiglob
 Fügt die Konfiguration für die Web Application Firewall hinzu. Diese Option darf mehrfach angegeben werden.
 .TP
 .I \-iport nummer

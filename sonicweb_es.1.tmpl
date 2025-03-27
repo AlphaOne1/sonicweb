@@ -13,9 +13,12 @@ sonicweb \- Pequeño servidor seguro de archivos estáticos.
 [\-base ruta]
 [\-port número]
 [\-address dirección]
+[\-tlscert archivo]
+[\-tlskey archivo]
 [\-header encabezado]
 [\-headerfile archivo]
-[\-wafcfg archivo-glob]
+[\-tryfile archivoexpr]
+[\-wafcfg archivoglob]
 [\-iport número]
 [\-iaddress dirección]
 [\-telemetry {true,false}]
@@ -46,16 +49,22 @@ Establece el puerto de escucha al número indicado. Por defecto en
 Establece la dirección de escucha. Por defecto en
 .BR "todas\ las\ direcciones".
 .TP
+.I \-tlscert archivo
+Establece el certificado TLS
+.TP
+.I \-tlskey archivo
+Establece la clave TLS
+.TP
 .I \-header <encabezado>
 Añade el encabezado HTTP especificado a las respuestas; se puede indicar varias veces.
 .TP
-.I \-headerfile <archivo>
+.I \-headerfile archivo
 Añade los encabezados HTTP de un archivo especificado a las respuestas; se puede indicar varias veces.
 .TP
-.I \-tryfile <fileexpr>
+.I \-tryfile archivoexpr
 Siempre intenta cargar primero la expresión de archivo dada; se puede indicar varias veces.
 .TP
-.I \-wafcfg <archivo-glob>
+.I \-wafcfg archivoglob
 Añade el archivo de configuración del Firewall de Aplicaciones Web; se puede indicar varias veces.
 .TP
 .I \-iport número

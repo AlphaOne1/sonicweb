@@ -25,6 +25,8 @@ Getting Started
 | -base           \<path\>     | base path to publish the content            | `/`     |
 | -port           \<port\>     | port to listen on for web requests          | `8080`  |
 | -address        \<address\>  | address to listen on for web requests       | all     |
+| -tlscert        \<certfile\> | TLS certificate file                        | n/a     |
+| -tlskey         \<keyfile\>  | TLS key file                                | n/a     |
 | -header         \<header\>   | additional header                           | n/a     |
 | -headerfile     \<file\>     | file containing additional headers          | n/a     |
 | -tryfile        \<fileexp\>  | always try to load file expression first    | n/a     |

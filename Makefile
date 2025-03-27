@@ -12,12 +12,13 @@ MANPAGES=	 sonicweb.1.gz		\
              sonicweb_de.1.gz	\
              sonicweb_es.1.gz
 
-.PHONY: all clean docker  test
+.PHONY: all clean docker test tls
 
 all: sonic-$(IGOOS)-$(IGOARCH)
 docker: docker-linux-amd64
 package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: SonicWeb-$(IBUILDTAG).tgz
+tls: server.crt server.key
 
 sonic-%: *.go logo.tmpl
 	CGO_ENABLED=$(ICGO_ENABLED) go build						\
@@ -56,12 +57,17 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 %.gz: %
 	gzip -k -9 $<
 
+server.crt server.key:
+	openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 7 -nodes -subj "/CN=sw-example.ex"
+
 test:
 	go test ./...
 
 clean:
 	@-rm -vf	sonic-*-*		\
 				nfpm-*.yaml		\
+				server.crt		\
+				server.key		\
 				sonicweb*.1.gz	\
 				sonicweb*.1		\
 				SonicWeb-*.* | sed -r s/"(.*)"/"cleaning \\1"/
