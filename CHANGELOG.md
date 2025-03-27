@@ -3,6 +3,8 @@ Release 1.4.0
 
 - added `-tryfile` option, to replace original URI with a given list of
   files to try first
+- added single-page application example to illustrate the try-file usage
+- added `-tlscert` and `-tlskey` parameter, enabling serving via TLS
 
 Release 1.3.0
 =============
