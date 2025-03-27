@@ -24,7 +24,7 @@ func setupLogging(logLevel string, logStyle string) {
 		Level:     parsedLogLevel,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000"))
+				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000Z07:00"))
 			}
 			return a
 		},
@@ -35,6 +35,7 @@ func setupLogging(logLevel string, logStyle string) {
 	if (logStyle == "auto" && ppid > 1) || logStyle == "text" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &options)))
 	} else if logStyle == "auto" || logStyle == "json" {
+		options.ReplaceAttr = nil
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
 	} else {
 		slog.Error("unsupported log style", slog.String("logStyle", logStyle))
