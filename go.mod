@@ -6,7 +6,7 @@ module sonic
 go 1.24.0
 
 require (
-	github.com/AlphaOne1/geany v0.0.0-20250324231128-a4a5066e8882
+	github.com/AlphaOne1/geany v0.1.0
 	github.com/AlphaOne1/midgard v0.1.1
 	github.com/corazawaf/coraza/v3 v3.3.3
 	github.com/prometheus/client_golang v1.21.1
@@ -48,7 +48,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
