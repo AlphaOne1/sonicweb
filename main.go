@@ -76,7 +76,7 @@ func generateTLSConfig(
 		cert, err := tls.LoadX509KeyPair(cert, key)
 
 		if err != nil {
-			return nil, fmt.Errorf("could not load certificate: %w\n", err)
+			return nil, fmt.Errorf("could not load certificate: %w", err)
 		}
 
 		return &tls.Config{
