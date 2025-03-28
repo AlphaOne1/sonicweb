@@ -7,7 +7,7 @@
 # This dockerfile relies on a previously build os and architecture fitting executable.
 # It can be generated as follows:
 #     $ GOOS=linux GOARCH=amd64 make
-# Copy the web content to the /www directory.
+# Copy or mount the web content to the /www directory.
 # After starting the image the content of this directory will be served.
 
 ARG USER=appuser
@@ -44,4 +44,4 @@ EXPOSE 8080/tcp
 EXPOSE 8081/tcp
 USER ${USER}:${USER}
 
-ENTRYPOINT ["/bin/sonicweb", "--port=80", "--root=/www"]
+ENTRYPOINT ["/bin/sonicweb", "--root=/www"]
