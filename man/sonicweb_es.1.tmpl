@@ -16,6 +16,7 @@ sonicweb \- Pequeño servidor seguro de archivos estáticos.
 [\-tlscert archivo]
 [\-tlskey archivo]
 [\-acmedomain dominio]
+[\-certcache ruta]
 [\-header encabezado]
 [\-headerfile archivo]
 [\-tryfile archivoexpr]
@@ -58,6 +59,10 @@ Establece la clave TLS
 .TP
 .I \-acmedomain dominio
 Establece el dominio permitido para la obtención automática de certificados; se puede indicar varias veces.
+.TP
+.I \-certcache ruta
+Establece el directorio para la caché de certificados. Por defecto se configura en el
+.BR directorio\ predeterminado\ para\ archivos\ temporales\ del\ sistema\ operativo.
 .TP
 .I \-header <encabezado>
 Añade el encabezado HTTP especificado a las respuestas; se puede indicar varias veces.

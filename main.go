@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	_ "embed"
 	"errors"
 	"flag"
@@ -19,8 +20,6 @@ import (
 	"time"
 	_ "time/tzdata"
 
-	"go.uber.org/automaxprocs/maxprocs"
-
 	"github.com/AlphaOne1/geany"
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/defs"
@@ -29,6 +28,8 @@ import (
 	"github.com/AlphaOne1/midgard/util"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.uber.org/automaxprocs/maxprocs"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // ServerName is the reported server name in the header
@@ -54,6 +55,42 @@ func setupMaxProcs() {
 			exitFunc(1)
 		}
 	}
+}
+
+func generateTLSConfig(cert string, key string, acmeDomains []string, certCache string) (*tls.Config, error) {
+	if (len(cert) > 0) != (len(key) > 0) {
+		return nil, fmt.Errorf("invalid tls config, cert and key must both be given or not given")
+	}
+
+	if len(cert) > 0 && len(acmeDomains) > 0 {
+		return nil, fmt.Errorf("either cert+key or acmeDomains are to be given")
+	}
+
+	if len(cert) > 0 {
+		cert, err := tls.LoadX509KeyPair(cert, key)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not load certificate: %w\n", err)
+		}
+
+		return &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}, nil
+	}
+
+	if len(acmeDomains) > 0 {
+		// automatic certificate management with autocert
+		certManager := autocert.Manager{
+			Cache:      autocert.DirCache(certCache),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(acmeDomains...),
+		}
+
+		return certManager.TLSConfig(), nil
+	}
+
+	// completely valid, we do not have a TLS config
+	return nil, nil
 }
 
 // generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
@@ -131,6 +168,7 @@ func main() {
 	tlsCert := flag.String("tlscert", "", "tls certificate file")
 	tlsKey := flag.String("tlskey", "", "tls key file")
 	flag.Var(acmeDomains, "acmedomain", "domain for automatic certificate retrieval")
+	certCache := flag.String("certcache", os.TempDir(), "directory for certificate cache")
 	flag.Var(headersParam, "header", "additional HTTP header")
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
 	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
@@ -183,8 +221,16 @@ func main() {
 
 	slog.Info("registering handler for FileServer")
 
+	tlsConfig, tlsConfigErr := generateTLSConfig(*tlsCert, *tlsKey, *acmeDomains, *certCache)
+
+	if tlsConfigErr != nil {
+		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))
+		exitFunc(1)
+	}
+
 	server := http.Server{
-		Addr: *listenAddress + ":" + *listenPort,
+		Addr:      *listenAddress + ":" + *listenPort,
+		TLSConfig: tlsConfig,
 	}
 
 	defer func() { _ = server.Close() }()
@@ -215,14 +261,16 @@ func main() {
 
 	var listenErr error
 
-	if len(*tlsCert) > 0 && len(*tlsKey) > 0 {
+	if tlsConfig != nil {
 		slog.Info("starting tls server",
 			slog.String("address", server.Addr),
 			slog.Duration("t_init", time.Since(startInit)),
 			slog.String("cert", *tlsCert),
-			slog.String("key", *tlsKey))
+			slog.String("key", *tlsKey),
+			slog.Any("acmeDomains", *acmeDomains),
+		)
 
-		listenErr = server.ListenAndServeTLS(*tlsCert, *tlsKey)
+		listenErr = server.ListenAndServeTLS("", "")
 	} else {
 		slog.Info("starting server",
 			slog.String("address", server.Addr),
