@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/pprof"
@@ -27,6 +26,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 )
 
+// initTracer initializes the tracing functionality. If used, the tracing
+// backend will report tracing data to the provided tracing endpoint.
 func initTracer(endpoint string) (*sdktrace.TracerProvider, error) {
 	// // Create stdout exporter to be able to retrieve
 	// // the collected spans.
@@ -59,7 +60,10 @@ func initTracer(endpoint string) (*sdktrace.TracerProvider, error) {
 	return tp, nil
 }
 
-func setupMetricsInstrumentation(instrumentAddress *string, instrumentPort *int, enableTelemetry bool, enablePprof bool) {
+// setupMetricsInstrumentation sets up the telemetry functionality.
+// If either telemetry or pprof, are enabled, serveMetrics is called subsequently to
+// open a telemetry and/or profiling providing server port.
+func setupMetricsInstrumentation(instrumentAddress *string, instrumentPort *string, enableTelemetry bool, enablePprof bool) {
 	if !enableTelemetry && !enablePprof {
 		return
 	}
@@ -93,12 +97,14 @@ func setupMetricsInstrumentation(instrumentAddress *string, instrumentPort *int,
 	go serveMetrics(*instrumentAddress, *instrumentPort, enableTelemetry, enablePprof)
 }
 
-func serveMetrics(address string, port int, enableTelemetry, enablePprof bool) {
+// serveMetrics sets up the metrics functionality. It opens a separate port and metrics collectors can fetch their
+// data from there. For profiling purposes, if enabled, also the pprof endpoints are added on the same port.
+func serveMetrics(address string, port string, enableTelemetry, enablePprof bool) {
 	if !enableTelemetry && !enablePprof {
 		return
 	}
 
-	listenAddress := fmt.Sprintf("%v:%v", address, port)
+	listenAddress := address + ":" + port
 
 	mux := http.NewServeMux()
 

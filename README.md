@@ -50,7 +50,7 @@ Getting Started
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```text
-$ ./sonic-linux-amd64 --root testroot/
+$ ./sonic-linux-amd64 -root testroot/
            |\
            ||\
   _________||\\
@@ -91,7 +91,7 @@ HTTPS
 To use a certificate and key pair, you simply start *SonicWeb* as follows:
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -tlscert cert.pem -tlskey key.pem
+$ ./sonic-linux-amd64 -root testroot/ -tlscert cert.pem -tlskey key.pem
 ```
 
 The Makefile provides a straightforward way to generate certificates for testing purposes.
@@ -111,11 +111,18 @@ operating system's default temporary directory. It can be changed using the `-ce
 To start *SonicWeb* using automatic certificate retrieval, use the following command:
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -acmedomain example.com -acmedomain www.example.com
+$ ./sonic-linux-amd64 -root testroot/ -acmedomain example.com -acmedomain www.example.com
 ```
 
 Other acme endpoints can be used, specifying the `-acmeendpoint` parameter. If nothing is specified, the production
-endpoint of Let's Encrypt is used.
+endpoint of Let's Encrypt is used. Use the following command for testing:
+
+```shell
+$ ./sonic-linux-amd64 -root testroot/             \
+                      -acmedomain example.com     \
+                      -acmedomain www.example.com \
+                      -acmeendpoint "https://acme-staging-v02.api.letsencrypt.org/directory"
+```
 
 Additional Headers
 ------------------
@@ -124,13 +131,13 @@ In some situations, it is necessary to add HTTP headers to the response.
 *SonicWeb* provides the `-header` parameter to facilitate this.
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -header "Environment: production"
+$ ./sonic-linux-amd64 -root testroot/ -header "Environment: production"
 ```
 
 To add a huge amount of headers the `-headerfile` parameter can be used:
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -headerfile additional_headers.conf
+$ ./sonic-linux-amd64 -root testroot/ -headerfile additional_headers.conf
 ```
 
 The file should be formatted as follows:
@@ -163,7 +170,7 @@ that suffix is truncated—replaced by the final `/`—to prevent redirection lo
 An invocation of *SonicWeb* could then be as follows:
 
 ```shell
-$ ./sonic-linux-amd64 --root testroot/ -tryfile \$uri -tryfile /
+$ ./sonic-linux-amd64 -root testroot/ -tryfile \$uri -tryfile /
 ```
 
 Web Application Firewall

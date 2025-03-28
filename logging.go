@@ -8,6 +8,9 @@ import (
 	"os"
 )
 
+// setupLogging sets the log format and level. It can try to guess in which environment
+// SonicWeb runs (logStyle "auto"). If its parent seems to not be an init process, then
+// text logging is used, otherwise JSON.
 func setupLogging(logLevel string, logStyle string) {
 	var parsedLogLevel slog.Level
 

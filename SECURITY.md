@@ -5,8 +5,9 @@ Supported Versions
 ------------------
 
 | Version        | Supported          |
-| -------------- | ------------------ |
+|----------------|--------------------|
 | master         | :white_check_mark: |
+| releases 1.x   | :white_check_mark: |
 | other branches | :x:                |
 
 Reporting a Vulnerability

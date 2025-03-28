@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	_ "embed"
 	"errors"
 	"flag"
@@ -26,11 +25,8 @@ import (
 	"github.com/AlphaOne1/midgard/handler/access_log"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/util"
-	"golang.org/x/crypto/acme"
-
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/automaxprocs/maxprocs"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 // ServerName is the reported server name in the header
@@ -56,56 +52,6 @@ func setupMaxProcs() {
 			exitFunc(1)
 		}
 	}
-}
-
-func generateTLSConfig(
-	cert string,
-	key string,
-	acmeDomains []string,
-	certCache string,
-	acmeEndpoint string) (*tls.Config, error) {
-	if (len(cert) > 0) != (len(key) > 0) {
-		return nil, fmt.Errorf("invalid tls config, cert and key must both be given or not given")
-	}
-
-	if len(cert) > 0 && len(acmeDomains) > 0 {
-		return nil, fmt.Errorf("either cert+key or acmeDomains are to be given")
-	}
-
-	if len(cert) > 0 {
-		cert, err := tls.LoadX509KeyPair(cert, key)
-
-		if err != nil {
-			return nil, fmt.Errorf("could not load certificate: %w", err)
-		}
-
-		return &tls.Config{
-			Certificates: []tls.Certificate{cert},
-		}, nil
-	}
-
-	if len(acmeDomains) > 0 {
-		var acmeClient *acme.Client
-
-		if len(acmeEndpoint) > 0 {
-			acmeClient = &acme.Client{
-				DirectoryURL: acmeEndpoint,
-			}
-		}
-
-		// automatic certificate management with autocert
-		certManager := autocert.Manager{
-			Cache:      autocert.DirCache(certCache),
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(acmeDomains...),
-			Client:     acmeClient,
-		}
-
-		return certManager.TLSConfig(), nil
-	}
-
-	// completely valid, we do not have a TLS config
-	return nil, nil
 }
 
 // generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
@@ -189,7 +135,7 @@ func main() {
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
 	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
 	flag.Var(wafCfg, "wafcfg", "waf configuration file")
-	instrumentPort := flag.Int("iport", 8081, "port to listen on for instrumentation")
+	instrumentPort := flag.String("iport", "8081", "port to listen on for instrumentation")
 	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
 	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
 	traceEndpoint := flag.String("trace-endpoint", "", "endpoint for tracing data")
