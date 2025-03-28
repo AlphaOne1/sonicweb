@@ -3,6 +3,7 @@ SonicWeb
 
 *SonicWeb* is a lightweight, easy-to-use web server for static content.
 
+
 Features
 --------
 
@@ -14,32 +15,36 @@ Features
   [Jaeger Tracing](jaegertracing.io)
 * no complications with configuration files
 
+
 Getting Started
 ---------------
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
-| Parameter                    | Description                                 | Default |
-|------------------------------|---------------------------------------------|---------|
-| -root           \<path\>     | root directory of content                   | `/www`  |
-| -base           \<path\>     | base path to publish the content            | `/`     |
-| -port           \<port\>     | port to listen on for web requests          | `8080`  |
-| -address        \<address\>  | address to listen on for web requests       | all     |
-| -tlscert        \<certfile\> | TLS certificate file                        | n/a     |
-| -tlskey         \<keyfile\>  | TLS key file                                | n/a     |
-| -header         \<header\>   | additional header                           | n/a     |
-| -headerfile     \<file\>     | file containing additional headers          | n/a     |
-| -tryfile        \<fileexp\>  | always try to load file expression first    | n/a     |
-| -wafcfg         \<file-glob> | configuration for Web Application Firewall  | n/a     |
-| -iport          \<port\>     | port to listen on for telemetry requests    | `8081`  |
-| -iaddress       \<address\>  | address to listen on for telemetry requests | all     |
-| -telemetry      {true,false} | enable/disable telemetry support            | `true`  |
-| -trace-endpoint {address}    | endpoint to send trace data to              | `""`    |
-| -pprof          {true,false} | enable/disable pprof support                | `false` |
-| -log            \<level\>    | log level (debug, info, warn, error)        | `info`  |
-| -logstyle       \<style\>    | log style (auto, text, json)                | `auto`  |
-| -help                        | print the argument overview and exit        | n/a     |
-| -version                     | print just version information and exit     | n/a     |
+| Parameter                    | Description                                        | Default           |
+|------------------------------|----------------------------------------------------|-------------------|
+| -root           \<path\>     | root directory of content                          | `/www`            |
+| -base           \<path\>     | base path to publish the content                   | `/`               |
+| -port           \<port\>     | port to listen on for web requests                 | `8080`            |
+| -address        \<address\>  | address to listen on for web requests              | all               |
+| -tlscert        \<certfile\> | TLS certificate file                               | n/a               |
+| -tlskey         \<keyfile\>  | TLS key file                                       | n/a               |
+| -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               |
+| -certcache      \<path\>     | directory for certificate cache                    | os temp directory |
+| -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |
+| -header         \<header\>   | additional header                                  | n/a               |
+| -headerfile     \<file\>     | file containing additional headers                 | n/a               |
+| -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               |
+| -wafcfg         \<file-glob> | configuration for Web Application Firewall         | n/a               |
+| -iport          \<port\>     | port to listen on for telemetry requests           | `8081`            |
+| -iaddress       \<address\>  | address to listen on for telemetry requests        | all               |
+| -telemetry      {true,false} | enable/disable telemetry support                   | `true`            |
+| -trace-endpoint {address}    | endpoint to send trace data to                     | `""`              |
+| -pprof          {true,false} | enable/disable pprof support                       | `false`           |
+| -log            \<level\>    | log level (debug, info, warn, error)               | `info`            |
+| -logstyle       \<style\>    | log style (auto, text, json)                       | `auto`            |
+| -help                        | print the argument overview and exit               | n/a               |
+| -version                     | print just version information and exit            | n/a               |
 
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
@@ -60,16 +65,56 @@ $ ./sonic-linux-amd64 --root testroot/
          \  |              of: 2025-03-24T10:34:12Z
           \ |           using: go1.24.1
            \|
-time=2025-03-24T11:53:38.789677 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2025-03-24T11:53:38.790198 level=INFO msg=logging level=info
-time=2025-03-24T11:53:38.790235 level=INFO msg="using root directory" root=testroot/
-time=2025-03-24T11:53:38.790268 level=INFO msg="using base path" path=/
-time=2025-03-24T11:53:38.790285 level=INFO msg="tracing disabled"
-time=2025-03-24T11:53:38.790815 level=INFO msg="registering handler for FileServer"
-time=2025-03-24T11:53:38.792743 level=INFO msg="serving pprof disabled"
-time=2025-03-24T11:53:38.793455 level=INFO msg="serving telemetry" address=:8081/metrics
-time=2025-03-24T11:53:38.795349 level=INFO msg="starting server" address=:8080 t_init=6.141082ms
+time=2025-03-28T01:37:49.082745+01:00 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2025-03-28T01:37:49.083018+01:00 level=INFO msg=logging level=info
+time=2025-03-28T01:37:49.083034+01:00 level=INFO msg="using root directory" root=testroot
+time=2025-03-28T01:37:49.083069+01:00 level=INFO msg="using base path" path=/
+time=2025-03-28T01:37:49.083084+01:00 level=INFO msg="tracing disabled"
+time=2025-03-28T01:37:49.083365+01:00 level=INFO msg="registering handler for FileServer"
+time=2025-03-28T01:37:49.083627+01:00 level=INFO msg="serving pprof disabled"
+time=2025-03-28T01:37:49.083765+01:00 level=INFO msg="serving telemetry" address=:8081/metrics
+time=2025-03-28T01:37:49.086207+01:00 level=INFO msg="starting server" address=:8080 t_init=3.707531ms
 ```
+
+HTTPS
+---
+
+*SonicWeb* supports serving HTTPS via TLS. There are two options to enable HTTPS:
+
+1. Manually provide a certificate and a key
+2. Enable automatic certificate retrieval via [Let's Encrypt](https://letsencrypt.org)
+
+
+### Manual Configuration
+
+To use a certificate and key pair, you simply start *SonicWeb* as follows:
+
+```shell
+$ ./sonic-linux-amd64 --root testroot/ -tlscert cert.pem -tlskey key.pem
+```
+
+The Makefile provides a straightforward way to generate certificates for testing purposes.
+For serious use, an official certificate signed by a certificate authority should be considered.
+
+
+### Automatic Certificate Retrieval
+
+Let's Encrypt offers to automatically obtain certificates. For this to work, *SonicWeb* holds a list of valid domains,
+for which certificate retrieval is allowed. When a client connects to one of these, and no certificate is available,
+*SonicWeb* sends a certificate request to Let's Encrypt. The valid domains can be specified via the `-acmedomain`
+parameter. Only exact domains match, so subdomains must be provided with repeated calls.
+
+Once a certificate is obtained, it is stored in a certificate cache. By default, this cache is in the
+operating system's default temporary directory. It can be changed using the `-certcache` parameter.
+
+To start *SonicWeb* using automatic certificate retrieval, use the following command:
+
+```shell
+$ ./sonic-linux-amd64 --root testroot/ -acmedomain example.com -acmedomain www.example.com
+```
+
+Other acme endpoints can be used, specifying the `-acmeendpoint` parameter. If nothing is specified, the production
+endpoint of Let's Encrypt is used.
 
 Additional Headers
 ------------------
@@ -97,6 +142,7 @@ The file should be formatted as follows:
 Headers can be specified multiple times, with the last entry taking precedence.
 *SonicWeb* sets the `Server` header to its name and version. By providing an own version of the `Server` header,
 it can be replaced, e.g. to misguide potential attackers.
+
 
 Try Files
 ---------
