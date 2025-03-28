@@ -7,7 +7,7 @@ Release 1.4.0
 - added `-tlscert` and `-tlskey` parameter, enabling serving via TLS
 - fixed manpage headers
 - add support for automatic certificates via Let's Encrypt
-  via `-acmedomain` and `-certcache` parameters
+  via `-acmedomain`, `-certcache` and `-acmeendpoint` parameters
 
 Release 1.3.0
 =============

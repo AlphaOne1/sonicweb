@@ -26,6 +26,7 @@ import (
 	"github.com/AlphaOne1/midgard/handler/access_log"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/util"
+	"golang.org/x/crypto/acme"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/automaxprocs/maxprocs"
@@ -57,7 +58,12 @@ func setupMaxProcs() {
 	}
 }
 
-func generateTLSConfig(cert string, key string, acmeDomains []string, certCache string) (*tls.Config, error) {
+func generateTLSConfig(
+	cert string,
+	key string,
+	acmeDomains []string,
+	certCache string,
+	acmeEndpoint string) (*tls.Config, error) {
 	if (len(cert) > 0) != (len(key) > 0) {
 		return nil, fmt.Errorf("invalid tls config, cert and key must both be given or not given")
 	}
@@ -79,11 +85,20 @@ func generateTLSConfig(cert string, key string, acmeDomains []string, certCache 
 	}
 
 	if len(acmeDomains) > 0 {
+		var acmeClient *acme.Client
+
+		if len(acmeEndpoint) > 0 {
+			acmeClient = &acme.Client{
+				DirectoryURL: acmeEndpoint,
+			}
+		}
+
 		// automatic certificate management with autocert
 		certManager := autocert.Manager{
 			Cache:      autocert.DirCache(certCache),
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(acmeDomains...),
+			Client:     acmeClient,
 		}
 
 		return certManager.TLSConfig(), nil
@@ -169,6 +184,7 @@ func main() {
 	tlsKey := flag.String("tlskey", "", "tls key file")
 	flag.Var(acmeDomains, "acmedomain", "domain for automatic certificate retrieval")
 	certCache := flag.String("certcache", os.TempDir(), "directory for certificate cache")
+	acmeEndpoint := flag.String("acmeendpoint", "", " acme endpoint to use")
 	flag.Var(headersParam, "header", "additional HTTP header")
 	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
 	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
@@ -221,7 +237,7 @@ func main() {
 
 	slog.Info("registering handler for FileServer")
 
-	tlsConfig, tlsConfigErr := generateTLSConfig(*tlsCert, *tlsKey, *acmeDomains, *certCache)
+	tlsConfig, tlsConfigErr := generateTLSConfig(*tlsCert, *tlsKey, *acmeDomains, *certCache, *acmeEndpoint)
 
 	if tlsConfigErr != nil {
 		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))

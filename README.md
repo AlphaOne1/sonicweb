@@ -31,6 +31,7 @@ Getting Started
 | -tlskey         \<keyfile\>  | TLS key file                                       | n/a               |
 | -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               |
 | -certcache      \<path\>     | directory for certificate cache                    | os temp directory |
+| -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |
 | -header         \<header\>   | additional header                                  | n/a               |
 | -headerfile     \<file\>     | file containing additional headers                 | n/a               |
 | -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               |
@@ -111,6 +112,9 @@ To start *SonicWeb* using automatic certificate retrieval, use the following com
 ```shell
 $ ./sonic-linux-amd64 --root testroot/ -acmedomain example.com -acmedomain www.example.com
 ```
+
+Other acme endpoints can be used, specifying the `-acmeendpoint` parameter. If nothing is specified, the production
+endpoint of Let's Encrypt is used.
 
 Additional Headers
 ------------------
