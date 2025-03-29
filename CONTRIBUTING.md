@@ -1,7 +1,7 @@
 Contributing
 ============
 
-Thanks for your interest in contributing to *sonicweb*. Please take a moment to
+Thanks for your interest in contributing to *SonicWeb*. Please take a moment to
 review this document __before submitting a pull request__.
 
 Pull requests
@@ -77,7 +77,7 @@ control system.
 At this point, if your changes look good and tests are passing, you are ready to
 create a pull request.
 
-Github Actions will run the test suite against the latest Go version. There are
+GitHub Actions will run the test suite against the latest Go version. There are
 tests that most likely did not run in the developers machine (CodeQL, Trivy). These
 tests may produce warnings. Take those warnings serious even if they seem harmless.
 Too many harmless warnings could possibly overlay really serious ones, so all

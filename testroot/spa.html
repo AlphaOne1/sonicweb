@@ -88,7 +88,7 @@
 
             // update the number of buttons
             function updateButtons(num) {
-                buttonArea = document.getElementById("buttonArea")
+                let buttonArea = document.getElementById("buttonArea")
                 buttonArea.innerHTML = ""
 
                 if (![1,2,4].includes(num)) {
@@ -133,8 +133,6 @@
 
             // Function to initialize buttons based on cookies
             function initializeButtonsFromCookies(num) {
-                currentPath = window.location.pathname;
-
                 for (let i = 0; i < num; i++) {
                     const buttonState = getCookie(`button${i}`); // State for button i
                     const button = document.getElementById(`button${i}`);
@@ -169,7 +167,7 @@
         <p> To start the server use the following command:
         </p>
         <code>
-            $ ./sonic-linux-amd64 --root testroot -tryfile \$uri -tryfile /spa.html
+            $ ./sonic-linux-amd64 -root testroot/ -tryfile \$uri -tryfile /spa.html
         </code>
 
         <script>

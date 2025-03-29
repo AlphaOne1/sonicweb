@@ -12,8 +12,8 @@ Features
 * usage of OWASP [Coraza](https://github.com/corazawaf/coraza) middleware
   to follow best security practises
 * HTTPS using [Let's Encrypt](https://letsencrypt.org) certificates
-* easy integration in monitoring using [Prometheus](prometheus.io) and/or
-  [Jaeger Tracing](jaegertracing.io)
+* easy integration in monitoring using [Prometheus](https://prometheus.io) and/or
+  [Jaeger Tracing](https://jaegertracing.io)
 * no complications with configuration files
 
 
