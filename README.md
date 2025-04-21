@@ -1,5 +1,6 @@
-SonicWeb
-========
+<p align="center">
+    <img src="sonicweb_logo.svg" width="60%" alt="Logo"><br>
+</p>
 
 *SonicWeb* is a lightweight, easy-to-use web server for static content.
 
