@@ -1,3 +1,9 @@
+Release 1.4.1
+=============
+
+- update dependencies
+- build using Go 1.24.3, that also fixes a vulnerability in os.Root
+
 Release 1.4.0
 =============
 
