@@ -1,3 +1,8 @@
+Release 1.5.0
+=============
+
+- added `-clientca` option to enable mTLS connections
+
 Release 1.4.1
 =============
 
