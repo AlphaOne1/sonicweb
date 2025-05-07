@@ -31,14 +31,14 @@ Getting Started
 | -address        \<address\>  | address to listen on for web requests              | all               |          |
 | -tlscert        \<certfile\> | TLS certificate file                               | n/a               |          |
 | -tlskey         \<keyfile\>  | TLS key file                                       | n/a               |          |
-| -clientca       \<cafile\>   | client certificate authority for mTLS              | n/a               | [x]      |
-| -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               | [x]      |
+| -clientca       \<cafile\>   | client certificate authority for mTLS              | n/a               | &check;  |
+| -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               | &check;  |
 | -certcache      \<path\>     | directory for certificate cache                    | os temp directory |          |
 | -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |          |
-| -header         \<header\>   | additional header                                  | n/a               | [x]      |
-| -headerfile     \<file\>     | file containing additional headers                 | n/a               | [x]      |
-| -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | [x]      |
-| -wafcfg         \<file-glob> | configuration for Web Application Firewall         | n/a               | [x]      |
+| -header         \<header\>   | additional header                                  | n/a               | &check;  |
+| -headerfile     \<file\>     | file containing additional headers                 | n/a               | &check;  |
+| -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | &check;  | 
+| -wafcfg         \<file-glob> | configuration for Web Application Firewall         | n/a               | &check;  | 
 | -iport          \<port\>     | port to listen on for telemetry requests           | `8081`            |          |
 | -iaddress       \<address\>  | address to listen on for telemetry requests        | all               |          |
 | -telemetry      {true,false} | enable/disable telemetry support                   | `true`            |          |
