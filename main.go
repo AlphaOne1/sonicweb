@@ -121,6 +121,7 @@ func main() {
 	tryFiles := &MultiStringValue{}
 	wafCfg := &MultiStringValue{}
 	acmeDomains := &MultiStringValue{}
+	clientCAs := &MultiStringValue{}
 
 	rootPath := flag.String("root", "/www", "root directory for webserver")
 	basePath := flag.String("base", "/", "base path for serving")
@@ -128,6 +129,7 @@ func main() {
 	listenAddress := flag.String("address", "", "address to listen on")
 	tlsCert := flag.String("tlscert", "", "tls certificate file")
 	tlsKey := flag.String("tlskey", "", "tls key file")
+	flag.Var(clientCAs, "clientca", "client certificate authority file for mTLS")
 	flag.Var(acmeDomains, "acmedomain", "domain for automatic certificate retrieval")
 	certCache := flag.String("certcache", os.TempDir(), "directory for certificate cache")
 	acmeEndpoint := flag.String("acmeendpoint", "", " acme endpoint to use")
@@ -178,12 +180,18 @@ func main() {
 		slog.Info("tracing disabled")
 	}
 
-	// setup opentelemetry with prometheus metricsExporter
+	// set up opentelemetry with prometheus metricsExporter
 	setupMetricsInstrumentation(instrumentAddress, instrumentPort, *enableTelemetry, *enablePprof)
 
 	slog.Info("registering handler for FileServer")
 
-	tlsConfig, tlsConfigErr := generateTLSConfig(*tlsCert, *tlsKey, *acmeDomains, *certCache, *acmeEndpoint)
+	tlsConfig, tlsConfigErr := generateTLSConfig(
+		*tlsCert,
+		*tlsKey,
+		*acmeDomains,
+		*certCache,
+		*acmeEndpoint,
+		*clientCAs)
 
 	if tlsConfigErr != nil {
 		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))

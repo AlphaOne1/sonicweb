@@ -18,7 +18,6 @@ all: sonic-$(IGOOS)-$(IGOARCH)
 docker: docker-linux-amd64
 package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: SonicWeb-$(IBUILDTAG).tgz
-tls: server.crt server.key
 
 sonic-%: *.go logo.tmpl
 	CGO_ENABLED=$(ICGO_ENABLED) go build						\
@@ -57,8 +56,31 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 %.gz: %
 	gzip -k -9 $<
 
-server.crt server.key:
-	openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 7 -nodes -subj "/CN=sw-example.ex"
+tls:
+	mkdir -p testcert
+	openssl genrsa -out testcert/ca-key.pem 4096
+	openssl req -new -x509 -nodes -days 7 -subj "/CN=localhost" \
+				-key testcert/ca-key.pem			\
+				-out testcert/ca-cert.pem
+	openssl req -newkey rsa:4096 -nodes -days 7 -subj "/CN=localhost" \
+				-keyout testcert/server-key.pem		\
+				-out    testcert/server-req.pem
+	openssl x509 -req -days 7 -set_serial 01		\
+				-in    testcert/server-req.pem		\
+				-out   testcert/server-cert.pem		\
+				-CA    testcert/ca-cert.pem			\
+				-CAkey testcert/ca-key.pem
+	openssl req -newkey rsa:4096 -nodes -days 7 -subj "/CN=localhost" \
+  				-keyout testcert/client-key.pem		\
+   				-out    testcert/client-req.pem
+	openssl x509 -req -days 7 -set_serial 01		\
+				-in    testcert/client-req.pem		\
+				-out   testcert/client-cert.pem		\
+				-CA    testcert/ca-cert.pem			\
+				-CAkey testcert/ca-key.pem
+	rm testcert/*-req.pem
+
+	#openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 7 -nodes -subj "/CN=sw-example.ex"
 
 test:
 	go test ./...
@@ -66,8 +88,7 @@ test:
 clean:
 	@-rm -vf	sonic-*-*			\
 				nfpm-*.yaml			\
-				server.crt			\
-				server.key			\
+				testcert            \
 				man/sonicweb*.1.gz	\
 				man/sonicweb*.1		\
 				SonicWeb-*.* | sed -r s/"(.*)"/"cleaning \\1"/

@@ -1,10 +1,9 @@
 # Copyright the SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-server.key
-server.crt
+/.idea
+go.work*
 sonic
 sonic-*-*
 SonicWeb-*.*
-/.idea
-go.work*
+/testcert

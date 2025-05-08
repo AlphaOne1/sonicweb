@@ -5,7 +5,9 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
 
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
@@ -22,7 +24,8 @@ func generateTLSConfig(
 	key string,
 	acmeDomains []string,
 	certCache string,
-	acmeEndpoint string) (*tls.Config, error) {
+	acmeEndpoint string,
+	clientCAs []string) (*tls.Config, error) {
 	if (len(cert) > 0) != (len(key) > 0) {
 		return nil, fmt.Errorf("invalid tls config, cert and key must both be given or not given")
 	}
@@ -31,6 +34,17 @@ func generateTLSConfig(
 		return nil, fmt.Errorf("either cert+key or acmeDomains are to be given")
 	}
 
+	if len(cert) == 0 && len(acmeDomains) == 0 {
+		if len(clientCAs) > 0 {
+			return nil, fmt.Errorf("clientCAs are only valid if cert+key or acmeDomains are given")
+		}
+
+		// completely valid, we do not have a TLS config
+		return nil, nil
+	}
+
+	var result *tls.Config
+
 	if len(cert) > 0 {
 		cert, err := tls.LoadX509KeyPair(cert, key)
 
@@ -38,9 +52,9 @@ func generateTLSConfig(
 			return nil, fmt.Errorf("could not load certificate: %w", err)
 		}
 
-		return &tls.Config{
+		result = &tls.Config{
 			Certificates: []tls.Certificate{cert},
-		}, nil
+		}
 	}
 
 	if len(acmeDomains) > 0 {
@@ -60,9 +74,25 @@ func generateTLSConfig(
 			Client:     acmeClient,
 		}
 
-		return certManager.TLSConfig(), nil
+		result = certManager.TLSConfig()
 	}
 
-	// completely valid, we do not have a TLS config
-	return nil, nil
+	if len(clientCAs) > 0 {
+		var clientCAPool *x509.CertPool = x509.NewCertPool()
+
+		for _, ca := range clientCAs {
+			caFile, caFileErr := os.ReadFile(ca)
+
+			if caFileErr != nil {
+				return nil, fmt.Errorf("could not read client CA file: %w", caFileErr)
+			}
+
+			clientCAPool.AppendCertsFromPEM(caFile)
+		}
+
+		result.ClientCAs = clientCAPool
+		result.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	return result, nil
 }
