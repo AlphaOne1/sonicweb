@@ -78,7 +78,7 @@ func generateTLSConfig(
 	}
 
 	if len(clientCAs) > 0 {
-		var clientCAPool *x509.CertPool = x509.NewCertPool()
+		var clientCAPool = x509.NewCertPool()
 
 		for _, ca := range clientCAs {
 			caFile, caFileErr := os.ReadFile(ca)
