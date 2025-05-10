@@ -15,6 +15,7 @@ sonicweb \- Kleiner, sicherer statischer Dateiserver.
 [\-address adresse]
 [\-tlscert datei]
 [\-tlskey datei]
+[\-clientca datei]
 [\-acmedomain domain]
 [\-certcache pfad]
 [\-acmeendpoint url]
@@ -57,6 +58,10 @@ Setzt das TLS-Zertifikat
 .TP
 .I \-tlskey datei
 Setzt den TLS-Schlüssel
+.TP
+.I \-clientca datei
+Setzt ein Zertifikat einer Zertifizierungsstelle zur Prüfung der Clientzertifikate.\
+ Diese Option darf mehrfach angegeben werden.
 .TP
 .I \-acmedomain domain
 Setzt erlaubte Domäne für automatische Zertifikatsbeschaffung. Diese Option darf mehrfach angegeben werden.

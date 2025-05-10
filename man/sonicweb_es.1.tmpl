@@ -15,6 +15,7 @@ sonicweb \- Pequeño servidor seguro de archivos estáticos.
 [\-address dirección]
 [\-tlscert archivo]
 [\-tlskey archivo]
+[\-clientca archivo]
 [\-acmedomain dominio]
 [\-certcache ruta]
 [\-acmeendpoint lru]
@@ -57,6 +58,10 @@ Establece el certificado TLS
 .TP
 .I \-tlskey archivo
 Establece la clave TLS
+.TP
+.I \-clientca archivo
+Establece un certificado de autoridad de certificación para la validación de certificados de clientes;\
+ se puede indicar varias veces.
 .TP
 .I \-acmedomain dominio
 Establece el dominio permitido para la obtención automática de certificados; se puede indicar varias veces.
