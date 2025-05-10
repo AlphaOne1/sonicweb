@@ -15,6 +15,7 @@ sonicweb \- Small, secure static file server.
 [\-address address]
 [\-tlscert file]
 [\-tlskey file]
+[\-clientca file]
 [\-acmedomain domain]
 [\-certcache path]
 [\-acmeendpoint url]
@@ -57,6 +58,9 @@ Set the TLS certificate
 .TP
 .I \-tlskey file
 Set the TLS key
+.TP
+.I \-clientca file
+Set a certificate authority certificate for client certificate validation. This option may be repeated.
 .TP
 .I \-acmedomain domain
 Set allowed domain for automatic certificate retrieval. This option may be repeated.
