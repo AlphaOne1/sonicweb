@@ -148,7 +148,7 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 	}
 
 	runtime.Gosched()
-	time.Sleep(50 * time.Millisecond)
+	// time.Sleep(50 * time.Millisecond)
 
 	return <-result
 }
