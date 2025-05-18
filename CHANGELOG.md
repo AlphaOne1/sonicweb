@@ -2,6 +2,8 @@ Release 1.5.0
 =============
 
 - added `-clientca` option to enable mTLS connections
+- improved shutdown handling
+- dependency updates
 
 Release 1.4.1
 =============
