@@ -5,6 +5,8 @@ package main
 
 import (
 	"bufio"
+	"fmt"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -65,46 +67,74 @@ func headerParamToHeaders(param []string) [][2]string {
 // headerFilesToHeaders reads the additional header information from the given files,
 // and generates key-value pairs of them.
 func headerFilesToHeaders(files []string) [][2]string {
-	lines := make([]string, 0, 2*len(files))
+	var allLines []string
 
-	for _, f := range files {
-		slog.Info("reading additional header file", slog.String("file", f))
-		fh, openErr := os.Open(f)
+	for _, filePath := range files {
+		slog.Info("reading additional header file", slog.String("file", filePath))
 
-		if openErr != nil {
-			slog.Error("could not open header file",
-				slog.String("file", f),
-				slog.String("error", openErr.Error()))
+		lines, err := readHeaderFile(filePath)
+		if err != nil {
+			slog.Error("could not process header file",
+				slog.String("file", filePath),
+				slog.String("error", err.Error()))
 			exitFunc(1)
 		}
 
-		defer func() { _ = fh.Close() }()
-
-		scanner := bufio.NewScanner(fh)
-
-		for scanner.Scan() {
-			if len(scanner.Text()) > 0 {
-				// jumping comments
-				if strings.HasPrefix(scanner.Text(), "#") {
-					continue
-				}
-
-				// adding multi-line header content to last read header
-				if strings.HasPrefix(scanner.Text(), " ") && len(lines) > 0 {
-					lines[len(lines)-1] = lines[len(lines)-1] + "\n" + strings.TrimSpace(scanner.Text())
-					continue
-				}
-
-				lines = append(lines, strings.TrimSpace(scanner.Text()))
-			}
-		}
+		allLines = append(allLines, lines...)
 	}
 
-	return headerParamToHeaders(lines)
+	return headerParamToHeaders(allLines)
+}
+
+// readHeaderFile opens and reads a header file, returning the parsed header lines.
+func readHeaderFile(filePath string) ([]string, error) {
+	fh, err := os.Open(filePath)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not open file: %w", err)
+	}
+
+	defer func() { _ = fh.Close() }()
+
+	return parseHeaderLines(fh)
+}
+
+// parseHeaderLines scans the reader and extracts header lines, handling comments
+// and multi-line headers.
+func parseHeaderLines(reader io.Reader) ([]string, error) {
+	var lines []string
+	scanner := bufio.NewScanner(reader)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if len(line) == 0 {
+			continue
+		}
+
+		// Skip comments
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Handle multi-line header content
+		if strings.HasPrefix(line, " ") && len(lines) > 0 {
+			lines[len(lines)-1] = lines[len(lines)-1] + "\n" + strings.TrimSpace(line)
+			continue
+		}
+
+		lines = append(lines, strings.TrimSpace(line))
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error scanning file: %w", err)
+	}
+
+	return lines, nil
 }
 
 // addHeaders generates the header-adding middleware. It adds the Server header and all the
-// additional headers given as parameter.
+// additional headers given as parameters.
 func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 	serverVal := ServerName
 
@@ -119,7 +149,7 @@ func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 	))
 }
 
-// addTryFiles looks of the given URI matches an existing file.
+// addTryFiles looks if the given URI matches an existing file.
 // If there is no file, a series of other files is tried instead.
 func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 	tryFiles := make([]string, 0, len(tries))

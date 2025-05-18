@@ -13,9 +13,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 	_ "time/tzdata"
 
@@ -37,6 +35,85 @@ var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is ov
 
 //go:embed logo.tmpl
 var logoTmpl string
+
+// MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences
+type MultiStringValue []string
+
+// String returns the content as one string separated by comma, be careful, this is not a safe operation,
+// if the parameters may contain comma themselves
+func (m *MultiStringValue) String() string {
+	return strings.Join(*m, ",")
+}
+
+// Set adds a new value.
+func (m *MultiStringValue) Set(value string) error {
+	*m = append(*m, value)
+	return nil
+}
+
+// ServerConfig holds all server configuration options
+type ServerConfig struct {
+	RootPath          string
+	BasePath          string
+	ListenPort        string
+	ListenAddress     string
+	TLSCert           string
+	TLSKey            string
+	ClientCAs         *MultiStringValue
+	AcmeDomains       *MultiStringValue
+	CertCache         string
+	AcmeEndpoint      string
+	Headers           *MultiStringValue
+	HeadersFile       *MultiStringValue
+	TryFiles          *MultiStringValue
+	WafCfg            *MultiStringValue
+	InstrumentPort    string
+	InstrumentAddress string
+	EnableTelemetry   bool
+	TraceEndpoint     string
+	EnablePprof       bool
+	LogLevel          string
+	LogStyle          string
+	PrintVersion      bool
+}
+
+// setupFlags defines and parses all command line flags
+func setupFlags() ServerConfig {
+	config := ServerConfig{
+		ClientCAs:   &MultiStringValue{},
+		AcmeDomains: &MultiStringValue{},
+		Headers:     &MultiStringValue{},
+		HeadersFile: &MultiStringValue{},
+		TryFiles:    &MultiStringValue{},
+		WafCfg:      &MultiStringValue{},
+	}
+
+	flag.StringVar(&config.RootPath, "root", "/www", "root directory for webserver")
+	flag.StringVar(&config.BasePath, "base", "/", "base path for serving")
+	flag.StringVar(&config.ListenPort, "port", "8080", "port to listen on")
+	flag.StringVar(&config.ListenAddress, "address", "", "address to listen on")
+	flag.StringVar(&config.TLSCert, "tlscert", "", "tls certificate file")
+	flag.StringVar(&config.TLSKey, "tlskey", "", "tls key file")
+	flag.Var(config.ClientCAs, "clientca", "client certificate authority file for mTLS")
+	flag.Var(config.AcmeDomains, "acmedomain", "domain for automatic certificate retrieval")
+	flag.StringVar(&config.CertCache, "certcache", os.TempDir(), "directory for certificate cache")
+	flag.StringVar(&config.AcmeEndpoint, "acmeendpoint", "", " acme endpoint to use")
+	flag.Var(config.Headers, "header", "additional HTTP header")
+	flag.Var(config.HeadersFile, "headerfile", "file containing additional HTTP headers")
+	flag.Var(config.TryFiles, "tryfile", "always try to load file expression first")
+	flag.Var(config.WafCfg, "wafcfg", "waf configuration file")
+	flag.StringVar(&config.InstrumentPort, "iport", "8081", "port to listen on for instrumentation")
+	flag.StringVar(&config.InstrumentAddress, "iaddress", "", "address to listen on for instrumentation")
+	flag.BoolVar(&config.EnableTelemetry, "telemetry", true, "enable telemetry support")
+	flag.StringVar(&config.TraceEndpoint, "trace-endpoint", "", "endpoint for tracing data")
+	flag.BoolVar(&config.EnablePprof, "pprof", false, "enable pprof support")
+	flag.StringVar(&config.LogLevel, "log", "info", "log level, valid options are debug, info, warn and error")
+	flag.StringVar(&config.LogStyle, "logstyle", "auto", "log style, valid options are auto, text and json")
+	flag.BoolVar(&config.PrintVersion, "version", false, "print version and exit")
+
+	flag.Parse()
+	return config
+}
 
 // setupMaxProcs sets the maximum count of processors to use for scheduling
 func setupMaxProcs() {
@@ -96,81 +173,37 @@ func generateFileHandler(
 	)
 }
 
-// MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences
-type MultiStringValue []string
-
-// String returns the content as one string separated by comma, be careful, this is not a safe operation,
-// if the parameters may contain comma themselves
-func (m *MultiStringValue) String() string {
-	return strings.Join(*m, ",")
-}
-
-// Set adds a new value.
-func (m *MultiStringValue) Set(value string) error {
-	*m = append(*m, value)
-	return nil
-}
-
 // main initializes all necessary parts and starts the server.
 func main() {
 	startInit := time.Now()
 	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
-	headersParam := &MultiStringValue{}
-	headersFileParam := &MultiStringValue{}
-	tryFiles := &MultiStringValue{}
-	wafCfg := &MultiStringValue{}
-	acmeDomains := &MultiStringValue{}
-	clientCAs := &MultiStringValue{}
+	// Parse command line flags
+	config := setupFlags()
 
-	rootPath := flag.String("root", "/www", "root directory for webserver")
-	basePath := flag.String("base", "/", "base path for serving")
-	listenPort := flag.String("port", "8080", "port to listen on")
-	listenAddress := flag.String("address", "", "address to listen on")
-	tlsCert := flag.String("tlscert", "", "tls certificate file")
-	tlsKey := flag.String("tlskey", "", "tls key file")
-	flag.Var(clientCAs, "clientca", "client certificate authority file for mTLS")
-	flag.Var(acmeDomains, "acmedomain", "domain for automatic certificate retrieval")
-	certCache := flag.String("certcache", os.TempDir(), "directory for certificate cache")
-	acmeEndpoint := flag.String("acmeendpoint", "", " acme endpoint to use")
-	flag.Var(headersParam, "header", "additional HTTP header")
-	flag.Var(headersFileParam, "headerfile", "file containing additional HTTP headers")
-	flag.Var(tryFiles, "tryfile", "always try to load file expression first")
-	flag.Var(wafCfg, "wafcfg", "waf configuration file")
-	instrumentPort := flag.String("iport", "8081", "port to listen on for instrumentation")
-	instrumentAddress := flag.String("iaddress", "", "address to listen on for instrumentation")
-	enableTelemetry := flag.Bool("telemetry", true, "enable telemetry support")
-	traceEndpoint := flag.String("trace-endpoint", "", "endpoint for tracing data")
-	enablePprof := flag.Bool("pprof", false, "enable pprof support")
-	logLevel := flag.String("log", "info", "log level, valid options are debug, info, warn and error")
-	logStyle := flag.String("logstyle", "auto", "log style, valid options are auto, text and json")
-	printVersion := flag.Bool("version", false, "print version and exit")
-
-	flag.Parse()
-
-	if *printVersion {
+	if config.PrintVersion {
 		// we already printed the logo, that contains all the necessary information
 		exitFunc(0)
 	}
 
-	setupLogging(*logLevel, *logStyle)
+	setupLogging(config.LogLevel, config.LogStyle)
 	setupMaxProcs()
 
-	slog.Info("logging", slog.String("level", *logLevel))
+	slog.Info("logging", slog.String("level", config.LogLevel))
 
-	slog.Info("using root directory", slog.String("root", *rootPath))
+	slog.Info("using root directory", slog.String("root", config.RootPath))
 
-	if _, statErr := os.Stat(*rootPath); statErr != nil {
+	if _, statErr := os.Stat(config.RootPath); statErr != nil {
 		slog.Error("could not get info of root path",
-			slog.String("path", *rootPath),
+			slog.String("path", config.RootPath),
 			slog.String("error", statErr.Error()))
 		exitFunc(1)
 	}
 
-	slog.Info("using base path", slog.String("path", *basePath))
+	slog.Info("using base path", slog.String("path", config.BasePath))
 
-	if len(*traceEndpoint) > 0 {
-		if _, err := initTracer(*traceEndpoint); err != nil {
+	if len(config.TraceEndpoint) > 0 {
+		if _, err := initTracer(config.TraceEndpoint); err != nil {
 			slog.Error("could not initialize tracing", slog.String("error", err.Error()))
 			exitFunc(1)
 		}
@@ -180,18 +213,15 @@ func main() {
 		slog.Info("tracing disabled")
 	}
 
-	// set up opentelemetry with prometheus metricsExporter
-	setupMetricsInstrumentation(instrumentAddress, instrumentPort, *enableTelemetry, *enablePprof)
-
 	slog.Info("registering handler for FileServer")
 
 	tlsConfig, tlsConfigErr := generateTLSConfig(
-		*tlsCert,
-		*tlsKey,
-		*acmeDomains,
-		*certCache,
-		*acmeEndpoint,
-		*clientCAs)
+		config.TLSCert,
+		config.TLSKey,
+		*config.AcmeDomains,
+		config.CertCache,
+		config.AcmeEndpoint,
+		*config.ClientCAs)
 
 	if tlsConfigErr != nil {
 		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))
@@ -199,61 +229,62 @@ func main() {
 	}
 
 	server := http.Server{
-		Addr:      *listenAddress + ":" + *listenPort,
+		Addr:      config.ListenAddress + ":" + config.ListenPort,
 		TLSConfig: tlsConfig,
 	}
 
 	defer func() { _ = server.Close() }()
 
-	termReceived := make(chan os.Signal, 1)
-
-	go func() {
-		<-termReceived
-		slog.Info("file server received termination signal")
-		_ = server.Shutdown(context.Background())
-	}()
-
-	// termination handling
-	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
-
 	handler := generateFileHandler(
-		*enableTelemetry,
-		len(*traceEndpoint) > 0,
-		*basePath,
-		*rootPath,
-		append(headerParamToHeaders(*headersParam), headerFilesToHeaders(*headersFileParam)...),
-		*tryFiles,
-		*wafCfg)
+		config.EnableTelemetry,
+		len(config.TraceEndpoint) > 0,
+		config.BasePath,
+		config.RootPath,
+		append(headerParamToHeaders(*config.Headers), headerFilesToHeaders(*config.HeadersFile)...),
+		*config.TryFiles,
+		*config.WafCfg)
 
 	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()
-	http.Handle("GET "+*basePath, handler)
+	http.Handle("GET "+config.BasePath, handler)
 
-	var listenErr error
+	go func() {
+		var listenErr error
 
-	if tlsConfig != nil {
-		slog.Info("starting tls server",
-			slog.String("address", server.Addr),
-			slog.Duration("t_init", time.Since(startInit)),
-			slog.String("cert", *tlsCert),
-			slog.String("key", *tlsKey),
-			slog.Any("acmeDomains", *acmeDomains),
-		)
+		if tlsConfig != nil {
+			slog.Info("starting tls server",
+				slog.String("address", server.Addr),
+				slog.Duration("t_init", time.Since(startInit)),
+				slog.String("cert", config.TLSCert),
+				slog.String("key", config.TLSKey),
+				slog.Any("acmeDomains", *config.AcmeDomains),
+			)
 
-		listenErr = server.ListenAndServeTLS("", "")
-	} else {
-		slog.Info("starting server",
-			slog.String("address", server.Addr),
-			slog.Duration("t_init", time.Since(startInit)))
+			listenErr = server.ListenAndServeTLS("", "")
+		} else {
+			slog.Info("starting server",
+				slog.String("address", server.Addr),
+				slog.Duration("t_init", time.Since(startInit)))
 
-		listenErr = server.ListenAndServe()
+			listenErr = server.ListenAndServe()
+		}
+
+		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+			slog.Error("error listening", slog.String("error", listenErr.Error()))
+			exitFunc(1)
+		}
+	}()
+
+	// set up opentelemetry with prometheus metricsExporter
+	setupMetricsInstrumentation(&config.InstrumentAddress, &config.InstrumentPort, config.EnableTelemetry, config.EnablePprof)
+
+	fileServerShutdownErr := waitServerShutdown(&server, "file")
+
+	if fileServerShutdownErr != nil {
+		slog.Error("error shutting down server", slog.String("error", fileServerShutdownErr.Error()))
 	}
 
-	if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-		slog.Error("error listening", slog.String("error", listenErr.Error()))
-		exitFunc(1)
-	}
+	waitServersShutdown()
 
-	slog.Info("server shutdown")
 	exitFunc(0)
 }

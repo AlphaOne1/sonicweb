@@ -13,8 +13,8 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-// generateTLSConfig generates a new TLS configuration, if the parameters are accordingly.
-// To use a use supplied cert- and key file, just specify those two parameters. Specifying
+// generateTLSConfig generates a new TLS configuration if the parameters are set accordingly.
+// To use a user-supplied cert- and key file, only specify those two parameters. Specifying
 // the acmeDomains will lead to an error in this case.
 // To use the Let's Encrypt feature, cert and key are to be left empty and acmeDomains must
 // be specified.
@@ -78,7 +78,7 @@ func generateTLSConfig(
 	}
 
 	if len(clientCAs) > 0 {
-		var clientCAPool *x509.CertPool = x509.NewCertPool()
+		var clientCAPool = x509.NewCertPool()
 
 		for _, ca := range clientCAs {
 			caFile, caFileErr := os.ReadFile(ca)

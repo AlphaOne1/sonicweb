@@ -10,13 +10,12 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
+
 	// stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -133,21 +132,15 @@ func serveMetrics(address string, port string, enableTelemetry, enablePprof bool
 
 	defer func() { _ = server.Close() }()
 
-	termReceived := make(chan os.Signal, 1)
-
 	go func() {
-		<-termReceived
-		slog.Info("metrics received termination signal")
-		_ = server.Shutdown(context.Background())
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("error serving metrics", slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+		slog.Info("metrics server stopped to accept new connections")
 	}()
 
-	// termination handling
-	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
-
-	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("error serving metrics", slog.String("error", err.Error()))
-		os.Exit(1)
+	if shutdownErr := waitServerShutdown(&server, "metrics"); shutdownErr != nil {
+		slog.Error("error shutting down metrics server", slog.String("error", shutdownErr.Error()))
 	}
-
-	slog.Info("metrics server shutdown")
 }
