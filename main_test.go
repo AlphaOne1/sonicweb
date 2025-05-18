@@ -151,7 +151,7 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 	slog.Info("stoping exit timer")
 
 	if afterTimer.Stop() {
-		sendMe(t, syscall.SIGINT)
+		sendMe(t, syscall.SIGTERM)
 	}
 
 	return <-result
