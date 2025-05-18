@@ -13,9 +13,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 	_ "time/tzdata"
 
@@ -240,17 +238,6 @@ func main() {
 
 	defer func() { _ = server.Close() }()
 
-	termReceived := make(chan os.Signal, 1)
-
-	go func() {
-		<-termReceived
-		slog.Info("file server received termination signal")
-		_ = server.Shutdown(context.Background())
-	}()
-
-	// termination handling
-	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
-
 	handler := generateFileHandler(
 		config.EnableTelemetry,
 		len(config.TraceEndpoint) > 0,
@@ -264,31 +251,40 @@ func main() {
 	http.DefaultServeMux = http.NewServeMux()
 	http.Handle("GET "+config.BasePath, handler)
 
-	var listenErr error
+	go func() {
+		var listenErr error
 
-	if tlsConfig != nil {
-		slog.Info("starting tls server",
-			slog.String("address", server.Addr),
-			slog.Duration("t_init", time.Since(startInit)),
-			slog.String("cert", config.TLSCert),
-			slog.String("key", config.TLSKey),
-			slog.Any("acmeDomains", *config.AcmeDomains),
-		)
+		if tlsConfig != nil {
+			slog.Info("starting tls server",
+				slog.String("address", server.Addr),
+				slog.Duration("t_init", time.Since(startInit)),
+				slog.String("cert", config.TLSCert),
+				slog.String("key", config.TLSKey),
+				slog.Any("acmeDomains", *config.AcmeDomains),
+			)
 
-		listenErr = server.ListenAndServeTLS("", "")
-	} else {
-		slog.Info("starting server",
-			slog.String("address", server.Addr),
-			slog.Duration("t_init", time.Since(startInit)))
+			listenErr = server.ListenAndServeTLS("", "")
+		} else {
+			slog.Info("starting server",
+				slog.String("address", server.Addr),
+				slog.Duration("t_init", time.Since(startInit)))
 
-		listenErr = server.ListenAndServe()
+			listenErr = server.ListenAndServe()
+		}
+
+		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+			slog.Error("error listening", slog.String("error", listenErr.Error()))
+			exitFunc(1)
+		}
+	}()
+
+	fileServerShutdownErr := waitServerShutdown(&server, "file")
+
+	if fileServerShutdownErr != nil {
+		slog.Error("error shutting down server", slog.String("error", fileServerShutdownErr.Error()))
 	}
 
-	if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-		slog.Error("error listening", slog.String("error", listenErr.Error()))
-		exitFunc(1)
-	}
+	waitServersShutdown()
 
-	slog.Info("server shutdown")
 	exitFunc(0)
 }

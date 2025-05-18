@@ -88,8 +88,15 @@ func sendMe(t *testing.T, sig os.Signal) {
 		return
 	}
 
+	switch runtime.GOOS {
+	case "windows":
+		t.Errorf("Go does not yet support anything else than KILL on Windows")
+		sig = os.Kill
+	default:
+	}
+
 	if signalErr := currentProcess.Signal(sig); signalErr != nil {
-		t.Errorf("could not send signal")
+		t.Errorf("could not send signal %s: %v", sig.String(), signalErr)
 	}
 }
 
@@ -144,7 +151,7 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 	slog.Info("stoping exit timer")
 
 	if afterTimer.Stop() {
-		sendMe(t, syscall.SIGTERM)
+		sendMe(t, syscall.SIGINT)
 	}
 
 	runtime.Gosched()

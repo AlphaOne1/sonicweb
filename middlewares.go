@@ -134,7 +134,7 @@ func parseHeaderLines(reader io.Reader) ([]string, error) {
 }
 
 // addHeaders generates the header-adding middleware. It adds the Server header and all the
-// additional headers given as parameter.
+// additional headers given as parameters.
 func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 	serverVal := ServerName
 
@@ -149,7 +149,7 @@ func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 	))
 }
 
-// addTryFiles looks of the given URI matches an existing file.
+// addTryFiles looks if the given URI matches an existing file.
 // If there is no file, a series of other files is tried instead.
 func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 	tryFiles := make([]string, 0, len(tries))
