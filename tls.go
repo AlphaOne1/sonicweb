@@ -77,7 +77,7 @@ func generateTLSConfig(
 		result = certManager.TLSConfig()
 	}
 
-	if len(clientCAs) > 0 {
+	if result != nil && len(clientCAs) > 0 {
 		var clientCAPool = x509.NewCertPool()
 
 		for _, ca := range clientCAs {
