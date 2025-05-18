@@ -213,9 +213,6 @@ func main() {
 		slog.Info("tracing disabled")
 	}
 
-	// set up opentelemetry with prometheus metricsExporter
-	setupMetricsInstrumentation(&config.InstrumentAddress, &config.InstrumentPort, config.EnableTelemetry, config.EnablePprof)
-
 	slog.Info("registering handler for FileServer")
 
 	tlsConfig, tlsConfigErr := generateTLSConfig(
@@ -277,6 +274,9 @@ func main() {
 			exitFunc(1)
 		}
 	}()
+
+	// set up opentelemetry with prometheus metricsExporter
+	setupMetricsInstrumentation(&config.InstrumentAddress, &config.InstrumentPort, config.EnableTelemetry, config.EnablePprof)
 
 	fileServerShutdownErr := waitServerShutdown(&server, "file")
 

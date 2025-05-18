@@ -6,14 +6,16 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/prometheus"
 	"log/slog"
 	"net/http"
 	"net/http/pprof"
 	"os"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+
 	// stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -140,7 +142,5 @@ func serveMetrics(address string, port string, enableTelemetry, enablePprof bool
 
 	if shutdownErr := waitServerShutdown(&server, "metrics"); shutdownErr != nil {
 		slog.Error("error shutting down metrics server", slog.String("error", shutdownErr.Error()))
-	} else {
-		slog.Info("metrics server shutdown")
 	}
 }
