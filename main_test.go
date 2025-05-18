@@ -154,9 +154,6 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 		sendMe(t, syscall.SIGINT)
 	}
 
-	runtime.Gosched()
-	// time.Sleep(50 * time.Millisecond)
-
 	return <-result
 }
 
