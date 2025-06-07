@@ -1,6 +1,7 @@
 // Copyright the SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
+// Package main contains the server logic of SonicWeb.
 package main
 
 import (
@@ -241,8 +242,10 @@ func main() {
 	}
 
 	server := http.Server{
-		Addr:      config.ListenAddress + ":" + config.ListenPort,
-		TLSConfig: tlsConfig,
+		Addr:              config.ListenAddress + ":" + config.ListenPort,
+		ReadHeaderTimeout: 2 * time.Second,
+		ReadTimeout:       2 * time.Second,
+		TLSConfig:         tlsConfig,
 	}
 
 	defer func() { _ = server.Close() }()

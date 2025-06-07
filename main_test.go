@@ -103,11 +103,7 @@ func sendMe(t *testing.T, sig os.Signal) {
 func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
 	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
-		if code == 0 {
-			panic(code)
-		} else {
-			panic(code)
-		}
+		panic(code)
 	}
 
 	buildInfoTag = "test"
@@ -183,6 +179,12 @@ func TestSonicMain(t *testing.T) {
 			continue
 		}
 
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				t.Errorf("could not close response: %v", err)
+			}
+		}()
+
 		couldRequest = true
 
 		assert.Equal(t, http.StatusOK, res.StatusCode, "status code should be 200")
@@ -246,6 +248,12 @@ func TestSonicMainTLS(t *testing.T) {
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
+
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				t.Errorf("could not close response: %v", err)
+			}
+		}()
 
 		couldRequest = true
 

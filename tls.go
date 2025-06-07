@@ -54,6 +54,7 @@ func generateTLSConfig(
 
 		result = &tls.Config{
 			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS13,
 		}
 	}
 

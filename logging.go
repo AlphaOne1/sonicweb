@@ -22,7 +22,7 @@ func setupLogging(logLevel string, logStyle string) error {
 	options := slog.HandlerOptions{
 		AddSource: func() bool { return parsedLogLevel <= slog.LevelDebug }(),
 		Level:     parsedLogLevel,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		ReplaceAttr: func(_ /*groups*/ []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000Z07:00"))
 			}
