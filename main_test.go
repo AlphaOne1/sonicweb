@@ -243,7 +243,7 @@ func TestSonicMainTLS(t *testing.T) {
 			},
 		}
 
-		req, _ := http.NewRequest("GET", "http://localhost:8080/index.html", nil)
+		req, _ := http.NewRequest("GET", "https://localhost:8080/index.html", nil)
 		res, err := client.Do(req.WithContext(context.Background()))
 
 		if err != nil {
