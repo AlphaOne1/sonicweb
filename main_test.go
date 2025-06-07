@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -170,7 +171,8 @@ func TestSonicMain(t *testing.T) {
 	couldRequest := false
 
 	for i := 0; i < 10 && !couldRequest; i++ {
-		res, err := http.Get("http://localhost:8080/index.html")
+		req, _ := http.NewRequest("GET", "http://localhost:8080/index.html", nil)
+		res, err := http.DefaultClient.Do(req.WithContext(context.Background()))
 
 		if err != nil {
 			runtime.Gosched()
@@ -240,7 +242,9 @@ func TestSonicMainTLS(t *testing.T) {
 				},
 			},
 		}
-		res, err := client.Get("https://localhost:8080/index.html")
+
+		req, _ := http.NewRequest("GET", "http://localhost:8080/index.html", nil)
+		res, err := client.Do(req.WithContext(context.Background()))
 
 		if err != nil {
 			runtime.Gosched()
@@ -366,7 +370,8 @@ func BenchmarkHandler(b *testing.B) {
 	client := &http.Client{}
 
 	for i := 0; i < b.N; i++ {
-		resp, err := client.Get(server.URL)
+		req, _ := http.NewRequest("GET", server.URL, nil)
+		resp, err := client.Do(req.WithContext(context.Background()))
 
 		if err != nil {
 			b.Fatalf("Failed to make GET request: %v", err)

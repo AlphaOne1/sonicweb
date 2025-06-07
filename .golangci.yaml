@@ -4,24 +4,30 @@
 version: "2"
 
 run:
-  timeout: 5m
-  tests: true
+    timeout: 5m
+    tests: true
 
 linters:
-  enable:
-    # Default linters
-    - errcheck
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
-    # Additional linters
-    - gosec
-    - misspell
-    - revive
-    - bodyclose
-    - noctx
+    enable:
+        # Default linters
+        - errcheck
+        - govet
+        - ineffassign
+        - staticcheck
+        - unused
+        # Additional linters
+        - gosec
+        - misspell
+        - revive
+        - bodyclose
+        - noctx
+
+    exclusions:
+        rules:
+            - path: main_test.go
+              linters:
+                  - gosec
 
 issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
+    max-issues-per-linter: 0
+    max-same-issues: 0

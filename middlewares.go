@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/AlphaOne1/midgard/handler/add_header"
@@ -84,7 +85,7 @@ func headerFilesToHeaders(files []string) ([][2]string, error) {
 
 // readHeaderFile opens and reads a header file, returning the parsed header lines.
 func readHeaderFile(filePath string) ([]string, error) {
-	fh, err := os.Open(filePath)
+	fh, err := os.Open(filepath.Clean(filePath))
 
 	if err != nil {
 		return nil, fmt.Errorf("could not open file %v: %w", filePath, err)
