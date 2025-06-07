@@ -338,15 +338,20 @@ func TestSonicMainInvalidWAFFile(t *testing.T) {
 }
 
 func BenchmarkHandler(b *testing.B) {
-	server := httptest.NewServer(
-		generateFileHandler(
-			false,
-			false,
-			"/",
-			"testroot/",
-			nil,
-			nil,
-			nil))
+	fileHandler, fileHandlerErr := generateFileHandler(
+		false,
+		false,
+		"/",
+		"testroot/",
+		nil,
+		nil,
+		nil)
+
+	if fileHandlerErr != nil {
+		b.Fatalf("could not generate file handler: %v", fileHandlerErr)
+	}
+
+	server := httptest.NewServer(fileHandler)
 
 	defer server.Close()
 

@@ -1,0 +1,28 @@
+# Configuration file for golangci-lint
+# See https://golangci-lint.run/usage/configuration/ for more information
+
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    # Default linters
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Additional linters
+    - gosec
+    - misspell
+    - revive
+    - bodyclose
+    - noctx
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
