@@ -101,7 +101,7 @@ func sendMe(t *testing.T, sig os.Signal) {
 }
 
 func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
-	// exitFunc replaces os.Exit with this function that will end main and we can catch the error here
+	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
 		if code == 0 {
 			panic(code)
@@ -132,7 +132,7 @@ func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
 		mainStart <- struct{}{}
 		main()
 
-		// we can just come here, if main did not call anyhow the exit function
+		// we can just come here if main did not call anyhow the exit function
 		// normal returns from main signalize no error --> 0
 		mainReturn <- 0
 	}()

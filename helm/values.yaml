@@ -62,8 +62,8 @@ ingress:
     #     - chart-example.local
 
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
+  # We usually recommend not specifying default resources and to leave this as a conscious
+  # choice for the user. This also increases the chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
@@ -73,7 +73,8 @@ resources: {}
   #     cpu: 100m
   #     memory: 128Mi
 
-# This is to set up the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# This is to set up the liveness and readiness probes more information can be found here:
+# https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
     httpGet:
         path: /
@@ -84,7 +85,8 @@ readinessProbe:
         path: /
         port: http
 
-#This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+# This section is for setting up autoscaling more information can be found here:
+# https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
     enabled: false
     minReplicas: 1

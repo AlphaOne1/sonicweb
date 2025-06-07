@@ -39,7 +39,7 @@ var logoTmpl string
 // MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences
 type MultiStringValue []string
 
-// String returns the content as one string separated by comma, be careful, this is not a safe operation,
+// String returns the content as one string separated by comma, be careful, this is not a safe operation
 // if the parameters may contain comma themselves
 func (m *MultiStringValue) String() string {
 	return strings.Join(*m, ",")
@@ -186,7 +186,7 @@ func main() {
 	config := setupFlags()
 
 	if config.PrintVersion {
-		// we already printed the logo, that contains all the necessary information
+		// we already printed the logo that contains all the necessary information
 		exitFunc(0)
 	}
 

@@ -30,7 +30,7 @@ func wafMiddleware(configs []string) (func(http.Handler) http.Handler, error) {
 		wafConfig = wafConfig.WithDirectivesFromFile(config)
 	}
 
-	// First we initialize our waf and our seclang parser
+	// First, we initialize our waf and our seclang parser
 	waf, wafErr := coraza.NewWAF(wafConfig)
 
 	// Now we parse our rules
@@ -63,7 +63,7 @@ func headerParamToHeaders(param []string) [][2]string {
 	return headers
 }
 
-// headerFilesToHeaders reads the additional header information from the given files,
+// headerFilesToHeaders reads the additional header information from the given files
 // and generates key-value pairs of them.
 func headerFilesToHeaders(files []string) ([][2]string, error) {
 	var allLines []string
@@ -190,11 +190,11 @@ func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 				if _, statErr := fs.Stat(strings.TrimPrefix(path, "/")); statErr != nil {
 					if strings.HasSuffix(path, "/") {
 						if _, statErr2 := fs.Stat(strings.TrimPrefix(path, "/") + "index.html"); statErr2 != nil {
-							// path does not exist, has / suffix and also path/index.html does not exist
+							// path does not exist, has / suffix, and also path/index.html does not exist
 							continue
 						}
 					} else {
-						// path does not have / suffix and does not exist
+						// path does not have /-suffix, and does not exist
 						continue
 					}
 				}
