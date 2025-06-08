@@ -64,19 +64,19 @@ $ ./sonic-linux-amd64 -root testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.4.1
-         \  |              of: 2025-05-07T21:44:41Z
-          \ |           using: go1.24.3
+   |/   \    _______\ Version: v1.5.0
+         \  |              of: 2025-06-08T00:02:28Z
+          \ |           using: go1.24.4
            \|
-time=2025-05-07T23:51:47.351580+02:00 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
-time=2025-05-07T23:51:47.351782+02:00 level=INFO msg=logging level=info
-time=2025-05-07T23:51:47.351797+02:00 level=INFO msg="using root directory" root=testroot
-time=2025-05-07T23:51:47.351826+02:00 level=INFO msg="using base path" path=/
-time=2025-05-07T23:51:47.351841+02:00 level=INFO msg="tracing disabled"
-time=2025-05-07T23:51:47.352099+02:00 level=INFO msg="registering handler for FileServer"
-time=2025-05-07T23:51:47.352249+02:00 level=INFO msg="serving pprof disabled"
-time=2025-05-07T23:51:47.352414+02:00 level=INFO msg="serving telemetry" address=:8081/metrics
-time=2025-05-07T23:51:47.354188+02:00 level=INFO msg="starting server" address=:8080 t_init=2.812408ms
+time=2025-06-08T02:08:38.620345+02:00 level=INFO msg="maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"
+time=2025-06-08T02:08:38.621143+02:00 level=INFO msg=logging level=info
+time=2025-06-08T02:08:38.621192+02:00 level=INFO msg="using root directory" root=testroot
+time=2025-06-08T02:08:38.621301+02:00 level=INFO msg="using base path" path=/
+time=2025-06-08T02:08:38.621344+02:00 level=INFO msg="tracing disabled"
+time=2025-06-08T02:08:38.621365+02:00 level=INFO msg="registering handler for FileServer"
+time=2025-06-08T02:08:38.625397+02:00 level=INFO msg="starting server" address=:8080 t_init=5.978992ms
+time=2025-06-08T02:08:38.626010+02:00 level=INFO msg="serving pprof disabled"
+time=2025-06-08T02:08:38.626268+02:00 level=INFO msg="serving telemetry" address=:8081/metrics
 ```
 
 HTTPS
