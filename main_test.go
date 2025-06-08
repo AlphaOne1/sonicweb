@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -101,13 +102,9 @@ func sendMe(t *testing.T, sig os.Signal) {
 }
 
 func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
-	// exitFunc replaces os.Exit with this function that will end main and we can catch the error here
+	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
-		if code == 0 {
-			panic(code)
-		} else {
-			panic(code)
-		}
+		panic(code)
 	}
 
 	buildInfoTag = "test"
@@ -132,7 +129,7 @@ func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
 		mainStart <- struct{}{}
 		main()
 
-		// we can just come here, if main did not call anyhow the exit function
+		// we can just come here if main did not call anyhow the exit function
 		// normal returns from main signalize no error --> 0
 		mainReturn <- 0
 	}()
@@ -174,7 +171,8 @@ func TestSonicMain(t *testing.T) {
 	couldRequest := false
 
 	for i := 0; i < 10 && !couldRequest; i++ {
-		res, err := http.Get("http://localhost:8080/index.html")
+		req, _ := http.NewRequest("GET", "http://localhost:8080/index.html", nil)
+		res, err := http.DefaultClient.Do(req.WithContext(context.Background()))
 
 		if err != nil {
 			runtime.Gosched()
@@ -182,6 +180,12 @@ func TestSonicMain(t *testing.T) {
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
+
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				t.Errorf("could not close response: %v", err)
+			}
+		}()
 
 		couldRequest = true
 
@@ -238,7 +242,9 @@ func TestSonicMainTLS(t *testing.T) {
 				},
 			},
 		}
-		res, err := client.Get("https://localhost:8080/index.html")
+
+		req, _ := http.NewRequest("GET", "https://localhost:8080/index.html", nil)
+		res, err := client.Do(req.WithContext(context.Background()))
 
 		if err != nil {
 			runtime.Gosched()
@@ -246,6 +252,12 @@ func TestSonicMainTLS(t *testing.T) {
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
+
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				t.Errorf("could not close response: %v", err)
+			}
+		}()
 
 		couldRequest = true
 
@@ -338,22 +350,28 @@ func TestSonicMainInvalidWAFFile(t *testing.T) {
 }
 
 func BenchmarkHandler(b *testing.B) {
-	server := httptest.NewServer(
-		generateFileHandler(
-			false,
-			false,
-			"/",
-			"testroot/",
-			nil,
-			nil,
-			nil))
+	fileHandler, fileHandlerErr := generateFileHandler(
+		false,
+		false,
+		"/",
+		"testroot/",
+		nil,
+		nil,
+		nil)
+
+	if fileHandlerErr != nil {
+		b.Fatalf("could not generate file handler: %v", fileHandlerErr)
+	}
+
+	server := httptest.NewServer(fileHandler)
 
 	defer server.Close()
 
 	client := &http.Client{}
 
 	for i := 0; i < b.N; i++ {
-		resp, err := client.Get(server.URL)
+		req, _ := http.NewRequest("GET", server.URL, nil)
+		resp, err := client.Do(req.WithContext(context.Background()))
 
 		if err != nil {
 			b.Fatalf("Failed to make GET request: %v", err)

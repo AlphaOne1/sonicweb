@@ -12,8 +12,12 @@ import (
 	"time"
 )
 
+// serversToShutdown tracks the number of active servers being waited for to gracefully shut down.
 var serversToShutdown = sync.WaitGroup{}
 
+// waitServerShutdown gracefully shuts down the provided server upon receiving termination signals (SIGINT, SIGTERM).
+// It logs the shutdown process, waits for an active server shutdown process to complete, and handles errors if any.
+// Returns an error if the server fails to shut down gracefully.
 func waitServerShutdown(server *http.Server, serverName string) error {
 	serversToShutdown.Add(1)
 
@@ -41,6 +45,8 @@ func waitServerShutdown(server *http.Server, serverName string) error {
 	return shutdownErr
 }
 
+// waitServersShutdown waits for all servers to complete their shutdown process using waitServerShutdown,
+// before continuing execution.
 func waitServersShutdown() {
 	slog.Info("waiting for servers to shutdown")
 	serversToShutdown.Wait()

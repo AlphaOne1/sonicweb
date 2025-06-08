@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
@@ -126,8 +127,10 @@ func serveMetrics(address string, port string, enableTelemetry, enablePprof bool
 	}
 
 	server := http.Server{
-		Addr:    listenAddress,
-		Handler: mux,
+		Addr:              listenAddress,
+		Handler:           mux,
+		ReadHeaderTimeout: 2 * time.Second,
+		ReadTimeout:       2 * time.Second,
 	}
 
 	defer func() { _ = server.Close() }()

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 )
@@ -11,21 +12,17 @@ import (
 // setupLogging sets the log format and level. It can try to guess in which environment
 // SonicWeb runs (logStyle "auto"). If its parent seems to not be an init process, then
 // text logging is used, otherwise JSON.
-func setupLogging(logLevel string, logStyle string) {
+func setupLogging(logLevel string, logStyle string) error {
 	var parsedLogLevel slog.Level
 
 	if levelErr := (&parsedLogLevel).UnmarshalText([]byte(logLevel)); levelErr != nil {
-		slog.Error("invalid loglevel",
-			slog.String("error", levelErr.Error()),
-			slog.String("given", logLevel))
-
-		exitFunc(1)
+		return fmt.Errorf("invalid loglevel: %w", levelErr)
 	}
 
 	options := slog.HandlerOptions{
 		AddSource: func() bool { return parsedLogLevel <= slog.LevelDebug }(),
 		Level:     parsedLogLevel,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		ReplaceAttr: func(_ /*groups*/ []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000Z07:00"))
 			}
@@ -41,7 +38,8 @@ func setupLogging(logLevel string, logStyle string) {
 		options.ReplaceAttr = nil
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
 	} else {
-		slog.Error("unsupported log style", slog.String("logStyle", logStyle))
-		exitFunc(1)
+		return fmt.Errorf("unsupported log style %v", logStyle)
 	}
+
+	return nil
 }

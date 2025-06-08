@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
@@ -54,6 +55,7 @@ func generateTLSConfig(
 
 		result = &tls.Config{
 			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS13,
 		}
 	}
 
@@ -81,7 +83,7 @@ func generateTLSConfig(
 		var clientCAPool = x509.NewCertPool()
 
 		for _, ca := range clientCAs {
-			caFile, caFileErr := os.ReadFile(ca)
+			caFile, caFileErr := os.ReadFile(filepath.Clean(ca))
 
 			if caFileErr != nil {
 				return nil, fmt.Errorf("could not read client CA file: %w", caFileErr)

@@ -11,7 +11,7 @@ Features
 * statically linked, suitable for use in scratch containers (~13MB)
 * focused purpose, thus little attack surface
 * usage of OWASP [Coraza](https://github.com/corazawaf/coraza) middleware
-  to follow best security practises
+  to follow best security practices
 * HTTPS using [Let's Encrypt](https://letsencrypt.org) certificates
 * easy integration in monitoring using [Prometheus](https://prometheus.io) and/or
   [Jaeger Tracing](https://jaegertracing.io)
@@ -143,7 +143,7 @@ In some situations, it is necessary to add HTTP headers to the response.
 $ ./sonic-linux-amd64 -root testroot/ -header "Environment: production"
 ```
 
-To add a huge amount of headers the `-headerfile` parameter can be used:
+To add a huge number of headers the `-headerfile` parameter can be used:
 
 ```shell
 $ ./sonic-linux-amd64 -root testroot/ -headerfile additional_headers.conf
@@ -158,7 +158,7 @@ The file should be formatted as follows:
 
 Headers can be specified multiple times, with the last entry taking precedence.
 *SonicWeb* sets the `Server` header to its name and version. By providing an own version of the `Server` header,
-it can be replaced, e.g. to misguide potential attackers.
+it can be replaced, e.g., to misguide potential attackers.
 
 
 Try Files

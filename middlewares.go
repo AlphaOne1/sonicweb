@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/AlphaOne1/midgard/handler/add_header"
@@ -21,7 +22,7 @@ import (
 )
 
 // wafMiddleware generates the web application firewall middleware.
-func wafMiddleware(configs []string) func(http.Handler) http.Handler {
+func wafMiddleware(configs []string) (func(http.Handler) http.Handler, error) {
 
 	wafConfig := coraza.NewWAFConfig()
 
@@ -30,18 +31,17 @@ func wafMiddleware(configs []string) func(http.Handler) http.Handler {
 		wafConfig = wafConfig.WithDirectivesFromFile(config)
 	}
 
-	// First we initialize our waf and our seclang parser
+	// First, we initialize our waf and our seclang parser
 	waf, wafErr := coraza.NewWAF(wafConfig)
 
 	// Now we parse our rules
 	if wafErr != nil {
-		slog.Error("could not initialize waf", slog.String("error", wafErr.Error()))
-		exitFunc(1)
+		return nil, fmt.Errorf("could not initialize waf %w", wafErr)
 	}
 
 	return func(next http.Handler) http.Handler {
 		return corhttp.WrapHandler(waf, next)
-	}
+	}, nil
 }
 
 // headerParamToHeaders takes additional headers in the form of curl, e.g. "Content-Type: application/json",
@@ -64,9 +64,9 @@ func headerParamToHeaders(param []string) [][2]string {
 	return headers
 }
 
-// headerFilesToHeaders reads the additional header information from the given files,
+// headerFilesToHeaders reads the additional header information from the given files
 // and generates key-value pairs of them.
-func headerFilesToHeaders(files []string) [][2]string {
+func headerFilesToHeaders(files []string) ([][2]string, error) {
 	var allLines []string
 
 	for _, filePath := range files {
@@ -74,24 +74,21 @@ func headerFilesToHeaders(files []string) [][2]string {
 
 		lines, err := readHeaderFile(filePath)
 		if err != nil {
-			slog.Error("could not process header file",
-				slog.String("file", filePath),
-				slog.String("error", err.Error()))
-			exitFunc(1)
+			return nil, fmt.Errorf("could not process header file %v: %w", filePath, err)
 		}
 
 		allLines = append(allLines, lines...)
 	}
 
-	return headerParamToHeaders(allLines)
+	return headerParamToHeaders(allLines), nil
 }
 
 // readHeaderFile opens and reads a header file, returning the parsed header lines.
 func readHeaderFile(filePath string) ([]string, error) {
-	fh, err := os.Open(filePath)
+	fh, err := os.Open(filepath.Clean(filePath))
 
 	if err != nil {
-		return nil, fmt.Errorf("could not open file: %w", err)
+		return nil, fmt.Errorf("could not open file %v: %w", filePath, err)
 	}
 
 	defer func() { _ = fh.Close() }()
@@ -194,11 +191,11 @@ func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 				if _, statErr := fs.Stat(strings.TrimPrefix(path, "/")); statErr != nil {
 					if strings.HasSuffix(path, "/") {
 						if _, statErr2 := fs.Stat(strings.TrimPrefix(path, "/") + "index.html"); statErr2 != nil {
-							// path does not exist, has / suffix and also path/index.html does not exist
+							// path does not exist, has / suffix, and also path/index.html does not exist
 							continue
 						}
 					} else {
-						// path does not have / suffix and does not exist
+						// path does not have /-suffix, and does not exist
 						continue
 					}
 				}

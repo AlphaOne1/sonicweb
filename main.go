@@ -1,6 +1,7 @@
 // Copyright the SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
+// Package main contains the server logic of SonicWeb.
 package main
 
 import (
@@ -39,7 +40,7 @@ var logoTmpl string
 // MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences
 type MultiStringValue []string
 
-// String returns the content as one string separated by comma, be careful, this is not a safe operation,
+// String returns the content as one string separated by comma, be careful, this is not a safe operation
 // if the parameters may contain comma themselves
 func (m *MultiStringValue) String() string {
 	return strings.Join(*m, ",")
@@ -64,7 +65,7 @@ type ServerConfig struct {
 	CertCache         string
 	AcmeEndpoint      string
 	Headers           *MultiStringValue
-	HeadersFile       *MultiStringValue
+	HeadersFiles      *MultiStringValue
 	TryFiles          *MultiStringValue
 	WafCfg            *MultiStringValue
 	InstrumentPort    string
@@ -80,12 +81,12 @@ type ServerConfig struct {
 // setupFlags defines and parses all command line flags
 func setupFlags() ServerConfig {
 	config := ServerConfig{
-		ClientCAs:   &MultiStringValue{},
-		AcmeDomains: &MultiStringValue{},
-		Headers:     &MultiStringValue{},
-		HeadersFile: &MultiStringValue{},
-		TryFiles:    &MultiStringValue{},
-		WafCfg:      &MultiStringValue{},
+		ClientCAs:    &MultiStringValue{},
+		AcmeDomains:  &MultiStringValue{},
+		Headers:      &MultiStringValue{},
+		HeadersFiles: &MultiStringValue{},
+		TryFiles:     &MultiStringValue{},
+		WafCfg:       &MultiStringValue{},
 	}
 
 	flag.StringVar(&config.RootPath, "root", "/www", "root directory for webserver")
@@ -99,7 +100,7 @@ func setupFlags() ServerConfig {
 	flag.StringVar(&config.CertCache, "certcache", os.TempDir(), "directory for certificate cache")
 	flag.StringVar(&config.AcmeEndpoint, "acmeendpoint", "", " acme endpoint to use")
 	flag.Var(config.Headers, "header", "additional HTTP header")
-	flag.Var(config.HeadersFile, "headerfile", "file containing additional HTTP headers")
+	flag.Var(config.HeadersFiles, "headerfile", "file containing additional HTTP headers")
 	flag.Var(config.TryFiles, "tryfile", "always try to load file expression first")
 	flag.Var(config.WafCfg, "wafcfg", "waf configuration file")
 	flag.StringVar(&config.InstrumentPort, "iport", "8081", "port to listen on for instrumentation")
@@ -116,7 +117,7 @@ func setupFlags() ServerConfig {
 }
 
 // setupMaxProcs sets the maximum count of processors to use for scheduling
-func setupMaxProcs() {
+func setupMaxProcs() error {
 	if _, mpFound := os.LookupEnv("GOMAXPROCS"); !mpFound {
 		if _, err := maxprocs.Set(maxprocs.Logger(func(format string, args ...any) {
 			if slog.Default().Enabled(context.Background(), slog.LevelInfo) {
@@ -124,11 +125,11 @@ func setupMaxProcs() {
 				slog.Info(message)
 			}
 		})); err != nil {
-			slog.Error("failed to automatically set GOMAXPROCS",
-				slog.String("error", err.Error()))
-			exitFunc(1)
+			return fmt.Errorf("failed to automatically set GOMAXPROCS: %w", err)
 		}
 	}
+
+	return nil
 }
 
 // generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
@@ -139,7 +140,7 @@ func generateFileHandler(
 	rootPath string,
 	additionalHeaders [][2]string,
 	tryFiles []string,
-	wafCfg []string) http.Handler {
+	wafCfg []string) (http.Handler, error) {
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
@@ -150,13 +151,17 @@ func generateFileHandler(
 	root, rootErr := os.OpenRoot(rootPath)
 
 	if rootErr != nil {
-		slog.Error("could not open root", slog.String("error", rootErr.Error()))
-		exitFunc(1)
-		return nil // silencing the static checker, unreachable
+		return nil, fmt.Errorf("could not open root: %w", rootErr) // silencing the static checker, unreachable
+	}
+
+	wafMW, wafMWErr := wafMiddleware(wafCfg)
+
+	if wafMWErr != nil {
+		return nil, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
 	}
 
 	mwStack = append(mwStack,
-		wafMiddleware(wafCfg),
+		wafMW,
 		addHeaders(additionalHeaders),
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
@@ -170,7 +175,7 @@ func generateFileHandler(
 		http.FileServerFS(
 			root.FS(),
 		),
-	)
+	), nil
 }
 
 // main initializes all necessary parts and starts the server.
@@ -182,12 +187,20 @@ func main() {
 	config := setupFlags()
 
 	if config.PrintVersion {
-		// we already printed the logo, that contains all the necessary information
+		// we already printed the logo that contains all the necessary information
 		exitFunc(0)
 	}
 
-	setupLogging(config.LogLevel, config.LogStyle)
-	setupMaxProcs()
+	if err := setupLogging(config.LogLevel, config.LogStyle); err != nil {
+		slog.Error("error setting up logging", slog.String("error", err.Error()))
+		exitFunc(1)
+	}
+
+	if err := setupMaxProcs(); err != nil {
+		slog.Error("could not set maximum processors to use",
+			slog.String("error", err.Error()))
+		exitFunc(1)
+	}
 
 	slog.Info("logging", slog.String("level", config.LogLevel))
 
@@ -229,20 +242,36 @@ func main() {
 	}
 
 	server := http.Server{
-		Addr:      config.ListenAddress + ":" + config.ListenPort,
-		TLSConfig: tlsConfig,
+		Addr:              config.ListenAddress + ":" + config.ListenPort,
+		ReadHeaderTimeout: 2 * time.Second,
+		ReadTimeout:       2 * time.Second,
+		TLSConfig:         tlsConfig,
 	}
 
 	defer func() { _ = server.Close() }()
 
-	handler := generateFileHandler(
+	headers, headersErr := headerFilesToHeaders(*config.HeadersFiles)
+
+	if headersErr != nil {
+		slog.Error("could not process headers file",
+			slog.Any("files", *config.HeadersFiles),
+			slog.String("error", headersErr.Error()))
+		exitFunc(1)
+	}
+
+	handler, handlerErr := generateFileHandler(
 		config.EnableTelemetry,
 		len(config.TraceEndpoint) > 0,
 		config.BasePath,
 		config.RootPath,
-		append(headerParamToHeaders(*config.Headers), headerFilesToHeaders(*config.HeadersFile)...),
+		append(headerParamToHeaders(*config.Headers), headers...),
 		*config.TryFiles,
 		*config.WafCfg)
+
+	if handlerErr != nil {
+		slog.Error("could not generate file handler", slog.String("error", handlerErr.Error()))
+		exitFunc(1)
+	}
 
 	// remove all implicitly registered handlers
 	http.DefaultServeMux = http.NewServeMux()
