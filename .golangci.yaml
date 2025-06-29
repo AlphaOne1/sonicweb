@@ -1,0 +1,119 @@
+# Copyright the SonicWeb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
+# Configuration file for golangci-lint
+# See https://golangci-lint.run/usage/configuration/ for more information
+
+version: "2"
+
+run:
+    timeout: 5m
+    tests: true
+
+linters:
+    default: all
+
+    disable:
+        - exhaustruct
+        - forbidigo
+        - wsl
+
+    exclusions:
+        warn-unused: true
+
+        rules:
+            - path: _test\.go
+              linters:
+                  - cyclop
+                  - dupword
+                  - funlen
+                  - gocognit
+                  - maintidx
+                  - nestif
+            - path: main_test.go
+              linters:
+                  - gosec
+            - path: (main|server).go
+              linters:
+                  - gochecknoglobals
+            - path: tls.go
+              linters:
+                  - nilnil
+            - path: main.go
+              linters:
+                  - funlen
+
+    settings:
+        cyclop:
+            max-complexity: 25
+
+        depguard:
+            rules:
+                main:
+                    files:
+                        - $all
+                        - "!**/*_test.go"
+                    allow:
+                        - $gostd
+                        - "github.com/AlphaOne1/geany"
+                        - "github.com/AlphaOne1/midgard"
+                        - "github.com/AlphaOne1/midgard/defs"
+                        - "github.com/AlphaOne1/midgard/handler/access_log"
+                        - "github.com/AlphaOne1/midgard/handler/add_header"
+                        - "github.com/AlphaOne1/midgard/handler/correlation"
+                        - "github.com/AlphaOne1/midgard/util"
+                        - "github.com/AlphaOne1/templig"
+                        - "github.com/corazawaf/coraza/v3"
+                        - "github.com/corazawaf/coraza/v3/http"
+                        - "github.com/prometheus/client_golang/prometheus/promhttp"
+                        - "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+                        - "go.opentelemetry.io/otel"
+                        - "go.opentelemetry.io/otel/attribute"
+                        - "go.opentelemetry.io/otel/exporters/prometheus"
+                        - "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+                        - "go.opentelemetry.io/otel/propagation"
+                        - "go.opentelemetry.io/otel/sdk/metric"
+                        - "go.opentelemetry.io/otel/sdk/resource"
+                        - "go.opentelemetry.io/otel/sdk/trace"
+                        - "go.opentelemetry.io/otel/semconv/v1.27.0"
+                        - "go.uber.org/automaxprocs/maxprocs"
+                        - "golang.org/x/crypto/acme"
+                        - "golang.org/x/crypto/acme/autocert"
+                test:
+                    files:
+                        - "**/*_test.go"
+                    allow:
+                        - $gostd
+                        - github.com/stretchr/testify/assert
+                        - github.com/AlphaOne1/*
+
+        godot:
+            exclude:
+                - "\"go.opentelemetry.io"
+
+        mnd:
+            ignored-numbers:
+                - 2
+                - 4
+
+        nlreturn:
+            block-size: 2
+
+        paralleltest:
+            ignore-missing: true
+
+        testpackage:
+            skip-regexp: internal_test\.go
+
+        varnamelen:
+            max-distance: 10
+            ignore-decls:
+                - w http.ResponseWriter
+                - r *http.Request
+
+        whitespace:
+            multi-func: true
+
+issues:
+    max-issues-per-linter: 0
+    max-same-issues: 0

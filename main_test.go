@@ -158,7 +158,6 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 }
 
 func TestSonicMain(t *testing.T) {
-
 	afterTimer, mainReturn := startMain(t,
 		"sonicweb",
 		"-root", "./testroot",
