@@ -27,74 +27,101 @@ func generateTLSConfig(
 	certCache string,
 	acmeEndpoint string,
 	clientCAs []string) (*tls.Config, error) {
-	if (len(cert) > 0) != (len(key) > 0) {
-		return nil, fmt.Errorf("invalid tls config, cert and key must both be given or not given")
+
+	if err := validateTLSParams(cert, key, acmeDomains, clientCAs); err != nil {
+		return nil, err
 	}
 
-	if len(cert) > 0 && len(acmeDomains) > 0 {
-		return nil, fmt.Errorf("either cert+key or acmeDomains are to be given")
-	}
-
+	// completely valid, we do not have a TLS configuration
 	if len(cert) == 0 && len(acmeDomains) == 0 {
-		if len(clientCAs) > 0 {
-			return nil, fmt.Errorf("clientCAs are only valid if cert+key or acmeDomains are given")
-		}
-
-		// completely valid, we do not have a TLS config
 		return nil, nil
 	}
 
-	var result *tls.Config
+	var config *tls.Config
+	var err error
 
 	if len(cert) > 0 {
-		cert, err := tls.LoadX509KeyPair(cert, key)
+		config, err = createCertificateConfig(cert, key)
 
 		if err != nil {
-			return nil, fmt.Errorf("could not load certificate: %w", err)
-		}
-
-		result = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS13,
+			return nil, err
 		}
 	}
 
 	if len(acmeDomains) > 0 {
-		var acmeClient *acme.Client
-
-		if len(acmeEndpoint) > 0 {
-			acmeClient = &acme.Client{
-				DirectoryURL: acmeEndpoint,
-			}
-		}
-
-		// automatic certificate management with autocert
-		certManager := autocert.Manager{
-			Cache:      autocert.DirCache(certCache),
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(acmeDomains...),
-			Client:     acmeClient,
-		}
-
-		result = certManager.TLSConfig()
+		config = createACMEConfig(acmeDomains, certCache, acmeEndpoint)
 	}
 
-	if result != nil && len(clientCAs) > 0 {
-		var clientCAPool = x509.NewCertPool()
-
-		for _, ca := range clientCAs {
-			caFile, caFileErr := os.ReadFile(filepath.Clean(ca))
-
-			if caFileErr != nil {
-				return nil, fmt.Errorf("could not read client CA file: %w", caFileErr)
-			}
-
-			clientCAPool.AppendCertsFromPEM(caFile)
+	if config != nil && len(clientCAs) > 0 {
+		if err := configureClientCAs(config, clientCAs); err != nil {
+			return nil, err
 		}
-
-		result.ClientCAs = clientCAPool
-		result.ClientAuth = tls.RequireAndVerifyClientCert
 	}
 
-	return result, nil
+	return config, nil
+}
+
+func validateTLSParams(cert, key string, acmeDomains, clientCAs []string) error {
+	if (len(cert) > 0) != (len(key) > 0) {
+		return fmt.Errorf("invalid tls config, cert and key must both be given or not given")
+	}
+	if len(cert) > 0 && len(acmeDomains) > 0 {
+		return fmt.Errorf("either cert+key or acmeDomains are to be given")
+	}
+	if len(cert) == 0 && len(acmeDomains) == 0 && len(clientCAs) > 0 {
+		return fmt.Errorf("clientCAs are only valid if cert+key or acmeDomains are given")
+	}
+
+	return nil
+}
+
+func createCertificateConfig(certFile, keyFile string) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not load certificate: %w", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS13,
+	}, nil
+}
+
+func createACMEConfig(acmeDomains []string, certCache, acmeEndpoint string) *tls.Config {
+	var acmeClient *acme.Client
+
+	if len(acmeEndpoint) > 0 {
+		acmeClient = &acme.Client{
+			DirectoryURL: acmeEndpoint,
+		}
+	}
+
+	certManager := autocert.Manager{
+		Cache:      autocert.DirCache(certCache),
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(acmeDomains...),
+		Client:     acmeClient,
+	}
+
+	return certManager.TLSConfig()
+}
+
+func configureClientCAs(config *tls.Config, clientCAs []string) error {
+	clientCAPool := x509.NewCertPool()
+
+	for _, ca := range clientCAs {
+		caFile, err := os.ReadFile(filepath.Clean(ca))
+
+		if err != nil {
+			return fmt.Errorf("could not read client CA file: %w", err)
+		}
+
+		clientCAPool.AppendCertsFromPEM(caFile)
+	}
+
+	config.ClientCAs = clientCAPool
+	config.ClientAuth = tls.RequireAndVerifyClientCert
+
+	return nil
 }

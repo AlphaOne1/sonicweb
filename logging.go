@@ -26,19 +26,21 @@ func setupLogging(logLevel string, logStyle string) error {
 			if a.Key == slog.TimeKey {
 				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02T15:04:05.000000Z07:00"))
 			}
+
 			return a
 		},
 	}
 
 	ppid := os.Getppid()
 
-	if (logStyle == "auto" && ppid > 1) || logStyle == "text" {
+	switch {
+	case (logStyle == "auto" && ppid > 1) || logStyle == "text":
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &options)))
-	} else if logStyle == "auto" || logStyle == "json" {
+	case logStyle == "auto" || logStyle == "json":
 		options.ReplaceAttr = nil
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
-	} else {
-		return fmt.Errorf("unsupported log style %v", logStyle)
+	default:
+		return fmt.Errorf("unsupported log style %s", logStyle)
 	}
 
 	return nil

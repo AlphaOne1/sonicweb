@@ -6,18 +6,18 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 
-	// stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	// "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -31,19 +31,20 @@ import (
 func initTracer(endpoint string) (*sdktrace.TracerProvider, error) {
 	// // Create stdout exporter to be able to retrieve
 	// // the collected spans.
-	// exporter, err := stdout.New(stdout.WithPrettyPrint())
+
+	// exporter, err := stdouttrace.New(stdout.WithPrettyPrint())
 
 	exporter, err := otlptracehttp.New(context.Background(),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 		otlptracehttp.WithEndpoint(endpoint),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get telemetry exporter: %w", err)
 	}
 
 	// For the demonstration, use sdktrace.AlwaysSample sampler to sample all traces.
 	// In a production application, use sdktrace.ProbabilitySampler with a desired probability.
-	tp := sdktrace.NewTracerProvider(
+	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
@@ -51,19 +52,24 @@ func initTracer(endpoint string) (*sdktrace.TracerProvider, error) {
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 	)
 
-	otel.SetTracerProvider(tp)
+	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},
 	))
 
-	return tp, nil
+	return tracerProvider, nil
 }
 
 // setupMetricsInstrumentation sets up the telemetry functionality.
-// If either telemetry or pprof, are enabled, serveMetrics is called subsequently to
+// If either telemetry or pprof are enabled, serveMetrics is called subsequently to
 // open a telemetry and/or profiling providing server port.
-func setupMetricsInstrumentation(instrumentAddress *string, instrumentPort *string, enableTelemetry bool, enablePprof bool) {
+func setupMetricsInstrumentation(
+	instrumentAddress *string,
+	instrumentPort *string,
+	enableTelemetry bool,
+	enablePprof bool) {
+
 	if !enableTelemetry && !enablePprof {
 		return
 	}
@@ -97,7 +103,7 @@ func setupMetricsInstrumentation(instrumentAddress *string, instrumentPort *stri
 	go serveMetrics(*instrumentAddress, *instrumentPort, enableTelemetry, enablePprof)
 }
 
-// serveMetrics sets up the metrics functionality. It opens a separate port and metrics collectors can fetch their
+// serveMetrics sets up the metrics functionality. It opens a separate port, and metrics collectors can fetch their
 // data from there. For profiling purposes, if enabled, also the pprof endpoints are added on the same port.
 func serveMetrics(address string, port string, enableTelemetry, enablePprof bool) {
 	if !enableTelemetry && !enablePprof {
@@ -129,8 +135,8 @@ func serveMetrics(address string, port string, enableTelemetry, enablePprof bool
 	server := http.Server{
 		Addr:              listenAddress,
 		Handler:           mux,
-		ReadHeaderTimeout: 2 * time.Second,
-		ReadTimeout:       2 * time.Second,
+		ReadHeaderTimeout: ReadTimeout,
+		ReadTimeout:       ReadTimeout,
 	}
 
 	defer func() { _ = server.Close() }()

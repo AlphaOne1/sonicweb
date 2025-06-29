@@ -28,8 +28,11 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
-// ServerName is the reported server name in the header
+// ServerName is the reported server name in the header.
 const ServerName = "SonicWeb"
+
+// ReadTimeout is the timeout used to read header and body content.
+const ReadTimeout = 2 * time.Second
 
 var buildInfoTag = ""  // buildInfoTag holds the tag information of the version control system
 var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is overridden for testing
@@ -37,11 +40,11 @@ var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is ov
 //go:embed logo.tmpl
 var logoTmpl string
 
-// MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences
+// MultiStringValue is used for command line parsing, holding values of repeated parameter occurrences.
 type MultiStringValue []string
 
 // String returns the content as one string separated by comma, be careful, this is not a safe operation
-// if the parameters may contain comma themselves
+// if the parameters may contain comma themselves.
 func (m *MultiStringValue) String() string {
 	return strings.Join(*m, ",")
 }
@@ -52,7 +55,7 @@ func (m *MultiStringValue) Set(value string) error {
 	return nil
 }
 
-// ServerConfig holds all server configuration options
+// ServerConfig holds all server configuration options.
 type ServerConfig struct {
 	RootPath          string
 	BasePath          string
@@ -78,7 +81,7 @@ type ServerConfig struct {
 	PrintVersion      bool
 }
 
-// setupFlags defines and parses all command line flags
+// setupFlags defines and parses all command line flags.
 func setupFlags() ServerConfig {
 	config := ServerConfig{
 		ClientCAs:    &MultiStringValue{},
@@ -113,10 +116,11 @@ func setupFlags() ServerConfig {
 	flag.BoolVar(&config.PrintVersion, "version", false, "print version and exit")
 
 	flag.Parse()
+
 	return config
 }
 
-// setupMaxProcs sets the maximum count of processors to use for scheduling
+// setupMaxProcs sets the maximum count of processors to use for scheduling.
 func setupMaxProcs() error {
 	if _, mpFound := os.LookupEnv("GOMAXPROCS"); !mpFound {
 		if _, err := maxprocs.Set(maxprocs.Logger(func(format string, args ...any) {
@@ -160,12 +164,18 @@ func generateFileHandler(
 		return nil, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
 	}
 
+	statFS, statFSOK := root.FS().(fs.StatFS)
+
+	if !statFSOK {
+		return nil, fmt.Errorf("could not get StatFS from RootFS")
+	}
+
 	mwStack = append(mwStack,
 		wafMW,
 		addHeaders(additionalHeaders),
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
-		addTryFiles(tryFiles, root.FS().(fs.StatFS)),
+		addTryFiles(tryFiles, statFS),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(basePath, next)
 		})
@@ -243,8 +253,8 @@ func main() {
 
 	server := http.Server{
 		Addr:              config.ListenAddress + ":" + config.ListenPort,
-		ReadHeaderTimeout: 2 * time.Second,
-		ReadTimeout:       2 * time.Second,
+		ReadHeaderTimeout: ReadTimeout,
+		ReadTimeout:       ReadTimeout,
 		TLSConfig:         tlsConfig,
 	}
 
@@ -305,7 +315,11 @@ func main() {
 	}()
 
 	// set up opentelemetry with prometheus metricsExporter
-	setupMetricsInstrumentation(&config.InstrumentAddress, &config.InstrumentPort, config.EnableTelemetry, config.EnablePprof)
+	setupMetricsInstrumentation(
+		&config.InstrumentAddress,
+		&config.InstrumentPort,
+		config.EnableTelemetry,
+		config.EnablePprof)
 
 	fileServerShutdownErr := waitServerShutdown(&server, "file")
 

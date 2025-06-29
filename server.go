@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// serverShutdownTimeout is the timeout given to the server to do a controlled shutdown.
+const serverShutdownTimeout = 5 * time.Second
+
 // serversToShutdown tracks the number of active servers being waited for to gracefully shut down.
 var serversToShutdown = sync.WaitGroup{}
 
@@ -26,23 +29,30 @@ func waitServerShutdown(server *http.Server, serverName string) error {
 	signal.Notify(termReceived, syscall.SIGINT, syscall.SIGTERM)
 
 	s := <-termReceived
-	slog.Info(fmt.Sprintf("%s server received termination signal", serverName),
+	slog.Info("server received termination signal",
+		slog.String("name", serverName),
 		slog.String("signal", s.String()))
 
-	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
 	defer shutdownCtxCancel()
 
 	shutdownErr := server.Shutdown(shutdownCtx)
 
 	if shutdownErr != nil {
-		slog.Error(fmt.Sprintf("error shutting down %s server", serverName),
+		slog.Error("error shutting down server",
+			slog.String("name", serverName),
 			slog.String("error", shutdownErr.Error()))
 	} else {
-		slog.Info(fmt.Sprintf("%s server shutdown", serverName))
+		slog.Info("server shutdown", slog.String("name", serverName))
 	}
 
 	serversToShutdown.Done()
-	return shutdownErr
+
+	if shutdownErr != nil {
+		return fmt.Errorf("could not shutdown server %s: %w", serverName, shutdownErr)
+	}
+
+	return nil
 }
 
 // waitServersShutdown waits for all servers to complete their shutdown process using waitServerShutdown,
