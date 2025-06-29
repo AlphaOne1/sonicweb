@@ -4,10 +4,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 )
+
+var errLogConfig = errors.New("invalid log configuration")
 
 // setupLogging sets the log format and level. It can try to guess in which environment
 // SonicWeb runs (logStyle "auto"). If its parent seems to not be an init process, then
@@ -40,7 +43,7 @@ func setupLogging(logLevel string, logStyle string) error {
 		options.ReplaceAttr = nil
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &options)))
 	default:
-		return fmt.Errorf("unsupported log style %s", logStyle)
+		return fmt.Errorf("unsupported log style %s: %w", logStyle, errLogConfig)
 	}
 
 	return nil

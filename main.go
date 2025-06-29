@@ -136,6 +136,8 @@ func setupMaxProcs() error {
 	return nil
 }
 
+var errConversion = errors.New("conversion error")
+
 // generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
 	enableTelemetry bool,
@@ -167,7 +169,7 @@ func generateFileHandler(
 	statFS, statFSOK := root.FS().(fs.StatFS)
 
 	if !statFSOK {
-		return nil, fmt.Errorf("could not get StatFS from RootFS")
+		return nil, fmt.Errorf("could not get StatFS from RootFS: %w", errConversion)
 	}
 
 	mwStack = append(mwStack,

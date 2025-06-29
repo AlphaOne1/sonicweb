@@ -6,6 +6,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +14,8 @@ import (
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
+
+var errTLSConfig = errors.New("invalid tls configuration")
 
 // generateTLSConfig generates a new TLS configuration if the parameters are set accordingly.
 // To use a user-supplied cert- and key file, only specify those two parameters. Specifying
@@ -63,13 +66,13 @@ func generateTLSConfig(
 
 func validateTLSParams(cert, key string, acmeDomains, clientCAs []string) error {
 	if (len(cert) > 0) != (len(key) > 0) {
-		return fmt.Errorf("invalid tls config, cert and key must both be given or not given")
+		return fmt.Errorf("icert and key must both be given or not given: %w", errTLSConfig)
 	}
 	if len(cert) > 0 && len(acmeDomains) > 0 {
-		return fmt.Errorf("either cert+key or acmeDomains are to be given")
+		return fmt.Errorf("either cert+key or acmeDomains are to be given: %w", errTLSConfig)
 	}
 	if len(cert) == 0 && len(acmeDomains) == 0 && len(clientCAs) > 0 {
-		return fmt.Errorf("clientCAs are only valid if cert+key or acmeDomains are given")
+		return fmt.Errorf("clientCAs are only valid if cert+key or acmeDomains are given: %w", errTLSConfig)
 	}
 
 	return nil
