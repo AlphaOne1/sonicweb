@@ -18,6 +18,8 @@ jobs:
     GolangCI:
         runs-on: ubuntu-latest
         permissions:
+            # read action required for private repository
+            actions: read
             security-events: write
         steps:
           - name: Harden Runner
@@ -39,6 +41,8 @@ jobs:
     TrivyCode:
         runs-on: ubuntu-latest
         permissions:
+            # read action required for private repository
+            actions: read
             security-events: write
         steps:
             - name: Harden Runner
