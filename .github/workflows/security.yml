@@ -20,6 +20,7 @@ jobs:
         permissions:
             # read action required for private repository
             actions: read
+            contents: read
             security-events: write
         steps:
           - name: Harden Runner
@@ -43,6 +44,7 @@ jobs:
         permissions:
             # read action required for private repository
             actions: read
+            contents: read
             security-events: write
         steps:
             - name: Harden Runner
