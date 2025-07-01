@@ -93,8 +93,8 @@ linters:
 
         mnd:
             ignored-numbers:
-                - 2
-                - 4
+                - "2"
+                - "4"
 
         nlreturn:
             block-size: 2
