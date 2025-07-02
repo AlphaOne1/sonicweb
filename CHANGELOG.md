@@ -1,3 +1,9 @@
+Release 1.5.1
+=============
+
+- added golangci-lint and adapted code
+- dependency updates
+
 Release 1.5.0
 =============
 

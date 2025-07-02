@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -81,6 +80,8 @@ func generateCertAndKey() (string, string) {
 }
 
 func sendMe(t *testing.T, sig os.Signal) {
+	t.Helper()
+
 	currentPID := os.Getpid()
 	currentProcess, currentProcessErr := os.FindProcess(currentPID)
 
@@ -102,6 +103,7 @@ func sendMe(t *testing.T, sig os.Signal) {
 }
 
 func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
+	t.Helper()
 	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
 		panic(code)
@@ -145,6 +147,7 @@ func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
 }
 
 func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
+	t.Helper()
 	slog.Info("stoping exit timer")
 
 	if afterTimer.Stop() {
@@ -155,7 +158,6 @@ func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
 }
 
 func TestSonicMain(t *testing.T) {
-
 	afterTimer, mainReturn := startMain(t,
 		"sonicweb",
 		"-root", "./testroot",
@@ -171,13 +173,18 @@ func TestSonicMain(t *testing.T) {
 	couldRequest := false
 
 	for i := 0; i < 10 && !couldRequest; i++ {
-		req, _ := http.NewRequest("GET", "http://localhost:8080/index.html", nil)
-		res, err := http.DefaultClient.Do(req.WithContext(context.Background()))
+		req, _ := http.NewRequestWithContext(
+			t.Context(),
+			http.MethodGet,
+			"http://localhost:8080/index.html",
+			nil)
+		res, err := http.DefaultClient.Do(req)
 
 		if err != nil {
 			runtime.Gosched()
 			fmt.Printf("received error: %v\n", err)
 			time.Sleep(500 * time.Millisecond)
+
 			continue
 		}
 
@@ -243,13 +250,18 @@ func TestSonicMainTLS(t *testing.T) {
 			},
 		}
 
-		req, _ := http.NewRequest("GET", "https://localhost:8080/index.html", nil)
-		res, err := client.Do(req.WithContext(context.Background()))
+		req, _ := http.NewRequestWithContext(
+			t.Context(),
+			http.MethodGet,
+			"https://localhost:8080/index.html",
+			nil)
+		res, err := client.Do(req)
 
 		if err != nil {
 			runtime.Gosched()
 			fmt.Printf("received error: %v\n", err)
 			time.Sleep(500 * time.Millisecond)
+
 			continue
 		}
 
@@ -369,9 +381,13 @@ func BenchmarkHandler(b *testing.B) {
 
 	client := &http.Client{}
 
-	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", server.URL, nil)
-		resp, err := client.Do(req.WithContext(context.Background()))
+	for range b.N {
+		req, _ := http.NewRequestWithContext(
+			b.Context(),
+			http.MethodGet,
+			server.URL,
+			nil)
+		resp, err := client.Do(req)
 
 		if err != nil {
 			b.Fatalf("Failed to make GET request: %v", err)

@@ -23,7 +23,6 @@ import (
 
 // wafMiddleware generates the web application firewall middleware.
 func wafMiddleware(configs []string) (func(http.Handler) http.Handler, error) {
-
 	wafConfig := coraza.NewWAFConfig()
 
 	for _, config := range configs {
@@ -148,7 +147,7 @@ func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 
 // addTryFiles looks if the given URI matches an existing file.
 // If there is no file, a series of other files is tried instead.
-func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
+func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.Handler {
 	tryFiles := make([]string, 0, len(tries))
 
 	for _, v := range tries {
@@ -173,24 +172,21 @@ func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 				default:
 					slog.Warn("unknown variable in tryfile", slog.String("name", s))
 				}
+
 				return ""
 			}
 
-			for _, t := range tryFiles {
-				path := os.Expand(t, expandFunc)
+			for _, filename := range tryFiles {
+				path := os.Expand(filename, expandFunc)
 
 				if len(path) == 0 {
 					// since we operate on os.Root, we can have leading /
 					path = "/"
 				}
 
-				slog.Debug("try-file",
-					slog.String("pattern", t),
-					slog.String("path", path))
-
-				if _, statErr := fs.Stat(strings.TrimPrefix(path, "/")); statErr != nil {
+				if _, statErr := fileSystem.Stat(strings.TrimPrefix(path, "/")); statErr != nil {
 					if strings.HasSuffix(path, "/") {
-						if _, statErr2 := fs.Stat(strings.TrimPrefix(path, "/") + "index.html"); statErr2 != nil {
+						if _, statErr2 := fileSystem.Stat(strings.TrimPrefix(path, "/") + "index.html"); statErr2 != nil {
 							// path does not exist, has / suffix, and also path/index.html does not exist
 							continue
 						}
@@ -201,12 +197,13 @@ func addTryFiles(tries []string, fs fs.StatFS) func(http.Handler) http.Handler {
 				}
 
 				slog.Debug("using try file",
-					slog.String("pattern", t),
+					slog.String("pattern", filename),
 					slog.String("path", path))
 
 				r.URL.Path = path
 
 				next.ServeHTTP(w, r)
+
 				return
 			}
 
