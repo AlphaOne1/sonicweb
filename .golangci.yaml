@@ -16,7 +16,9 @@ linters:
     disable:
         - exhaustruct
         - forbidigo
+        - noinlineerr
         - wsl
+        - wsl_v5
 
     exclusions:
         warn-unused: true

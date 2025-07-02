@@ -173,8 +173,12 @@ func TestSonicMain(t *testing.T) {
 	couldRequest := false
 
 	for i := 0; i < 10 && !couldRequest; i++ {
-		req, _ := http.NewRequest(http.MethodGet, "http://localhost:8080/index.html", nil)
-		res, err := http.DefaultClient.Do(req.WithContext(t.Context()))
+		req, _ := http.NewRequestWithContext(
+			t.Context(),
+			http.MethodGet,
+			"http://localhost:8080/index.html",
+			nil)
+		res, err := http.DefaultClient.Do(req)
 
 		if err != nil {
 			runtime.Gosched()
@@ -246,8 +250,12 @@ func TestSonicMainTLS(t *testing.T) {
 			},
 		}
 
-		req, _ := http.NewRequest(http.MethodGet, "https://localhost:8080/index.html", nil)
-		res, err := client.Do(req.WithContext(t.Context()))
+		req, _ := http.NewRequestWithContext(
+			t.Context(),
+			http.MethodGet,
+			"https://localhost:8080/index.html",
+			nil)
+		res, err := client.Do(req)
 
 		if err != nil {
 			runtime.Gosched()
@@ -374,8 +382,12 @@ func BenchmarkHandler(b *testing.B) {
 	client := &http.Client{}
 
 	for range b.N {
-		req, _ := http.NewRequest(http.MethodGet, server.URL, nil)
-		resp, err := client.Do(req.WithContext(b.Context()))
+		req, _ := http.NewRequestWithContext(
+			b.Context(),
+			http.MethodGet,
+			server.URL,
+			nil)
+		resp, err := client.Do(req)
 
 		if err != nil {
 			b.Fatalf("Failed to make GET request: %v", err)
