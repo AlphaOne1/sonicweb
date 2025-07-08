@@ -6,7 +6,7 @@ module sonic
 go 1.24.0
 
 require (
-	github.com/AlphaOne1/geany v0.1.0
+	github.com/AlphaOne1/geany v0.1.1
 	github.com/AlphaOne1/midgard v0.1.1
 	github.com/corazawaf/coraza/v3 v3.3.3
 	github.com/prometheus/client_golang v1.22.0
