@@ -8,9 +8,12 @@ IGOARCH=     $(shell go env GOARCH)
 ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 IBUILDTAG=   $(shell git describe --tags)
 PATH:=       $(PATH):$(shell go env GOPATH)/bin
-MANPAGES=	 man/sonicweb.1.gz		\
+MANPAGES=    man/sonicweb.1.gz		\
              man/sonicweb_de.1.gz	\
              man/sonicweb_es.1.gz
+SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
+SOURCES=     $(shell go list -f $(SOURCES_FMT) ./... ) logo.tmpl
+
 
 .PHONY: all clean docker test tls
 
@@ -19,7 +22,7 @@ docker: docker-linux-amd64
 package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: SonicWeb-$(IBUILDTAG).tgz
 
-sonic-%: *.go logo.tmpl
+sonic-%: $(SOURCES)
 	CGO_ENABLED=$(ICGO_ENABLED) go build						\
 			-trimpath											\
 			-ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
