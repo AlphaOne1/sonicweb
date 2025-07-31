@@ -9,7 +9,7 @@ require (
 	github.com/AlphaOne1/geany v0.1.1
 	github.com/AlphaOne1/midgard v0.1.1
 	github.com/corazawaf/coraza/v3 v3.3.3
-	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/client_golang v1.23.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
