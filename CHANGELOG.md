@@ -3,6 +3,7 @@ Release 1.5.1
 
 - added golangci-lint and adapted code
 - dependency updates
+- added Community Code of Conduct
 
 Release 1.5.0
 =============
