@@ -3,7 +3,9 @@ Release 1.5.1
 
 - added golangci-lint and adapted code
 - dependency updates
+- update to Go 1.25
 - added Community Code of Conduct
+- removed automaxprocs, as this is working fine as of Go 1.25
 
 Release 1.5.0
 =============

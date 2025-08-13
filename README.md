@@ -1,6 +1,68 @@
+<!-- markdownlint-disable MD013 MD033 MD041 -->
 <p align="center">
     <img src="sonicweb_logo.svg" width="60%" alt="Logo"><br>
+    <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/test.yml"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://github.com/AlphaOne1/sonicweb/actions/workflows/test.yml/badge.svg"
+             alt="Test Pipeline Result">
+    </a>
+    <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/codeql.yml"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://github.com/AlphaOne1/sonicweb/actions/workflows/codeql.yml/badge.svg"
+             alt="CodeQL Pipeline Result">
+    </a>
+    <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/security.yml"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://github.com/AlphaOne1/sonicweb/actions/workflows/security.yml/badge.svg"
+             alt="Security Pipeline Result">
+    </a>
+    <a href="https://goreportcard.com/report/github.com/AlphaOne1/sonicweb"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://goreportcard.com/badge/github.com/AlphaOne1/sonicweb"
+             alt="Go Report Card">
+    </a>
+    <a href="https://app.codecov.io/gh/AlphaOne1/sonicweb"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://codecov.io/gh/AlphaOne1/sonicweb/graph/badge.svg"
+             alt="Code Coverage">
+    </a>
+    <a href="https://coderabbit.ai"
+       rel="external noopener noreferrer"
+       target="_blank">
+       <img src="https://img.shields.io/coderabbit/prs/github/AlphaOne1/sonicweb"
+            alt="CodeRabbit Reviews">
+    </a>
+    <!--<a href="https://www.bestpractices.dev/projects/0000"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://www.bestpractices.dev/projects/0000/badge"
+             alt="OpenSSF Best Practices">
+    </a>-->
+    <a href="https://scorecard.dev/viewer/?uri=github.com/AlphaOne1/sonicweb"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://api.scorecard.dev/projects/github.com/AlphaOne1/sonicweb/badge"
+             alt="OpenSSF Scorecard">
+    </a>
+    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=license"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb.svg?type=shield&issueType=license"
+            alt="FOSSA License Status">
+    </a>
+    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=security"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb.svg?type=shield&issueType=security"
+             alt="FOSSA Security Status">
+    </a>
 </p>
+<!-- markdownlint-enable MD013 MD033 MD041 -->
 
 *SonicWeb* is a lightweight, easy-to-use web server for static content.
 
@@ -37,8 +99,8 @@ Getting Started
 | -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |          |
 | -header         \<header\>   | additional header                                  | n/a               | &check;  |
 | -headerfile     \<file\>     | file containing additional headers                 | n/a               | &check;  |
-| -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | &check;  | 
-| -wafcfg         \<file-glob> | configuration for Web Application Firewall         | n/a               | &check;  | 
+| -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | &check;  |
+| -wafcfg         \<file-glob> | configuration for Web Application Firewall         | n/a               | &check;  |
 | -iport          \<port\>     | port to listen on for telemetry requests           | `8081`            |          |
 | -iaddress       \<address\>  | address to listen on for telemetry requests        | all               |          |
 | -telemetry      {true,false} | enable/disable telemetry support                   | `true`            |          |
