@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -230,7 +231,7 @@ func main() {
 	}
 
 	server := http.Server{
-		Addr:              config.ListenAddress + ":" + config.ListenPort,
+		Addr:              net.JoinHostPort(config.ListenAddress, config.ListenPort),
 		ReadHeaderTimeout: ReadTimeout,
 		ReadTimeout:       ReadTimeout,
 		TLSConfig:         tlsConfig,

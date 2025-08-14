@@ -44,9 +44,6 @@ linters:
             - path: main.go
               linters:
                   - funlen
-            - linters:
-                - noctx
-              text: "^log/slog\\."
 
     settings:
         cyclop:
