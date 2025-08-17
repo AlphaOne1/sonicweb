@@ -66,7 +66,7 @@ func generateTLSConfig(
 
 func validateTLSParams(cert, key string, acmeDomains, clientCAs []string) error {
 	if (len(cert) > 0) != (len(key) > 0) {
-		return fmt.Errorf("icert and key must both be given or not given: %w", errTLSConfig)
+		return fmt.Errorf("cert and key must both be given or not given: %w", errTLSConfig)
 	}
 	if len(cert) > 0 && len(acmeDomains) > 0 {
 		return fmt.Errorf("either cert+key or acmeDomains are to be given: %w", errTLSConfig)

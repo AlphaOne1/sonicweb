@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -110,7 +111,7 @@ func serveMetrics(address string, port string, enableTelemetry, enablePprof bool
 		return
 	}
 
-	listenAddress := address + ":" + port
+	listenAddress := net.JoinHostPort(address, port)
 
 	mux := http.NewServeMux()
 

@@ -5,13 +5,13 @@
 package main
 
 import (
-	"context"
 	_ "embed"
 	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -25,7 +25,6 @@ import (
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/util"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.uber.org/automaxprocs/maxprocs"
 )
 
 // ServerName is the reported server name in the header.
@@ -120,22 +119,6 @@ func setupFlags() ServerConfig {
 	return config
 }
 
-// setupMaxProcs sets the maximum count of processors to use for scheduling.
-func setupMaxProcs() error {
-	if _, mpFound := os.LookupEnv("GOMAXPROCS"); !mpFound {
-		if _, err := maxprocs.Set(maxprocs.Logger(func(format string, args ...any) {
-			if slog.Default().Enabled(context.Background(), slog.LevelInfo) {
-				message := fmt.Sprintf(format, args...)
-				slog.Info(message)
-			}
-		})); err != nil {
-			return fmt.Errorf("failed to automatically set GOMAXPROCS: %w", err)
-		}
-	}
-
-	return nil
-}
-
 var errConversion = errors.New("conversion error")
 
 // generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
@@ -208,12 +191,6 @@ func main() {
 		exitFunc(1)
 	}
 
-	if err := setupMaxProcs(); err != nil {
-		slog.Error("could not set maximum processors to use",
-			slog.String("error", err.Error()))
-		exitFunc(1)
-	}
-
 	slog.Info("logging", slog.String("level", config.LogLevel))
 
 	slog.Info("using root directory", slog.String("root", config.RootPath))
@@ -254,7 +231,7 @@ func main() {
 	}
 
 	server := http.Server{
-		Addr:              config.ListenAddress + ":" + config.ListenPort,
+		Addr:              net.JoinHostPort(config.ListenAddress, config.ListenPort),
 		ReadHeaderTimeout: ReadTimeout,
 		ReadTimeout:       ReadTimeout,
 		TLSConfig:         tlsConfig,
