@@ -107,10 +107,10 @@ jobs:
           - name: Coverage
             run: go tool cover -func=coverage.txt
 
-#          - name: Upload coverage to Codecov
-#            uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
-#            with:
-#                token: ${{ secrets.CODECOV_TOKEN }}
+          - name: Upload coverage to Codecov
+            uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+            with:
+                token: ${{ secrets.CODECOV_TOKEN }}
 
     # This action is mainly composed of snippets of github.com/jidicula/go-fuzz-action
 #    FuzzTest:
