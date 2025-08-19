@@ -1,3 +1,8 @@
+Release 1.5.2
+=============
+
+- changed release artifacts for Windows to 7z
+
 Release 1.5.1
 =============
 

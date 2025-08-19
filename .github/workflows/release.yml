@@ -8,11 +8,10 @@ on:
         types:
             - published
 
-permissions:
-    contents: write
-
 jobs:
     Build:
+        permissions:
+            contents: write
         strategy:
             matrix:
                 go-version:
