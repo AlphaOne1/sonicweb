@@ -72,12 +72,12 @@ jobs:
 
             - name: Compress 7z
               if: matrix.os == 'windows'
-              uses: edgarrc/action-7z@v1
+              uses: edgarrc/action-7z@93485892b5468e89cfb2c28a8d1c0e3904906458 # v1.0.5
               with:
                  args: 7z a -t7z -mx=9 sonic-${{matrix.os}}-${{matrix.architecture}}.7z sonic-${{matrix.os}}-${{matrix.architecture}}
 
             - name: Upload Release
-              uses: softprops/action-gh-release@v2
+              uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
               with:
                   files: |
                       sonic-*-*.7z
