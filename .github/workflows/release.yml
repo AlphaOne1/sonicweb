@@ -66,13 +66,21 @@ jobs:
                   GOARCH: ${{matrix.architecture}}
               run: make package
 
-            - name: Compress
+            - name: Compress xz
+              if: matrix.os != 'windows'
               run: xz -9 sonic-*-*
+
+            - name: Compress 7z
+              if: matrix.os == 'windows'
+              uses: edgarrc/action-7z@v1
+              with:
+                 args: 7z a -t7z -mx=9 sonic-${{matrix.os}}-${{matrix.architecture}}.7z sonic-${{matrix.os}}-${{matrix.architecture}}
 
             - name: Upload Release
               uses: softprops/action-gh-release@v2
               with:
                   files: |
+                      sonic-*-*.7z
                       sonic-*-*.xz
                       SonicWeb*.rpm
                       SonicWeb*.deb
