@@ -78,13 +78,12 @@ jobs:
                 sudo apt-get install -y p7zip-full
                 7z a -t7z -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
 
-            - name: Upload Release (via GitHub CLI)
+            - name: Upload Non-Windows Release (via GitHub CLI)
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                gh release upload "${{ github.event.release.tag_name }}" \
-                  sonic-*-*.7z \
-                  sonic-*-*.xz \
-                  SonicWeb*.rpm \
-                  SonicWeb*.deb \
-                  --clobber
+                shopt -s nullglob
+                for file in sonic-*-* SonicWeb*.rpm SonicWeb*.deb
+                do
+                    gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
+                done
