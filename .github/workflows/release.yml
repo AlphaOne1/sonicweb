@@ -44,7 +44,7 @@ jobs:
             - name: Install nfpm
               if: matrix.os == 'linux'
               run: |
-                  go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+                  go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
                   echo "$(go env GOPATH)/bin" >> GITHUB_PATH
 
             - name: Checkout
