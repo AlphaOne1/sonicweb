@@ -76,7 +76,7 @@ jobs:
               run: |
                 sudo apt-get update
                 sudo apt-get install -y p7zip-full
-                7z a -t7z -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
+                7z a -t7z -ssw -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
 
             - name: Upload Non-Windows Release (via GitHub CLI)
               env:
