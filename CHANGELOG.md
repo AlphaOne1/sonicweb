@@ -2,6 +2,7 @@ Release 1.5.2
 =============
 
 - changed release artifacts for Windows to 7z
+- fixed Windows executable file suffix
 
 Release 1.5.1
 =============
