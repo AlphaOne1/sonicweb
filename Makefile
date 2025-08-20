@@ -5,6 +5,7 @@
 
 IGOOS=       $(shell go env GOOS)
 IGOARCH=     $(shell go env GOARCH)
+EXEC_SUFFIX= $(if $(filter windows,$(IGOOS)),.exe,)
 ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 IBUILDTAG=   $(shell git describe --tags)
 PATH:=       $(PATH):$(shell go env GOPATH)/bin
@@ -17,7 +18,7 @@ SOURCES=     $(shell go list -f $(SOURCES_FMT) ./... ) logo.tmpl
 
 .PHONY: all clean docker test tls
 
-all: sonic-$(IGOOS)-$(IGOARCH)
+all: sonic-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
 docker: docker-linux-amd64
 package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: SonicWeb-$(IBUILDTAG).tgz
