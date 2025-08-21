@@ -52,7 +52,7 @@ jobs:
               if: matrix.os == 'linux'
               run: |
                   go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
-                  echo "$(go env GOPATH)/bin" >> GITHUB_PATH
+                  echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
             - name: Checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -76,7 +76,7 @@ jobs:
 
             - name: Compress xz
               if: matrix.os != 'windows'
-              run: xz -9 sonic-*-*
+              run: xz -T0 -9 sonic-*-*
 
             - name: Compress 7z (Windows)
               if: matrix.os == 'windows'
@@ -84,12 +84,13 @@ jobs:
               run: |
                   $sevenZip = "C:\Program Files\7-Zip\7z.exe"
                   if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
-                  & $sevenZip a -t7z -ssw -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
+                  & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
 
             - name: Upload Non-Windows Release (via GitHub CLI)
               if: matrix.os != 'windows'
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              shell: bash
               run: |
                   shopt -s nullglob
                   for file in sonic-*-* SonicWeb*.rpm SonicWeb*.deb
@@ -103,5 +104,9 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
+                  Set-StrictMode -Version Latest
+                  $ErrorActionPreference = 'Stop'
                   $tag = "${{ github.event.release.tag_name }}"
-                  Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object { gh release upload $tag $_.FullName --clobber }
+                  Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object {
+                      gh release upload $tag $_.FullName --clobber
+                  }
