@@ -29,7 +29,14 @@ jobs:
                 exclude:
                     - os: darwin
                       architecture: 386
-        runs-on: ubuntu-latest
+                include:
+                    - os: linux
+                      runner: ubuntu-latest
+                    - os: windows
+                      runner: windows-latest
+                    - os: darwin
+                      runner: macos-latest
+        runs-on: ${{ matrix.runner }}
         steps:
             - name: Harden Runner
               uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -71,14 +78,16 @@ jobs:
               if: matrix.os != 'windows'
               run: xz -9 sonic-*-*
 
-            - name: Compress 7z (verified path via system 7zip)
+            - name: Compress 7z (Windows)
               if: matrix.os == 'windows'
+              shell: powershell
               run: |
-                sudo apt-get update
-                sudo apt-get install -y p7zip-full
-                7z a -t7z -ssw -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
+                $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+                if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
+                & $sevenZip a -t7z -ssw -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
 
             - name: Upload Non-Windows Release (via GitHub CLI)
+              if: matrix.os != 'windows'
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
@@ -87,3 +96,12 @@ jobs:
                 do
                     gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
                 done
+
+            - name: Upload Windows Release (via GitHub CLI)
+              if: matrix.os == 'windows'
+              shell: powershell
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                $tag = "${{ github.event.release.tag_name }}"
+                Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object { gh release upload $tag $_.FullName --clobber }
