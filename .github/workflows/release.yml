@@ -61,9 +61,9 @@ jobs:
 
             - name: Build
               env:
-                CGO_ENABLED: "0"
-                GOOS: ${{matrix.os}}
-                GOARCH: ${{matrix.architecture}}
+                  CGO_ENABLED: "0"
+                  GOOS: ${{matrix.os}}
+                  GOARCH: ${{matrix.architecture}}
               run: make
 
             - name: Build Package
@@ -82,26 +82,26 @@ jobs:
               if: matrix.os == 'windows'
               shell: powershell
               run: |
-                $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-                if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
-                & $sevenZip a -t7z -ssw -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
+                  $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+                  if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
+                  & $sevenZip a -t7z -ssw -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
 
             - name: Upload Non-Windows Release (via GitHub CLI)
               if: matrix.os != 'windows'
               env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                shopt -s nullglob
-                for file in sonic-*-* SonicWeb*.rpm SonicWeb*.deb
-                do
-                    gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
-                done
+                  shopt -s nullglob
+                  for file in sonic-*-* SonicWeb*.rpm SonicWeb*.deb
+                  do
+                      gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
+                  done
 
             - name: Upload Windows Release (via GitHub CLI)
               if: matrix.os == 'windows'
               shell: powershell
               env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                $tag = "${{ github.event.release.tag_name }}"
-                Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object { gh release upload $tag $_.FullName --clobber }
+                  $tag = "${{ github.event.release.tag_name }}"
+                  Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object { gh release upload $tag $_.FullName --clobber }
