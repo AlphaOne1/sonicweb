@@ -1,3 +1,10 @@
+Release 1.5.3
+=============
+
+- added fuzz testing
+- document internal functions
+- dependency updates
+
 Release 1.5.2
 =============
 

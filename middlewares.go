@@ -212,3 +212,24 @@ func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.H
 		})
 	}
 }
+
+func checkValidFilePath() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			path := r.URL.Path
+
+			if strings.HasPrefix(path, "/") {
+				path = path[1:]
+			}
+
+			if path != "" && !fs.ValidPath(path) {
+				http.Error(w, "invalid path", http.StatusBadRequest)
+				slog.Error("invalid path", slog.String("path", path))
+
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
