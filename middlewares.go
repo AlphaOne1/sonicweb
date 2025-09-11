@@ -220,7 +220,7 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 
 			if path != "" && !fs.ValidPath(path) {
 				http.Error(w, "invalid path", http.StatusBadRequest)
-				slog.Error("invalid path", slog.String("path", path))
+				slog.Warn("invalid path", slog.String("path", path))
 
 				return
 			}

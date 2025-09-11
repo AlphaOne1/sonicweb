@@ -143,7 +143,7 @@ func generateFileHandler(
 		return nil, fmt.Errorf("could not open root: %w", rootErr) // silencing the static checker, unreachable
 	}
 
-	if wafCfg != nil {
+	if len(wafCfg) > 0 {
 		wafMW, wafMWErr := wafMiddleware(wafCfg)
 
 		if wafMWErr != nil {
