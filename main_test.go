@@ -444,7 +444,7 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 
 	urlParts := strings.Split(uri, "/")
 
-	for i := 0; i < len(urlParts); i++ {
+	for i := range urlParts {
 		urlParts[i] = url.PathEscape(urlParts[i])
 	}
 
@@ -525,6 +525,8 @@ func FuzzSonicMain(f *testing.F) {
 }
 
 func TestSonicMainHandler(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		uri         string
 		method      string
