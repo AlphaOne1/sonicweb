@@ -83,34 +83,34 @@ func generateCertAndKey() (string, string) {
 
 type testHelper interface {
 	Helper()
-	Errorf(string, ...any)
+	Errorf(format string, a ...any)
 }
 
-func sendMe(h testHelper, sig os.Signal) {
-	h.Helper()
+func sendMe(helper testHelper, sig os.Signal) {
+	helper.Helper()
 
 	currentPID := os.Getpid()
 	currentProcess, currentProcessErr := os.FindProcess(currentPID)
 
 	if currentProcessErr != nil {
-		h.Errorf("could not get process id")
+		helper.Errorf("could not get process id")
 		return
 	}
 
 	switch runtime.GOOS {
 	case "windows":
-		h.Errorf("Go does not yet support anything else than KILL on Windows")
+		helper.Errorf("Go does not yet support anything else than KILL on Windows")
 		sig = os.Kill
 	default:
 	}
 
 	if signalErr := currentProcess.Signal(sig); signalErr != nil {
-		h.Errorf("could not send signal %s: %v", sig.String(), signalErr)
+		helper.Errorf("could not send signal %s: %v", sig.String(), signalErr)
 	}
 }
 
-func startMain(h testHelper, args ...string) (*time.Timer, chan int) {
-	h.Helper()
+func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
+	helper.Helper()
 	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
 		panic(code)
@@ -147,7 +147,7 @@ func startMain(h testHelper, args ...string) (*time.Timer, chan int) {
 
 	slog.Info("setting exit timeout")
 	afterTimer := time.AfterFunc(2*time.Second, func() {
-		sendMe(h, syscall.SIGTERM)
+		sendMe(helper, syscall.SIGTERM)
 	})
 
 	return afterTimer, mainReturn
@@ -411,6 +411,8 @@ func BenchmarkHandler(b *testing.B) {
 }
 
 func sonicMainHandlerTest(t *testing.T, uri string, method string, header string, headerValue string) {
+	t.Helper()
+
 	fileHandler, fileHandlerErr := generateFileHandler(
 		false,
 		false,
@@ -465,13 +467,19 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 		if s == "" || len(s) > 128 {
 			return false
 		}
-		for i := 0; i < len(s); i++ {
+
+		for i := range len(s) {
 			c := s[i]
-			isAlphaNum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
-			if !(isAlphaNum || c == '-') {
+			isAlphaNum :=
+				(c >= 'a' && c <= 'z') ||
+					(c >= 'A' && c <= 'Z') ||
+					(c >= '0' && c <= '9')
+
+			if !isAlphaNum && c != '-' {
 				return false
 			}
 		}
+
 		return true
 	}
 	if len(headerValue) > 1024 {
@@ -517,8 +525,6 @@ func FuzzSonicMain(f *testing.F) {
 }
 
 func TestSonicMainHandler(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		uri         string
 		method      string
@@ -532,6 +538,8 @@ func TestSonicMainHandler(t *testing.T) {
 
 	for testIndex, test := range tests {
 		t.Run(fmt.Sprintf("TestSonicMainHandler-%d", testIndex), func(t *testing.T) {
+			t.Parallel()
+
 			sonicMainHandlerTest(t,
 				test.uri,
 				test.method,

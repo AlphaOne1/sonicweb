@@ -56,7 +56,7 @@ func headerParamToHeaders(param []string) [][2]string {
 			s = append(s, "")
 		}
 
-		// we cut just one "  " as this is often seen after colon after the header key
+		// we cut just one " " as this is often seen after colon after the header key
 		headers = append(headers, [2]string{s[0], strings.TrimSpace(s[1])})
 	}
 
@@ -216,11 +216,7 @@ func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.H
 func checkValidFilePath() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			path := r.URL.Path
-
-			if strings.HasPrefix(path, "/") {
-				path = path[1:]
-			}
+			path := strings.TrimPrefix(r.URL.Path, "/")
 
 			if path != "" && !fs.ValidPath(path) {
 				http.Error(w, "invalid path", http.StatusBadRequest)
