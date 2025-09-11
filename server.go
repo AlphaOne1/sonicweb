@@ -23,6 +23,7 @@ var serversToShutdown = sync.WaitGroup{}
 // Returns an error if the server fails to shut down gracefully.
 func waitServerShutdown(server *http.Server, serverName string) error {
 	serversToShutdown.Add(1)
+	defer serversToShutdown.Done()
 
 	// termination handling
 	termReceived := make(chan os.Signal, 1)
@@ -42,15 +43,11 @@ func waitServerShutdown(server *http.Server, serverName string) error {
 		slog.Error("error shutting down server",
 			slog.String("name", serverName),
 			slog.String("error", shutdownErr.Error()))
-	} else {
-		slog.Info("server shutdown", slog.String("name", serverName))
-	}
 
-	serversToShutdown.Done()
-
-	if shutdownErr != nil {
 		return fmt.Errorf("could not shutdown server %s: %w", serverName, shutdownErr)
 	}
+
+	slog.Info("server shutdown", slog.String("name", serverName))
 
 	return nil
 }

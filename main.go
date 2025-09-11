@@ -143,10 +143,14 @@ func generateFileHandler(
 		return nil, fmt.Errorf("could not open root: %w", rootErr) // silencing the static checker, unreachable
 	}
 
-	wafMW, wafMWErr := wafMiddleware(wafCfg)
+	if len(wafCfg) > 0 {
+		wafMW, wafMWErr := wafMiddleware(wafCfg)
 
-	if wafMWErr != nil {
-		return nil, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
+		if wafMWErr != nil {
+			return nil, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
+		}
+
+		mwStack = append(mwStack, wafMW)
 	}
 
 	statFS, statFSOK := root.FS().(fs.StatFS)
@@ -156,11 +160,11 @@ func generateFileHandler(
 	}
 
 	mwStack = append(mwStack,
-		wafMW,
 		addHeaders(additionalHeaders),
 		util.Must(correlation.New()),
 		util.Must(access_log.New()),
 		addTryFiles(tryFiles, statFS),
+		checkValidFilePath(),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(basePath, next)
 		})

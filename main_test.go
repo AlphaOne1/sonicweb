@@ -18,8 +18,10 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"runtime"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -79,31 +81,36 @@ func generateCertAndKey() (string, string) {
 	return certFile.Name(), keyFile.Name()
 }
 
-func sendMe(t *testing.T, sig os.Signal) {
-	t.Helper()
+type testHelper interface {
+	Helper()
+	Errorf(format string, a ...any)
+}
+
+func sendMe(helper testHelper, sig os.Signal) {
+	helper.Helper()
 
 	currentPID := os.Getpid()
 	currentProcess, currentProcessErr := os.FindProcess(currentPID)
 
 	if currentProcessErr != nil {
-		t.Errorf("could not get process id")
+		helper.Errorf("could not get process id")
 		return
 	}
 
 	switch runtime.GOOS {
 	case "windows":
-		t.Errorf("Go does not yet support anything else than KILL on Windows")
+		helper.Errorf("Go does not yet support anything else than KILL on Windows")
 		sig = os.Kill
 	default:
 	}
 
 	if signalErr := currentProcess.Signal(sig); signalErr != nil {
-		t.Errorf("could not send signal %s: %v", sig.String(), signalErr)
+		helper.Errorf("could not send signal %s: %v", sig.String(), signalErr)
 	}
 }
 
-func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
-	t.Helper()
+func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
+	helper.Helper()
 	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
 		panic(code)
@@ -140,18 +147,18 @@ func startMain(t *testing.T, args ...string) (*time.Timer, chan int) {
 
 	slog.Info("setting exit timeout")
 	afterTimer := time.AfterFunc(2*time.Second, func() {
-		sendMe(t, syscall.SIGTERM)
+		sendMe(helper, syscall.SIGTERM)
 	})
 
 	return afterTimer, mainReturn
 }
 
-func finalizeMain(t *testing.T, afterTimer *time.Timer, result chan int) int {
-	t.Helper()
+func finalizeMain(h testHelper, afterTimer *time.Timer, result chan int) int {
+	h.Helper()
 	slog.Info("stoping exit timer")
 
 	if afterTimer.Stop() {
-		sendMe(t, syscall.SIGTERM)
+		sendMe(h, syscall.SIGTERM)
 	}
 
 	return <-result
@@ -400,5 +407,147 @@ func BenchmarkHandler(b *testing.B) {
 		}
 
 		_ = resp.Body.Close()
+	}
+}
+
+func sonicMainHandlerTest(t *testing.T, uri string, method string, header string, headerValue string) {
+	t.Helper()
+
+	fileHandler, fileHandlerErr := generateFileHandler(
+		false,
+		false,
+		"/",
+		"testroot/",
+		nil,
+		nil,
+		nil)
+
+	if fileHandlerErr != nil {
+		t.Fatalf("could not generate file handler: %v", fileHandlerErr)
+	}
+
+	// Basic input constraints to keep fuzzing focused and avoid trivial rejections
+	if len(uri) == 0 || len(uri) > 1024 {
+		t.Skip()
+	}
+
+	// Ensure uri is a path; strip spaces and reject NUL
+	uri = strings.TrimSpace(uri)
+
+	if strings.ContainsRune(uri, '\x00') {
+		t.Skip()
+	}
+
+	if !strings.HasPrefix(uri, "/") {
+		uri = "/" + uri
+	}
+
+	urlParts := strings.Split(uri, "/")
+
+	for i := range urlParts {
+		urlParts[i] = url.PathEscape(urlParts[i])
+	}
+
+	uri = strings.Join(urlParts, "/")
+
+	if _, err := url.Parse(uri); err != nil {
+		t.Skip()
+	}
+
+	// Only fuzz a small, meaningful method set to reduce noise
+	switch strings.ToUpper(method) {
+	case "GET", "HEAD":
+		method = strings.ToUpper(method)
+	default:
+		t.Skip()
+	}
+
+	// Validate header name; only set it if it looks sane
+	validHeader := func(s string) bool {
+		if s == "" || len(s) > 128 {
+			return false
+		}
+
+		for i := range len(s) {
+			c := s[i]
+			isAlphaNum :=
+				(c >= 'a' && c <= 'z') ||
+					(c >= 'A' && c <= 'Z') ||
+					(c >= '0' && c <= '9')
+
+			if !isAlphaNum && c != '-' {
+				return false
+			}
+		}
+
+		return true
+	}
+	if len(headerValue) > 1024 {
+		// Avoid huge header values that only stress http parsing without adding coverage
+		t.Skip()
+	}
+
+	rec := httptest.NewRecorder()
+
+	req := httptest.NewRequestWithContext(
+		t.Context(),
+		method,
+		"http://localhost:8080"+uri,
+		nil)
+
+	if validHeader(header) {
+		req.Header.Set(header, headerValue)
+	}
+
+	fileHandler.ServeHTTP(rec, req)
+
+	if rec.Result().StatusCode >= http.StatusInternalServerError {
+		t.Errorf("received status code %s (%d) for %s %s",
+			http.StatusText(rec.Result().StatusCode),
+			rec.Result().StatusCode,
+			method,
+			uri)
+	}
+
+	if err := rec.Result().Body.Close(); err != nil {
+		t.Errorf("could not close response: %v", err)
+	}
+}
+
+func FuzzSonicMain(f *testing.F) {
+	f.Add("index.html", "GET", "X-Fuzz", "value")
+	f.Add("index.html", "HEAD", "X-Empty", "")
+	f.Add("%", "GET", "0", "0")
+	f.Add("\xd8", "HEAD", "0", "")
+	f.Add("0 0", "GET", "0", "0")
+
+	f.Fuzz(sonicMainHandlerTest)
+}
+
+func TestSonicMainHandler(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		uri         string
+		method      string
+		header      string
+		headerValue string
+	}{
+		{uri: "%", method: "GET", header: "0", headerValue: "0"},
+		{uri: "\xd8", method: "HEAD", header: "0", headerValue: ""},
+		{uri: "0 0", method: "GET", header: "0", headerValue: "0"},
+	}
+
+	for testIndex, test := range tests {
+		t.Run(fmt.Sprintf("TestSonicMainHandler-%d", testIndex), func(t *testing.T) {
+			t.Parallel()
+
+			sonicMainHandlerTest(t,
+				test.uri,
+				test.method,
+				test.header,
+				test.headerValue,
+			)
+		})
 	}
 }
