@@ -95,11 +95,12 @@ jobs:
                     username: ${{ github.actor }}
                     password: ${{ secrets.GITHUB_TOKEN }}
 
-            -   name: Generate Variables
-                if: matrix.os == 'linux'
+            -   name: Generate variables
+                if: matrix.os == 'linux' && matrix.architecture != '386'
+                shell: bash
                 run: |
-                    echo "OWNER_LC=${{ toLower(github.repository_owner) }}" >> "$GITHUB_ENV"
-                    echo "IMAGE_NAME=ghcr.io/${OWNER_LC}/sonicweb" >> "$GITHUB_ENV"
+                    echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+                    echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/sonicweb" >> "$GITHUB_ENV"
 
             -   name: Build Docker Image
                 if: matrix.os == 'linux' && matrix.architecture != '386'
@@ -162,9 +163,11 @@ jobs:
         needs: Build
         steps:
             -   name: Generate Variables
+                if: matrix.os == 'linux' && matrix.architecture != '386'
+                shell: bash
                 run: |
-                    echo "OWNER_LC=${{ toLower(github.repository_owner) }}" >> "$GITHUB_ENV"
-                    echo "IMAGE_NAME=ghcr.io/${OWNER_LC}/sonicweb" >> "$GITHUB_ENV"
+                    echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+                    echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/sonicweb" >> "$GITHUB_ENV"
 
             -   name: Login to GHCR
                 uses: docker/login-action@v3
