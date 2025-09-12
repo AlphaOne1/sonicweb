@@ -163,7 +163,6 @@ jobs:
         needs: Build
         steps:
             -   name: Generate Variables
-                if: matrix.os == 'linux' && matrix.architecture != '386'
                 shell: bash
                 run: |
                     echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
