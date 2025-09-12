@@ -71,6 +71,7 @@ jobs:
                   GOARCH: ${{matrix.architecture}}
               run: |
                   go version
+                  go clean -modcache
                   make
 
             - name: Build Package
