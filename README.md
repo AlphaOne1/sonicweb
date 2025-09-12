@@ -7,10 +7,10 @@
         <img src="https://github.com/AlphaOne1/sonicweb/actions/workflows/test.yml/badge.svg"
              alt="Test Pipeline Result">
     </a>
-    <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/codeql.yml"
+    <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/github-code-scanning/codeql"
        rel="external noopener noreferrer"
        target="_blank">
-        <img src="https://github.com/AlphaOne1/sonicweb/actions/workflows/codeql.yml/badge.svg"
+        <img src="https://github.com/AlphaOne1/sonicweb/actions/workflows/github-code-scanning/codeql/badge.svg"
              alt="CodeQL Pipeline Result">
     </a>
     <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/security.yml"
