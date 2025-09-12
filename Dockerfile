@@ -10,6 +10,10 @@
 # Copy or mount the web content to the /www directory.
 # After starting the image the content of this directory will be served.
 
+LABEL org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb
+LABEL org.opencontainers.image.description="SonciWeb webserver"
+LABEL org.opencontainers.image.licenses=MPL-2.0
+
 ARG USER=appuser
 
 FROM ubuntu:latest@sha256:9cbed754112939e914291337b5e554b07ad7c392491dba6daf25eef1332a22e8 AS builder
