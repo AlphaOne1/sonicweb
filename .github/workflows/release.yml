@@ -163,17 +163,17 @@ jobs:
 
             -   name: Build Docker Multi-Arch
                 run: |
-                    docker manifest create ghcr.io/${{ github.repository_owner }}/sonic:${{ github.event.release.tag_name }} \
-                          --amend ghcr.io/${{ github.repository_owner }}/sonic:${{ github.event.release.tag_name }}-amd64    \
-                          --amend ghcr.io/${{ github.repository_owner }}/sonic:${{ github.event.release.tag_name }}-arm64
-                    docker manifest push ghcr.io/${{ github.repository_owner }}/sonic:${{ github.event.release.tag_name }}
+                    docker manifest create ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:${{ github.event.release.tag_name }} \
+                          --amend ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:${{ github.event.release.tag_name }}-amd64    \
+                          --amend ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:${{ github.event.release.tag_name }}-arm64
+                    docker manifest push ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:${{ github.event.release.tag_name }}
                     # latest manifest
-                    docker manifest create ghcr.io/${{ github.repository_owner }}/sonic:latest \
-                          --amend ghcr.io/${{ github.repository_owner }}/sonic:latest-amd64    \
-                          --amend ghcr.io/${{ github.repository_owner }}/sonic:latest-arm64
-                    docker manifest push ghcr.io/${{ github.repository_owner }}/sonic:latest
+                    docker manifest create ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:latest \
+                          --amend ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:latest-amd64    \
+                          --amend ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:latest-arm64
+                    docker manifest push ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:latest
 
             -   name: Inspect manifests (optional)
                 run: |
-                    docker manifest inspect ghcr.io/${{ github.repository_owner }}/sonic:${{ github.event.release.tag_name }}
-                    docker manifest inspect ghcr.io/${{ github.repository_owner }}/sonic:latest
+                    docker manifest inspect ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:${{ github.event.release.tag_name }}
+                    docker manifest inspect ghcr.io/${{ toLower(github.repository_owner) }}/sonicweb:latest
