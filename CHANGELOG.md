@@ -1,3 +1,8 @@
+Release 1.6.0
+=============
+
+- provide prebuild (multi-arch) docker images
+
 Release 1.5.3
 =============
 
