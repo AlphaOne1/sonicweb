@@ -179,6 +179,7 @@ jobs:
 
             -   name: Build Docker Multi-Arch
                 run: |
+                    set -euo pipefail
                     docker manifest create ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }} \
                           --amend ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-amd64    \
                           --amend ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-arm64
