@@ -69,7 +69,9 @@ jobs:
                     CGO_ENABLED: "0"
                     GOOS: ${{matrix.os}}
                     GOARCH: ${{matrix.architecture}}
-                run: make
+                run: |
+                    go version
+                    make
 
             -   name: Build Package
                 if: matrix.os == 'linux'
