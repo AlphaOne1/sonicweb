@@ -181,14 +181,17 @@ jobs:
             - name: Build Docker Multi-Arch
               run: |
                   set -euo pipefail
-                  docker manifest create ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }} \
-                        --amend ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-amd64    \
-                        --amend ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-arm64
-                  docker manifest push ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+                  IMG_RELEASE=${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+                  DIGEST_AMD64=`docker buildx imagetools inspect ${IMG_RELEASE}-amd64 --format '{{ (index .Manifest "digest") }}'`
+                  DIGEST_ARM64=`docker buildx imagetools inspect ${IMG_RELEASE}-arm64 --format '{{ (index .Manifest "digest") }}'`
+                  docker manifest create ${IMG_RELEASE}           \
+                        --amend ${env.IMAGE_NAME}:${DIGEST_AMD64} \
+                        --amend ${env.IMAGE_NAME}:${DIGEST_ARM64}
+                  docker manifest push ${IMG_RELEASE}
                   # latest manifest
                   docker manifest create ${{ env.IMAGE_NAME }}:latest \
-                        --amend ${{ env.IMAGE_NAME }}:latest-amd64    \
-                        --amend ${{ env.IMAGE_NAME }}:latest-arm64
+                        --amend ${env.IMAGE_NAME}:${DIGEST_AMD64} \
+                        --amend ${env.IMAGE_NAME}:${DIGEST_ARM64}
                   docker manifest push ${{ env.IMAGE_NAME }}:latest
 
             - name: Inspect manifests (optional)
