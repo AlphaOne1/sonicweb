@@ -185,13 +185,13 @@ jobs:
                   DIGEST_AMD64=`docker buildx imagetools inspect ${IMG_RELEASE}-amd64 --format '{{ .Manifest.Digest }}'`
                   DIGEST_ARM64=`docker buildx imagetools inspect ${IMG_RELEASE}-arm64 --format '{{ .Manifest.Digest }}'`
                   docker manifest create ${IMG_RELEASE}           \
-                        --amend ${env.IMAGE_NAME}:${DIGEST_AMD64} \
-                        --amend ${env.IMAGE_NAME}:${DIGEST_ARM64}
+                        --amend ${{ env.IMAGE_NAME }}:${DIGEST_AMD64} \
+                        --amend ${{ env.IMAGE_NAME }}:${DIGEST_ARM64}
                   docker manifest push ${IMG_RELEASE}
                   # latest manifest
                   docker manifest create ${{ env.IMAGE_NAME }}:latest \
-                        --amend ${env.IMAGE_NAME}:${DIGEST_AMD64} \
-                        --amend ${env.IMAGE_NAME}:${DIGEST_ARM64}
+                        --amend ${{ env.IMAGE_NAME }}:${DIGEST_AMD64} \
+                        --amend ${{ env.IMAGE_NAME }}:${DIGEST_ARM64}
                   docker manifest push ${{ env.IMAGE_NAME }}:latest
 
             - name: Inspect manifests (optional)
