@@ -182,8 +182,8 @@ jobs:
               run: |
                   set -euo pipefail
                   IMG_RELEASE=${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-                  DIGEST_AMD64=`docker buildx imagetools inspect ${IMG_RELEASE}-amd64 --format '{{ (index .Manifest "digest") }}'`
-                  DIGEST_ARM64=`docker buildx imagetools inspect ${IMG_RELEASE}-arm64 --format '{{ (index .Manifest "digest") }}'`
+                  DIGEST_AMD64=`docker buildx imagetools inspect ${IMG_RELEASE}-amd64 --format '{{ .Digest }}'`
+                  DIGEST_ARM64=`docker buildx imagetools inspect ${IMG_RELEASE}-arm64 --format '{{ .Digest }}'`
                   docker manifest create ${IMG_RELEASE}           \
                         --amend ${env.IMAGE_NAME}:${DIGEST_AMD64} \
                         --amend ${env.IMAGE_NAME}:${DIGEST_ARM64}
