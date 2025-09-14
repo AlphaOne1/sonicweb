@@ -520,6 +520,7 @@ func FuzzSonicMain(f *testing.F) {
 	f.Add("%", "GET", "0", "0")
 	f.Add("\xd8", "HEAD", "0", "")
 	f.Add("0 0", "GET", "0", "0")
+	f.Add(strings.Repeat("0", 256), "HEAD", "0", "0")
 
 	f.Fuzz(sonicMainHandlerTest)
 }
@@ -536,6 +537,7 @@ func TestSonicMainHandler(t *testing.T) {
 		{uri: "%", method: "GET", header: "0", headerValue: "0"},
 		{uri: "\xd8", method: "HEAD", header: "0", headerValue: ""},
 		{uri: "0 0", method: "GET", header: "0", headerValue: "0"},
+		{uri: strings.Repeat("0", 256), method: "HEAD", header: "0", headerValue: "0"},
 	}
 
 	for testIndex, test := range tests {
