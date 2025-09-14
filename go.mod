@@ -3,7 +3,7 @@
 
 module sonic
 
-go 1.25.1
+go 1.25
 
 require (
 	github.com/AlphaOne1/geany v0.1.2
