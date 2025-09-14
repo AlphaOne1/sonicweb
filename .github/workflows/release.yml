@@ -78,6 +78,7 @@ jobs:
                   path: |
                       sonic-${{ matrix.os }}-${{ matrix.architecture }}
                   compression-level: '9'
+                  retention-days: 2
 
             - name: Build Package
               if: matrix.os == 'linux'

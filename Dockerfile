@@ -21,7 +21,6 @@ RUN useradd --home     "/nonexistent"      \
             --shell    "/usr/sbin/nologin" \
             --user-group                   \
             --uid 65532                    \
-            --gid 65532                    \
             -r                             \
             "${USER}"
 
