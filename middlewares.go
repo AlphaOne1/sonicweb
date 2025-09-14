@@ -217,20 +217,15 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const MaxPathPartLength = 255
+			const MaxLogStringLength = 64
 
 			path := strings.TrimPrefix(r.URL.Path, "/")
-
-			if path != "" && !fs.ValidPath(path) {
-				http.Error(w, "invalid path", http.StatusBadRequest)
-				slog.Warn("invalid path", slog.String("path", path))
-
-				return
-			}
 
 			// Enforce a conservative limit for each path segment (common FS limit: 255 bytes)
 			// This guards against overly long filenames like a single 256-char component.
 			if path != "" {
 				parts := strings.Split(path, "/")
+
 				for _, part := range parts {
 					if part == "" {
 						continue
@@ -238,14 +233,24 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 
 					if len(part) > MaxPathPartLength {
 						http.Error(w, "name too long", http.StatusBadRequest)
-						slog.Warn("filename too long",
+
+						// we trim the path and parts to avoid logging overflows
+						slog.Warn("filename too long, truncated",
 							slog.Int("length", len(part)),
-							slog.String("part", part),
-							slog.String("path", path))
+							slog.String("part", part[:MaxLogStringLength]+"..."),
+							slog.String("path", path[:MaxLogStringLength]+"..."))
 
 						return
 					}
 				}
+			}
+
+			if path != "" && !fs.ValidPath(path) {
+				http.Error(w, "invalid path", http.StatusBadRequest)
+				// we do not trim the path here, as it is already reasonably short and we want to see the error
+				slog.Warn("invalid path", slog.String("path", path))
+
+				return
 			}
 
 			next.ServeHTTP(w, r)
