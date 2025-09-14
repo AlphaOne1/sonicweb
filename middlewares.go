@@ -216,6 +216,8 @@ func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.H
 func checkValidFilePath() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			const MaxPathPartLength = 255
+
 			path := strings.TrimPrefix(r.URL.Path, "/")
 
 			if path != "" && !fs.ValidPath(path) {
@@ -223,6 +225,27 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 				slog.Warn("invalid path", slog.String("path", path))
 
 				return
+			}
+
+			// Enforce a conservative limit for each path segment (common FS limit: 255 bytes)
+			// This guards against overly long filenames like a single 256-char component.
+			if path != "" {
+				parts := strings.Split(path, "/")
+				for _, part := range parts {
+					if part == "" {
+						continue
+					}
+
+					if len(part) > MaxPathPartLength {
+						http.Error(w, "name too long", http.StatusBadRequest)
+						slog.Warn("filename too long",
+							slog.Int("length", len(part)),
+							slog.String("part", part),
+							slog.String("path", path))
+
+						return
+					}
+				}
 			}
 
 			next.ServeHTTP(w, r)
