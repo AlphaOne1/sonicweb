@@ -21,8 +21,6 @@ jobs:
             packages: write
         strategy:
             matrix:
-                go-version:
-                    - stable
                 architecture:
                     - "386"
                     - "amd64"
@@ -51,7 +49,7 @@ jobs:
             - name: Install Go
               uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
               with:
-                  go-version: ${{ matrix.go-version }}
+                  go-version-file: go.mod
 
             - name: Install nfpm
               if: matrix.os == 'linux'
@@ -71,7 +69,6 @@ jobs:
                   GOARCH: ${{matrix.architecture}}
               run: |
                   go version
-                  go clean -modcache
                   make
 
             - name: Build Package
@@ -102,8 +99,7 @@ jobs:
               if: matrix.os == 'linux' && matrix.architecture != '386'
               shell: bash
               run: |
-                  echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
-                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/sonicweb" >> "$GITHUB_ENV"
+                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
             - name: Build Docker Image
               if: matrix.os == 'linux' && matrix.architecture != '386'
@@ -168,8 +164,7 @@ jobs:
             - name: Generate Variables
               shell: bash
               run: |
-                  echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
-                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/sonicweb" >> "$GITHUB_ENV"
+                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
             - name: Login to GHCR
               uses: docker/login-action@v3
@@ -179,26 +174,35 @@ jobs:
                   password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build Docker Multi-Arch
+              env:
+                  IMG_RELEASE: ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
               run: |
                   set -euo pipefail
-                  IMG_RELEASE=${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+                  
                   docker buildx imagetools inspect ${IMG_RELEASE}-amd64
                   docker buildx imagetools inspect ${IMG_RELEASE}-arm64
-                  DIGEST_AMD64=`docker buildx imagetools inspect ${IMG_RELEASE}-amd64 --format '{{ (index .Manifest.Manifests 0).Digest }}'`
-                  DIGEST_ARM64=`docker buildx imagetools inspect ${IMG_RELEASE}-arm64 --format '{{ (index .Manifest.Manifests 0).Digest }}'`
+                  
+                  DIGEST_AMD64=`docker buildx imagetools inspect ${IMG_RELEASE}-amd64 \
+                      --format '{{ (index .Manifest.Manifests 0).Digest }}'`
+                  DIGEST_ARM64=`docker buildx imagetools inspect ${IMG_RELEASE}-arm64 \
+                      --format '{{ (index .Manifest.Manifests 0).Digest }}'`
+                  
                   echo "DIGEST_AMD64=${DIGEST_AMD64}"
                   echo "DIGEST_ARM64=${DIGEST_ARM64}"
-                  docker manifest create ${IMG_RELEASE}           \
-                        --amend ${{ env.IMAGE_NAME }}@${DIGEST_AMD64} \
-                        --amend ${{ env.IMAGE_NAME }}@${DIGEST_ARM64}
+                 
+                  # relese tagged manifest 
+                  docker manifest create ${IMG_RELEASE}       \
+                      --amend ${IMAGE_NAME}@${DIGEST_AMD64} \
+                      --amend ${IMAGE_NAME}@${DIGEST_ARM64}
                   docker manifest push ${IMG_RELEASE}
+                  
                   # latest manifest
-                  docker manifest create ${{ env.IMAGE_NAME }}:latest \
-                        --amend ${{ env.IMAGE_NAME }}@${DIGEST_AMD64} \
-                        --amend ${{ env.IMAGE_NAME }}@${DIGEST_ARM64}
-                  docker manifest push ${{ env.IMAGE_NAME }}:latest
+                  docker manifest create ${IMAGE_NAME}:latest \
+                      --amend ${IMAGE_NAME}@${DIGEST_AMD64} \
+                      --amend ${IMAGE_NAME}@${DIGEST_ARM64}
+                  docker manifest push ${IMAGE_NAME}:latest
 
-            - name: Inspect manifests (optional)
+            - name: Inspect final manifests
               run: |
-                  docker manifest inspect ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-                  docker manifest inspect ${{ env.IMAGE_NAME }}:latest
+                  docker manifest inspect ${IMAGE_NAME}:${{ github.event.release.tag_name }}
+                  docker manifest inspect ${IMAGE_NAME}:latest
