@@ -130,6 +130,11 @@ jobs:
         runs-on: ubuntu-latest
         needs: Build
         steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+              with:
+                  egress-policy: audit
+
             - name: Generate Variables
               shell: bash
               run: |
@@ -167,6 +172,7 @@ jobs:
                   platforms: linux/amd64,linux/arm64
                   pull: true
                   push: true
+                  cache-from: type=gha
                   cache-to: type=gha,mode=max
                   tags: |
                       ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
@@ -174,5 +180,5 @@ jobs:
 
             - name: Inspect final manifests
               run: |
-                  docker manifest inspect ${IMAGE_NAME}:${{ github.event.release.tag_name }}
-                  docker manifest inspect ${IMAGE_NAME}:latest
+                  docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
+                  docker manifest inspect "${IMAGE_NAME}:latest"
