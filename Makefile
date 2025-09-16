@@ -31,6 +31,11 @@ package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOAR
 helm: SonicWeb-$(IBUILDTAG).tgz
 
 sonic-%: $(SOURCES)
+	@if echo $@ | grep -v "$(IGOOS)" || echo $@ | grep "$(IGOARCH)" ;           \
+	then                                                                        \
+	    echo "GOOS ($(IGOOS)) and/or GOARCH ($(IGOARCH)) do not fit target $@"; \
+	    exit 1;                                                                 \
+	fi
 	go get
 	CGO_ENABLED=$(ICGO_ENABLED) go build						\
 			-trimpath											\
