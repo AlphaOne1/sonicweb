@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown Viewer</title>
+
+    <style>
+        body {
+            background-color: #f6f8fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            align-items: flex-start;
+        }
+
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 90ch;
+            padding: 2rem;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+    </style>
+
+    <!-- Load GitHub Markdown CSS: local first, fallback to CDN -->
+    <script>
+        function loadCSS(localHref, fallbackHref) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = localHref;
+            link.onerror = () => {
+                console.warn(`CSS failed: ${localHref}, loading fallback...`);
+                const fallbackLink = document.createElement('link');
+                fallbackLink.rel = 'stylesheet';
+                fallbackLink.href = fallbackHref;
+                document.head.appendChild(fallbackLink);
+            };
+            document.head.appendChild(link);
+        }
+
+        function loadScript(localSrc, fallbackSrc, callback) {
+            const script = document.createElement('script');
+            script.src = localSrc;
+            script.onload = () => {
+                console.log(`Loaded: ${localSrc}`);
+                if (callback) callback();
+            };
+            script.onerror = () => {
+                console.warn(`Script failed: ${localSrc}, loading fallback...`);
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = fallbackSrc;
+                fallbackScript.onload = () => {
+                    console.log(`Loaded fallback: ${fallbackSrc}`);
+                    if (callback) callback();
+                };
+                document.head.appendChild(fallbackScript);
+            };
+            document.head.appendChild(script);
+        }
+
+        function renderMarkdownFromFile(filePath) {
+            fetch(filePath, { cache: 'no-cache' })
+                .then(res => {
+                    if (!res.ok) throw new Error(`${filePath} not found (${res.status})`);
+                    return res.text();
+                })
+                .then(md => {
+                    if (typeof marked !== 'undefined') {
+                        document.getElementById('content').innerHTML = marked.parse(md);
+                    } else {
+                        document.getElementById('content').innerHTML = "<p><strong>Error:</strong> Markdown parser not available.</p>";
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('content').innerHTML = `<p><strong>Error:</strong> ${err.message}</p>`;
+                    console.error(err);
+                });
+        }
+
+        loadCSS(
+            'css/github-markdown.css',
+            'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css'
+        );
+
+        // highlight.js theme CSS
+        loadCSS(
+            'css/github-hljs.css',
+            'https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css'
+        );
+    </script>
+</head>
+<body>
+
+<!-- Main container for rendered Markdown -->
+<article id="content" class="markdown-body">
+    <p><em>README.md wird geladen...</em></p>
+</article>
+
+<!-- Load highlight.js and marked, then configure marked and render -->
+<script>
+    // 1) Load highlight.js first (local → CDN)
+    loadScript(
+        'js/highlight.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js',
+        () => {
+            // 2) Then load marked (local → CDN)
+            loadScript(
+                'js/marked.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/marked/16.3.0/lib/marked.umd.min.js',
+                () => {
+                    // 3) Configure marked highlighting only after both are available
+                    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+                        marked.setOptions({
+                            highlight: (code, lang) => {
+                                if (lang && hljs.getLanguage(lang)) {
+                                    return hljs.highlight(code, { language: lang }).value;
+                                }
+                                return hljs.highlightAuto(code).value;
+                            }
+                        });
+                    } else {
+                        console.warn('highlight.js or marked not available; code blocks will not be highlighted.');
+                    }
+
+                    // 4) Render once everything is ready
+                    renderMarkdownFromFile('README.md');
+                }
+            );
+        }
+    );
+</script>
+</body>
+</html>
