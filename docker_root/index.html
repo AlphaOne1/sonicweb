@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Markdown Viewer</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
     <style>
         body {
@@ -12,13 +14,19 @@
             justify-content: center;
             margin: 0;
             align-items: flex-start;
+            padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem 1rem;
         }
 
         .markdown-body {
             box-sizing: border-box;
             min-width: 200px;
             max-width: 90ch;
+            width: clamp(200px, 90vw, 90ch);
             padding: 2rem;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+            content-visibility: auto;
+            contain-intrinsic-size: 1200px;
             background: white;
             border-radius: 6px;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -61,7 +69,7 @@
             document.head.appendChild(script);
         }
 
-        function renderMarkdownFromFile(filePath) {
+        function renderMarkdownFromFile(filePath, elementID) {
             fetch(filePath, { cache: 'no-cache' })
                 .then(res => {
                     if (!res.ok) throw new Error(`${filePath} not found (${res.status})`);
@@ -69,13 +77,14 @@
                 })
                 .then(md => {
                     if (typeof marked !== 'undefined') {
-                        document.getElementById('content').innerHTML = marked.parse(md);
+                        // no DOMPurify, as we control the content of the Markdown here
+                        document.getElementById(elementID).innerHTML = marked.parse(md);
                     } else {
-                        document.getElementById('content').innerHTML = "<p><strong>Error:</strong> Markdown parser not available.</p>";
+                        document.getElementById(elementID).innerHTML = "<p><strong>Error:</strong> Markdown parser not available.</p>";
                     }
                 })
                 .catch(err => {
-                    document.getElementById('content').innerHTML = `<p><strong>Error:</strong> ${err.message}</p>`;
+                    document.getElementById(elementID).innerHTML = `<p><strong>Error:</strong> ${err.message}</p>`;
                     console.error(err);
                 });
         }
@@ -98,6 +107,11 @@
 <article id="content" class="markdown-body">
     <p><em>README.md wird geladen...</em></p>
 </article>
+<noscript>
+    <p><strong>Note:</strong> JavaScript is required to render the Markdown content.
+       Please enable JavaScript or view the raw README.md instead.
+    </p>
+</noscript>
 
 <!-- Load highlight.js and marked, then configure marked and render -->
 <script>
@@ -108,7 +122,7 @@
         () => {
             // 2) Then load marked (local → CDN)
             loadScript(
-                'js/marked.min.js',
+                'js/marked.umd.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/marked/16.3.0/lib/marked.umd.min.js',
                 () => {
                     // 3) Configure marked highlighting only after both are available
@@ -126,7 +140,7 @@
                     }
 
                     // 4) Render once everything is ready
-                    renderMarkdownFromFile('README.md');
+                    renderMarkdownFromFile('README.md', 'content');
                 }
             );
         }

@@ -31,7 +31,7 @@ package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOAR
 helm: SonicWeb-$(IBUILDTAG).tgz
 
 sonic-%: $(SOURCES)
-	@if echo $@ | grep -v "$(IGOOS)" || echo $@ | grep "$(IGOARCH)" ;           \
+	@if echo $@ | grep -v "$(IGOOS)" || echo $@ | grep -v "$(IGOARCH)" ;        \
 	then                                                                        \
 	    echo "GOOS ($(IGOOS)) and/or GOARCH ($(IGOARCH)) do not fit target $@"; \
 	    exit 1;                                                                 \

@@ -70,7 +70,7 @@ RUN getent passwd "${USER}" > /tmp/root/etc/passwd &&\
                               /tmp/root/tmp          \
                               /tmp/root/www        &&\
     chmod 1777                /tmp/root/tmp        &&\
-    sed -i '/<a href.*/,/<\/a>/d' /tmp/root/www/README.md
+    sed -i '1,80{/<a href.*/,/<\/a>/d}' /tmp/root/www/README.md
 
 ################################################################################
 FROM scratch AS sonicweb
