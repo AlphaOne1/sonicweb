@@ -2,6 +2,8 @@ Release 1.6.0
 =============
 
 - provide prebuild (multi-arch) docker images
+- update documentation for docker usage
+- check that build target for crosscompilation is set correctly
 
 Release 1.5.3
 =============

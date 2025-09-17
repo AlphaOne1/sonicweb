@@ -97,4 +97,4 @@ EXPOSE  8080/tcp  \
 
 USER    ${USER}:${USER}
 
-ENTRYPOINT ["/bin/sonicweb", "--root=/www"]
+ENTRYPOINT ["/bin/sonicweb"]

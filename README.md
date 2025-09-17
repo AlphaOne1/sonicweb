@@ -263,6 +263,46 @@ $ ./sonic-linux-amd64 -root testroot/                          \
                       -wafcfg /etc/crs4/plugins/\*-after.conf
 ```
 
+Docker Usage
+------------
+
+*SonicWeb* is also distributed as a docker image. To start it, one can simply write:
+
+```shell
+$ docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:latest
+```
+
+and it will show this documentation. The entrypoint of the dockerfile just starts *SonicWeb* without any parameters.
+So `/www` is the default web root directory. Every parameter passed after the image name is appended as a parameter
+to *SonicWeb*. So running e.g.
+
+```shell
+$ docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:latest --log=debug
+```
+
+is equivalent to running:
+
+```shell
+$ ./sonic-linux-amd64 --log=debug
+```
+
+The docker image is prepared to have new web content mounted on `/www` replacing the default content entirely. A new
+web root directory, e.g. `myapp/` could be mounted like this:
+
+```bash
+$ docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:latest
+```
+
+Note that without specifying the `:ro` flag, the content will be mounted as read-write. *SonicWeb* does not write into
+the mounted directory. Nevertheless it poses a potential risk.
+
+If telemetry is needed, port 8081 needs to be exposed additionally:
+
+```shell
+$ docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicweb:latest
+```
+
+
 Building
 --------
 
@@ -275,6 +315,6 @@ make
 If your operating system does not provide a usable form of `make`, you can also do:
 
 ```sh
-go get
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
+$ go get
+$ CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
 ```
