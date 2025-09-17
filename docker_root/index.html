@@ -64,6 +64,9 @@
                     console.log(`Loaded fallback: ${fallbackSrc}`);
                     if (callback) callback();
                 };
+                fallbackScript.onerror = () => {
+                    console.error(`Fallback load failed: ${fallbackSrc}`);
+                };
                 document.head.appendChild(fallbackScript);
             };
             document.head.appendChild(script);
