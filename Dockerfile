@@ -1,4 +1,4 @@
-# Copyright the SonicWeb contributors.
+# SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 ############################
@@ -6,7 +6,7 @@
 #
 # This dockerfile relies on a previously build os and architecture fitting executable.
 # It can be generated as follows:
-#     $ GOOS=linux GOARCH=amd64 make
+#     $ make sonic-linux-amd64
 # Copy or mount the web content to the /www directory.
 # After starting the image the content of this directory will be served.
 
@@ -75,10 +75,20 @@ RUN getent passwd "${USER}" > /tmp/root/etc/passwd &&\
 ################################################################################
 FROM scratch AS sonicweb
 
-LABEL org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb \
-      org.opencontainers.image.title="SonicWeb"                             \
+# Defaults for local builds; CI should override these via --build-arg
+ARG VERSION=dev
+ARG REVISION=unknown
+ARG CREATED=1970-01-01T00:00:00Z
+
+LABEL org.opencontainers.image.title="SonicWeb"                             \
       org.opencontainers.image.description="SonicWeb web server"            \
-      org.opencontainers.image.licenses=MPL-2.0
+      org.opencontainers.image.licenses=MPL-2.0                             \
+      org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb \
+      org.opencontainers.image.documentation=https://github.com/AlphaOne1/sonicweb \
+      org.opencontainers.image.url=https://github.com/AlphaOne1/sonicweb    \
+      org.opencontainers.image.version="${VERSION}"                         \
+      org.opencontainers.image.revision="${REVISION}"                       \
+      org.opencontainers.image.created="${CREATED}"
 
 ARG USER
 
