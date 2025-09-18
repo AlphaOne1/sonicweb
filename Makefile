@@ -33,8 +33,8 @@ helm: SonicWeb-$(IBUILDTAG).tgz
 sonic-%: $(SOURCES)
 	$(if $(filter 3,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern 'sonic-<os>-<arch>'))
 	go get
-	GOOS=$(word   2, $(subst -, ,$@))                           \
-	GOARCH=$(word 3, $(subst -, ,$@))                           \
+	GOOS=$(word   2, $(subst -, ,$(basename $@)))                \
+	GOARCH=$(word 3, $(subst -, ,$(basename $@)))                \
 	CGO_ENABLED=$(ICGO_ENABLED)									\
 	go build -trimpath											\
 			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
