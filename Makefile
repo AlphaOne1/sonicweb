@@ -31,11 +31,14 @@ package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOAR
 helm: SonicWeb-$(IBUILDTAG).tgz
 
 sonic-%: $(SOURCES)
+	$(if $(filter 3,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern 'sonic-<os>-<arch>'))
 	go get
-	CGO_ENABLED=$(ICGO_ENABLED) go build						\
-			-trimpath											\
-			-ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
-			-o $@
+	GOOS=$(word   2, $(subst -, ,$@))                           \
+	GOARCH=$(word 3, $(subst -, ,$@))                           \
+	CGO_ENABLED=$(ICGO_ENABLED)									\
+	go build -trimpath											\
+			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
+			 -o $@
 
 docker-%: sonic-%
 	export TARGET_OS=`  echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\1'/`;	\

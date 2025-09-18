@@ -17,6 +17,16 @@ FROM ubuntu:latest@sha256:9cbed754112939e914291337b5e554b07ad7c392491dba6daf25ee
 ARG TARGETARCH
 ARG USER
 
+# Centralized versions and checksums for third-party web assets
+ARG HLJS_VER=11.11.1
+ARG MARKED_VER=16.3.0
+ARG GHMD_VER=5.8.1
+
+ARG HLJS_JS_SHA256=c4a399dd6f488bc97a3546e3476747b3e714c99c57b9473154c6fb8d259b9381
+ARG MARKED_SHA256=fe19dcc22695007cccbd794f859676e9d25356d48be2fe1a158650405a34e81f
+ARG GHMD_SHA256=c47f5a601c095973e19c0a7d0418d35b2b209098955d2cc4136eb274f9083cc4
+ARG HLJS_CSS_SHA256=3a9a5def8b9c311e5ae43abde85c63133185eed4f0d9f67fea4b00a8308cf066
+
 RUN useradd --home     "/nonexistent"      \
             --shell    "/usr/sbin/nologin" \
             --user-group                   \
@@ -24,12 +34,43 @@ RUN useradd --home     "/nonexistent"      \
             -r                             \
             "${USER}"
 
-RUN mkdir -p /tmp/bin /tmp/tmp /tmp/www
-RUN chmod 1777 /tmp/tmp
+RUN mkdir -p /tmp/root/bin     \
+             /tmp/root/etc     \
+             /tmp/root/tmp     \
+             /tmp/root/www     \
+             /tmp/root/www/css \
+             /tmp/root/www/js
 
-COPY --chmod=0755 sonic-linux-${TARGETARCH} /tmp/bin/sonicweb
-RUN getent passwd "${USER}" > /tmp/passwd
-RUN getent group  "${USER}" > /tmp/group
+COPY --chmod=0755 sonic-linux-${TARGETARCH} /tmp/root/bin/sonicweb
+COPY --chmod=0444 docker_root/              \
+                  README.md                 \
+                  sonicweb_logo.svg         /tmp/root/www/
+
+ADD --chmod=0444                                                                     \
+    --checksum=sha256:${HLJS_JS_SHA256}                                              \
+    https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/highlight.min.js \
+    /tmp/root/www/js/
+ADD --chmod=0444                                                                      \
+    --checksum=sha256:${MARKED_SHA256}                                                \
+    https://cdnjs.cloudflare.com/ajax/libs/marked/${MARKED_VER}/lib/marked.umd.min.js \
+    /tmp/root/www/js/
+ADD --chmod=0444                                                                                   \
+    --checksum=sha256:${GHMD_SHA256}                                                               \
+    https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/${GHMD_VER}/github-markdown.min.css \
+    /tmp/root/www/css/
+ADD --chmod=0444                                                                          \
+    --checksum=sha256:${HLJS_CSS_SHA256}                                                  \
+    https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/styles/github.min.css \
+    /tmp/root/www/css/
+
+RUN getent passwd "${USER}" > /tmp/root/etc/passwd &&\
+    getent group  "${USER}" > /tmp/root/etc/group  &&\
+                                                     \
+    chown -R ${USER}:${USER}  /tmp/root/bin          \
+                              /tmp/root/tmp          \
+                              /tmp/root/www        &&\
+    chmod 1777                /tmp/root/tmp        &&\
+    sed -i '1,80{/<a href.*/,/<\/a>/d}' /tmp/root/www/README.md
 
 ################################################################################
 FROM scratch AS sonicweb
@@ -41,19 +82,19 @@ LABEL org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb \
 
 ARG USER
 
-COPY --from=builder                         /tmp/passwd \
-                                            /tmp/group  /etc/
+COPY --from=builder /tmp/root   /
 
-COPY --from=builder --chown=${USER}:${USER} /tmp/bin    \
-                                            /tmp/tmp    \
-                                            /tmp/www    /
+# if no volume is mounted, a standard documentation page is shown.
+# This page is overlayed by later mounts.
 VOLUME  /www
-ENV     HOME=/www
+ENV     HOME=/www \
+        PATH=/bin \
+        TMPDIR=/tmp
 WORKDIR /www
 
-EXPOSE 8080/tcp \
-       8081/tcp
+EXPOSE  8080/tcp  \
+        8081/tcp
 
-USER ${USER}:${USER}
+USER    ${USER}:${USER}
 
-ENTRYPOINT ["/bin/sonicweb", "--root=/www"]
+ENTRYPOINT ["/bin/sonicweb"]
