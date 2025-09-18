@@ -1,4 +1,7 @@
 {{/*
+SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+SPDX-License-Identifier: MPL-2.0
+
 Expand the name of the chart.
 */}}
 {{- define "SonicWeb.name" -}}

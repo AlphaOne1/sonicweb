@@ -1,4 +1,7 @@
 <!-- markdownlint-disable MD013 MD033 MD041 -->
+<!-- SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
 <p align="center">
     <img src="sonicweb_logo.svg" width="60%" alt="Logo"><br>
     <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/test.yml"
@@ -316,6 +319,6 @@ make
 If your operating system does not provide a usable form of `make`, you can also do:
 
 ```shell
-go get
+go mod download
 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
 ```

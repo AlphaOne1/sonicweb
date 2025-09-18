@@ -1,1 +1,5 @@
+<!-- SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
+
 - @AlphaOne1

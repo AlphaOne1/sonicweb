@@ -1,3 +1,7 @@
+<!-- SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
+
 Release 1.6.0
 =============
 
