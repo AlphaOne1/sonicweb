@@ -175,6 +175,10 @@ jobs:
                   push: true
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
+                  build-args: |
+                      VERSION=${{ github.event.release.tag_name }}
+                      REVISION=${{ github.sha }}
+                      CREATED=${{ github.event.release.created_at }}
                   tags: |
                       ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
                       ${{ env.IMAGE_NAME }}:latest
