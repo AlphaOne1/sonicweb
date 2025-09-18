@@ -1,4 +1,4 @@
-// Copyright the SonicWeb contributors.
+// SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 // Package main contains the server logic of SonicWeb.

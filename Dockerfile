@@ -1,4 +1,4 @@
-# Copyright the SonicWeb contributors.
+# SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 ############################
@@ -80,10 +80,12 @@ ARG VERSION=dev
 ARG REVISION=unknown
 ARG CREATED=1970-01-01T00:00:00Z
 
-LABEL org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb \
-      org.opencontainers.image.title="SonicWeb"                             \
+LABEL org.opencontainers.image.title="SonicWeb"                             \
       org.opencontainers.image.description="SonicWeb web server"            \
       org.opencontainers.image.licenses=MPL-2.0                             \
+      org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb \
+      org.opencontainers.image.documentation=https://github.com/AlphaOne1/sonicweb \
+      org.opencontainers.image.url=https://github.com/AlphaOne1/sonicweb    \
       org.opencontainers.image.version="${VERSION}"                         \
       org.opencontainers.image.revision="${REVISION}"                       \
       org.opencontainers.image.created="${CREATED}"
