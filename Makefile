@@ -105,7 +105,7 @@ test:
 
 
 fuzz:
-	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$"
+	go test -fuzz=Fuzz -fuzztime='30s' -fuzzminimizetime='10s' -run '^$'
 
 clean:
 	@-rm -vrf	sonic-*-*			\
