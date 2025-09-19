@@ -1,3 +1,7 @@
+<!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
+
 SonicWeb Community Code of Conduct
 ==================================
 

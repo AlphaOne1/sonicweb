@@ -1,4 +1,7 @@
 <!-- markdownlint-disable MD013 MD033 MD041 -->
+<!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
 <p align="center">
     <img src="sonicweb_logo.svg" width="60%" alt="Logo"><br>
     <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/test.yml"
@@ -48,6 +51,12 @@
        target="_blank">
         <img src="https://api.scorecard.dev/projects/github.com/AlphaOne1/sonicweb/badge"
              alt="OpenSSF Scorecard">
+    </a>
+    <a href="https://api.reuse.software/info/github.com/AlphaOne1/sonicweb"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://api.reuse.software/badge/github.com/AlphaOne1/sonicweb"
+            alt="REUSE compliance">
     </a>
     <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=license"
        rel="external noopener noreferrer"
@@ -316,6 +325,6 @@ make
 If your operating system does not provide a usable form of `make`, you can also do:
 
 ```shell
-go get
+go mod download
 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
 ```

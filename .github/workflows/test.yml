@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 name: Tests
@@ -85,18 +85,18 @@ jobs:
             with:
                 egress-policy: audit
 
-          - name: Install Go
-            uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
-            with:
-                go-version: ${{matrix.go-version}}
-
           - name: Checkout
             uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
             with:
                 fetch-depth: 1
 
+          - name: Install Go
+            uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+            with:
+                go-version-file: go.mod
+
           - name: Test
-            run: go run gotest.tools/gotestsum@latest --junitfile junit.xml -- -v `go list ./... | grep -v example` --covermode=count --coverpkg=./... --coverprofile=coverage.txt
+            run: go tool gotestsum --junitfile junit.xml -- -v `go list ./... | grep -v example` --covermode=count --coverpkg=./... --coverprofile=coverage.txt
 
           - name: Upload test results to Codecov
             if: ${{ !cancelled() }}
@@ -141,7 +141,7 @@ jobs:
 
           - name: Run Fuzz Test
             shell: bash
-            run: go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$"
+            run: make fuzz
 
           - name: Upload fuzz failure seed corpus as run artifact
             if: failure()

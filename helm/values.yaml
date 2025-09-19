@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
 # Default values for SonicWeb.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.

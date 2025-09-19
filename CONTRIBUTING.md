@@ -1,3 +1,7 @@
+<!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
+
 Contributing
 ============
 
@@ -63,7 +67,7 @@ All the good intentions go to waste, if nobody can enjoy the fruits of this labo
 due to non-existent (or bad, or wrong) documentation. Please take care that you
 include:
 
-- a corse description of your nea feature
+- a coarse description of your nea feature
 - generate new or update (in case) the existing examples
 - update the CHANGELOG.md
 

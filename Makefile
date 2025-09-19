@@ -1,29 +1,32 @@
 # vim: set smartindent ts=4:
 
-# SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-IGOOS=       $(shell go env GOOS)
-IGOARCH=     $(shell go env GOARCH)
+IGOOS:=      $(shell go env GOOS)
+IGOARCH:=    $(shell go env GOARCH)
 EXEC_SUFFIX= $(if $(filter windows,$(IGOOS)),.exe,)
 ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell command -v git >/dev/null 2>&1 && echo yes),yes,no)
 ifeq ($(GIT_AVAILABLE),yes)
-    IBUILDTAG := $(strip $(shell git describe --tags 2>/dev/null))
+    IBUILDTAG :=  $(strip $(shell git describe --tags 2>/dev/null))
+	GIT_REF_DATE:=$(strip $(shell git log -1 --date=format:"%B %Y" --format="%ad" 2>/dev/null))
 endif
-IBUILDTAG?= unknown
+IBUILDTAG?=		unknown
+GIT_REF_DATE?=	$(strip $(shell date +"%B %Y"))
 
 PATH:=       $(PATH):$(shell go env GOPATH)/bin
 MANPAGES=    man/sonicweb.1.gz		\
              man/sonicweb_de.1.gz	\
              man/sonicweb_es.1.gz
 SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
-SOURCES=     $(shell go list -f $(SOURCES_FMT) ./... ) logo.tmpl
+SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) logo.tmpl
 
 
-.PHONY: all clean docker test tls
+.PHONY: all clean docker fuzz helm package test tls
+.DELETE_ON_ERROR:
 
 all: sonic-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
 docker: docker-linux-amd64
@@ -32,20 +35,20 @@ helm: SonicWeb-$(IBUILDTAG).tgz
 
 sonic-%: $(SOURCES)
 	$(if $(filter 3,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern 'sonic-<os>-<arch>'))
-	go get
-	GOOS=$(word   2, $(subst -, ,$(basename $@)))                \
-	GOARCH=$(word 3, $(subst -, ,$(basename $@)))                \
-	CGO_ENABLED=$(ICGO_ENABLED)									\
+	go mod download
+	GOOS="$(word   2, $(subst -, ,$(basename $@)))"				\
+	GOARCH="$(word 3, $(subst -, ,$(basename $@)))"				\
+	CGO_ENABLED="$(ICGO_ENABLED)"								\
 	go build -trimpath											\
 			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
 			 -o $@
 
 docker-%: sonic-%
-	export TARGET_OS=`  echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\1'/`;	\
-	export TARGET_ARCH=`echo $< | sed -r s/'sonic-([^-]+)-([^-]+)'/'\2'/`;	\
-	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}					\
-	             -t sonicweb:$(IBUILDTAG)									\
-	             --squash													\
+	TARGET_OS="$(word   2, $(subst -, ,$(basename $<)))"	\
+	TARGET_ARCH="$(word 3, $(subst -, ,$(basename $<)))"	\
+	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}	\
+	             -t sonicweb:$(IBUILDTAG)					\
+	             --squash									\
 	             .
 
 SonicWeb-$(IBUILDTAG).tgz: $(shell find helm -type f)
@@ -58,15 +61,15 @@ SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml son
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
-	export TARGET_OS=`  echo $@ | sed -r s/'nfpm-([^-]+)-([^-]+).yaml'/'\1'/`;	\
-	export TARGET_ARCH=`echo $@ | sed -r s/'nfpm-([^-]+)-([^-]+).yaml'/'\2'/`;	\
-	export TARGET_VERSION="$(IBUILDTAG)";										\
-	cat $< | envsubst > $@
+	TARGET_OS="$(word   2, $(subst -, ,$(basename $@)))"	\
+	TARGET_ARCH="$(word 3, $(subst -, ,$(basename $@)))"	\
+	TARGET_VERSION="$(IBUILDTAG)"							\
+	envsubst < $< > $@
 
 %.1: %.1.tmpl
-	export GIT_REF_DATE=`git log -1 --date=format:"%B %Y" --format="%ad"`;	\
-	export GIT_TAG=`git describe --tags`;									\
-	cat $< | envsubst > $@
+	GIT_REF_DATE="$(GIT_REF_DATE)"	\
+	GIT_TAG="$(IBUILDTAG)"			\
+	envsubst < $< > $@
 
 %.gz: %
 	gzip -k -9 $<
@@ -100,10 +103,14 @@ tls:
 test:
 	go test ./...
 
+
+fuzz:
+	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
+
 clean:
-	@-rm -vf	sonic-*-*			\
+	@-rm -vrf	sonic-*-*			\
 				nfpm-*.yaml			\
 				testcert            \
 				man/sonicweb*.1.gz	\
 				man/sonicweb*.1		\
-				SonicWeb-*.* | sed -r s/"(.*)"/"cleaning \\1"/
+				SonicWeb-*.* | sed -E s/"(.*)"/"cleaning \\1"/
