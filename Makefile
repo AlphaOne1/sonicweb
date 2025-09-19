@@ -1,6 +1,6 @@
 # vim: set smartindent ts=4:
 
-# SPDX-FileCopyrightText: Copyright the SonicWeb contributors.
+# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 IGOOS=       $(shell go env GOOS)
