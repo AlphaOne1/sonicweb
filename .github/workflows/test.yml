@@ -96,7 +96,7 @@ jobs:
                 fetch-depth: 1
 
           - name: Test
-            run: go run gotest.tools/gotestsum@latest --junitfile junit.xml -- -v `go list ./... | grep -v example` --covermode=count --coverpkg=./... --coverprofile=coverage.txt
+            run: go tool gotestsum --junitfile junit.xml -- -v `go list ./... | grep -v example` --covermode=count --coverpkg=./... --coverprofile=coverage.txt
 
           - name: Upload test results to Codecov
             if: ${{ !cancelled() }}
@@ -141,7 +141,7 @@ jobs:
 
           - name: Run Fuzz Test
             shell: bash
-            run: go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$"
+            run: make fuzz
 
           - name: Upload fuzz failure seed corpus as run artifact
             if: failure()

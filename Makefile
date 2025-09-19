@@ -25,7 +25,7 @@ SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
 SOURCES=     $(shell go list -f "$(SOURCES_FMT)" ./... ) logo.tmpl
 
 
-.PHONY: all clean docker helm package test tls
+.PHONY: all clean docker fuzz helm package test tls
 .DELETE_ON_ERROR:
 
 all: sonic-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
@@ -102,6 +102,10 @@ tls:
 
 test:
 	go test ./...
+
+
+fuzz:
+	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$"
 
 clean:
 	@-rm -vrf	sonic-*-*			\
