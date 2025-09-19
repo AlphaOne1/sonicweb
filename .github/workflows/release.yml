@@ -132,6 +132,7 @@ jobs:
         needs: Build
         outputs:
             digest: ${{ steps.docker_build.outputs.digest }}
+            imageName: ${{ steps.vars.outputs.IMAGE_NAME}}
         steps:
             - name: Harden Runner
               uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -139,9 +140,11 @@ jobs:
                   egress-policy: audit
 
             - name: Generate Variables
+              id: vars
               shell: bash
               run: |
                   echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
             - name: Checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -242,7 +245,7 @@ jobs:
         name: Container Provenance
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
         with:
-            image:             ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+            image:             ${{ needs.BuildDockerMultiArch.outputs.imageName }}:${{ github.event.release.tag_name }}
             digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
             registry-username: ${{ github.actor }}
         secrets:
@@ -259,7 +262,7 @@ jobs:
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
         with:
             # gleiche Manifest-Digest, aber der immutable Tag als Referenz
-            image:             ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}-${{ github.sha }}
+            image:             ${{ needs.BuildDockerMultiArch.outputs.imageName }}:${{ github.event.release.tag_name }}-${{ github.sha }}
             digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
             registry-username: ${{ github.actor }}
         secrets:
