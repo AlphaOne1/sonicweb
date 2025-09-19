@@ -130,6 +130,8 @@ jobs:
             packages: write
         runs-on: ubuntu-latest
         needs: Build
+        outputs:
+            digest: ${{ steps.docker_build.outputs.digest }}
         steps:
             - name: Harden Runner
               uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -167,6 +169,7 @@ jobs:
                   path: .
 
             - name: Build Docker Image
+              id: docker_build
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   context: .
@@ -181,9 +184,44 @@ jobs:
                       CREATED=${{ github.event.release.created_at }}
                   tags: |
                       ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+                      ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-${{ github.sha }}
                       ${{ env.IMAGE_NAME }}:latest
 
             - name: Inspect final manifests
               run: |
                   docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
+                  docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
                   docker manifest inspect "${IMAGE_NAME}:latest"
+
+    ContainerProvenance:
+        permissions:
+            actions:  read  # for detecting the GitHub Actions environment.
+            id-token: write # for creating OIDC tokens for signing.
+            packages: write # for uploading attestations.
+        needs:
+            - BuildDockerMultiArch
+        name: Container Provenance
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
+        with:
+            image:             ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+            digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
+            registry-username: ${{ github.actor }}
+        secrets:
+            registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+    ContainerProvenanceImmutable:
+        permissions:
+            actions:  read
+            id-token: write
+            packages: write
+        needs:
+            - BuildDockerMultiArch
+        name: Container Provenance (immutable tag)
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
+        with:
+            # gleiche Manifest-Digest, aber der immutable Tag als Referenz
+            image:             ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}-${{ github.sha }}
+            digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
+            registry-username: ${{ github.actor }}
+        secrets:
+            registry-password: ${{ secrets.GITHUB_TOKEN }}
