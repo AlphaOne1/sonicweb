@@ -193,6 +193,45 @@ jobs:
                   docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
                   docker manifest inspect "${IMAGE_NAME}:latest"
 
+    ChecksumReleaseAssets:
+        needs: Build
+        runs-on: ubuntu-latest
+        name: Checksum Release Assets
+        outputs:
+            base64hashes: ${{ steps.hashes.outputs.handle }}
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+              with:
+                  egress-policy: audit
+
+            - name: Checkout
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  fetch-depth: 1
+
+            - name: Download all release assets via GitHub CLI
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  mkdir -p release-assets
+                  cd release-assets
+                  # gets all assets of the release
+                  gh release download "${{ github.event.release.tag_name }}" --clobber
+                  echo "Downloaded assets:"
+                  ls -lah
+
+            - name: Generate Checksums
+              run: sha256sum * > check.sha256
+              working-directory: release-assets
+
+            - name: Upload Checksums
+              id: hashes
+              uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@v2.1.0 #must have semver!
+              with:
+                  path: release-assets/check.sha256
+
     ContainerProvenance:
         permissions:
             actions:  read  # for detecting the GitHub Actions environment.
@@ -225,3 +264,13 @@ jobs:
             registry-username: ${{ github.actor }}
         secrets:
             registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+    AssetProvenance:
+        permissions:
+            actions:  read  # Needed for detection of GitHub Actions environment.
+            id-token: write # Needed for provenance signing and ID
+            contents: write # Needed for release uploads
+        needs: ChecksumReleaseAssets
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 #must have semver!
+        with:
+            base64-subjects-as-file: "${{ needs.ChecksumReleaseAssets.outputs.base64hashes }}"
