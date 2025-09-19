@@ -52,6 +52,12 @@
         <img src="https://api.scorecard.dev/projects/github.com/AlphaOne1/sonicweb/badge"
              alt="OpenSSF Scorecard">
     </a>
+    <a href="https://api.reuse.software/info/github.com/AlphaOne1/sonicweb"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://api.reuse.software/badge/github.com/AlphaOne1/sonicweb"
+            alt="REUSE compliance">
+    </a>
     <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=license"
        rel="external noopener noreferrer"
        target="_blank">
