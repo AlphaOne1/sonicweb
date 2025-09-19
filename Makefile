@@ -3,16 +3,16 @@
 # SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-IGOOS=       $(shell go env GOOS)
-IGOARCH=     $(shell go env GOARCH)
+IGOOS:=      $(shell go env GOOS)
+IGOARCH:=    $(shell go env GOARCH)
 EXEC_SUFFIX= $(if $(filter windows,$(IGOOS)),.exe,)
 ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell command -v git >/dev/null 2>&1 && echo yes),yes,no)
 ifeq ($(GIT_AVAILABLE),yes)
-    IBUILDTAG := $(strip $(shell git describe --tags 2>/dev/null))
-	GIT_REF_DATE=$(strip $(shell git log -1 --date=format:"%B %Y" --format="%ad" 2>/dev/null))
+    IBUILDTAG :=  $(strip $(shell git describe --tags 2>/dev/null))
+	GIT_REF_DATE:=$(strip $(shell git log -1 --date=format:"%B %Y" --format="%ad" 2>/dev/null))
 endif
 IBUILDTAG?=		unknown
 GIT_REF_DATE?=	$(strip $(shell date +"%B %Y"))
@@ -22,7 +22,7 @@ MANPAGES=    man/sonicweb.1.gz		\
              man/sonicweb_de.1.gz	\
              man/sonicweb_es.1.gz
 SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
-SOURCES=     $(shell go list -f "$(SOURCES_FMT)" ./... ) logo.tmpl
+SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) logo.tmpl
 
 
 .PHONY: all clean docker fuzz helm package test tls
