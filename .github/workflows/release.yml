@@ -130,6 +130,9 @@ jobs:
             packages: write
         runs-on: ubuntu-latest
         needs: Build
+        outputs:
+            digest: ${{ steps.docker_build.outputs.digest }}
+            imageName: ${{ steps.vars.outputs.IMAGE_NAME}}
         steps:
             - name: Harden Runner
               uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -137,9 +140,11 @@ jobs:
                   egress-policy: audit
 
             - name: Generate Variables
+              id: vars
               shell: bash
               run: |
                   echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
             - name: Checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -167,6 +172,7 @@ jobs:
                   path: .
 
             - name: Build Docker Image
+              id: docker_build
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   context: .
@@ -181,9 +187,104 @@ jobs:
                       CREATED=${{ github.event.release.created_at }}
                   tags: |
                       ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+                      ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-${{ github.sha }}
                       ${{ env.IMAGE_NAME }}:latest
 
             - name: Inspect final manifests
               run: |
+                  set -euo pipefail
                   docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
+                  docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
                   docker manifest inspect "${IMAGE_NAME}:latest"
+
+    ChecksumReleaseAssets:
+        needs: Build
+        runs-on: ubuntu-latest
+        name: Checksum Release Assets
+        outputs:
+            hashBase64File: ${{ steps.hashes.outputs.handle }}
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+              with:
+                  egress-policy: audit
+
+            - name: Checkout
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  fetch-depth: 1
+
+            - name: Download all release assets via GitHub CLI
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  mkdir -p release-assets
+                  cd release-assets
+                  # gets all assets of the release
+                  gh release download "${{ github.event.release.tag_name }}" --clobber
+                  echo "Downloaded assets:"
+                  ls -lah
+
+            - name: Generate Checksums
+              working-directory: release-assets
+              run: |
+                  set -euo pipefail
+                  # Robustly hash all regular files in this directory, then base64 and write via tee.
+                  LC_ALL=C find . -maxdepth 1 -type f -printf '%P\0' \
+                    | sort -z \
+                    | xargs -0 sha256sum -- \
+                    | base64 -w0 \
+                    | tee check.sha256 > /dev/null
+            - name: Upload Checksums
+              id: hashes
+              uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@v2.1.0 #must have semver!
+              with:
+                  path: release-assets/check.sha256
+
+    ContainerProvenance:
+        permissions:
+            actions:  read  # for detecting the GitHub Actions environment.
+            id-token: write # for creating OIDC tokens for signing.
+            packages: write # for uploading attestations.
+        needs:
+            - BuildDockerMultiArch
+        name: Container Provenance
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
+        with:
+            image:             ${{ needs.BuildDockerMultiArch.outputs.imageName }}:${{ github.event.release.tag_name }}
+            digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
+            registry-username: ${{ github.actor }}
+        secrets:
+            registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+    ContainerProvenanceImmutable:
+        permissions:
+            actions:  read
+            id-token: write
+            packages: write
+        needs:
+            - BuildDockerMultiArch
+        name: Container Provenance (immutable tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
+        with:
+            # same manifest digest, but referenced via the immutable tag
+            image:             ${{ needs.BuildDockerMultiArch.outputs.imageName }}:${{ github.event.release.tag_name }}-${{ github.sha }}
+            digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
+            registry-username: ${{ github.actor }}
+        secrets:
+            registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+    AssetProvenance:
+        permissions:
+            actions:  read  # Needed for detection of GitHub Actions environment.
+            id-token: write # Needed for provenance signing and ID
+            contents: write # Needed for release uploads
+        needs: ChecksumReleaseAssets
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 #must have semver!
+        with:
+            base64-subjects-as-file: "${{ needs.ChecksumReleaseAssets.outputs.hashBase64File }}"
+            upload-assets: true
+            upload-tag-name: "${{ github.event.release.tag_name }}"
