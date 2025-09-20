@@ -192,6 +192,7 @@ jobs:
 
             - name: Inspect final manifests
               run: |
+                  set -euo pipefail
                   docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
                   docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
                   docker manifest inspect "${IMAGE_NAME}:latest"
@@ -201,7 +202,7 @@ jobs:
         runs-on: ubuntu-latest
         name: Checksum Release Assets
         outputs:
-            base64hashes: ${{ steps.hashes.outputs.handle }}
+            hashBase64File: ${{ steps.hashes.outputs.handle }}
         steps:
             - name: Harden Runner
               uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -229,7 +230,7 @@ jobs:
               working-directory: release-assets
               run: |
                   set -euo pipefail
-                  sha256sum -- * | base64 -w0 | tee check.sha256 > /dev/null
+                  sha256sum -- `LC_ALL=C ls` | base64 -w0 | tee check.sha256 > /dev/null
 
             - name: Upload Checksums
               id: hashes
@@ -245,6 +246,7 @@ jobs:
         needs:
             - BuildDockerMultiArch
         name: Container Provenance
+        if: startsWith(github.ref, 'refs/tags/')
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
         with:
             image:             ${{ needs.BuildDockerMultiArch.outputs.imageName }}:${{ github.event.release.tag_name }}
@@ -261,6 +263,7 @@ jobs:
         needs:
             - BuildDockerMultiArch
         name: Container Provenance (immutable tag)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
         with:
             # same manifest digest, but referenced via the immutable tag
@@ -278,5 +281,5 @@ jobs:
         needs: ChecksumReleaseAssets
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 #must have semver!
         with:
-            base64-subjects-as-file: "${{ needs.ChecksumReleaseAssets.outputs.base64hashes }}"
+            base64-subjects-as-file: "${{ needs.ChecksumReleaseAssets.outputs.hashBase64File }}"
             upload-assets: true
