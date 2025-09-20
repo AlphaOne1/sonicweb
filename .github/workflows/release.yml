@@ -230,8 +230,12 @@ jobs:
               working-directory: release-assets
               run: |
                   set -euo pipefail
-                  sha256sum -- `LC_ALL=C ls` | base64 -w0 | tee check.sha256 > /dev/null
-
+                  # Robustly hash all regular files in this directory, then base64 and write via tee.
+                  find . -maxdepth 1 -type f -printf '%P\0' \
+                    | sort -z \
+                    | xargs -0 sha256sum -- \
+                    | base64 -w0 \
+                    | tee check.sha256 > /dev/null
             - name: Upload Checksums
               id: hashes
               uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@v2.1.0 #must have semver!
