@@ -4,7 +4,7 @@
 Release 1.6.1
 =============
 
-- added asset and container prevenance
+- added asset and container provenance
 
 Release 1.6.0
 =============

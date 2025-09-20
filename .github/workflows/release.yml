@@ -226,8 +226,10 @@ jobs:
                   ls -lah
 
             - name: Generate Checksums
-              run: sha256sum * | base64 -w0 > check.sha256
               working-directory: release-assets
+              run: |
+                  set -euo pipefail
+                  sha256sum -- * | base64 -w0 | tee check.sha256 > /dev/null
 
             - name: Upload Checksums
               id: hashes
@@ -261,7 +263,7 @@ jobs:
         name: Container Provenance (immutable tag)
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
         with:
-            # gleiche Manifest-Digest, aber der immutable Tag als Referenz
+            # same manifest digest, but referenced via the immutable tag
             image:             ${{ needs.BuildDockerMultiArch.outputs.imageName }}:${{ github.event.release.tag_name }}-${{ github.sha }}
             digest:            ${{ needs.BuildDockerMultiArch.outputs.digest }}
             registry-username: ${{ github.actor }}
