@@ -231,7 +231,7 @@ jobs:
               run: |
                   set -euo pipefail
                   # Robustly hash all regular files in this directory, then base64 and write via tee.
-                  find . -maxdepth 1 -type f -printf '%P\0' \
+                  LC_ALL=C find . -maxdepth 1 -type f -printf '%P\0' \
                     | sort -z \
                     | xargs -0 sha256sum -- \
                     | base64 -w0 \
@@ -287,3 +287,4 @@ jobs:
         with:
             base64-subjects-as-file: "${{ needs.ChecksumReleaseAssets.outputs.hashBase64File }}"
             upload-assets: true
+            upload-tag-name: "${{ github.event.release.tag_name }}"
