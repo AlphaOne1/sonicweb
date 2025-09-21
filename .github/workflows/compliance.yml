@@ -63,9 +63,9 @@ jobs:
                   if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
                   then
                       # New branch or force push without previous SHA: fall back to last 200 commits
-                      echo "range=$(git rev-list --max-count=200 "$AFTER")" >> "$GITHUB_OUTPUT"
+                      git rev-list "$AFTER" > shas.txt
                   else
-                      echo "range=$(git rev-list "$BEFORE".."$AFTER")" >> "$GITHUB_OUTPUT"
+                      git rev-list "$BEFORE".."$AFTER" > shas.txt
                   fi
 
             - name: Check for Signed-off-by
@@ -77,14 +77,14 @@ jobs:
                   while read -r sha
                   do
                       [ -n "$sha" ] || continue
-                      msg="$(git log --format=%B -n 1 "$sha")"
+                      msg=`git log --format=%B -n 1 "$sha"`
                   
                       if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
                       then
                           echo "Commit $sha missing Signed-off-by"
                           missing="true"
                       fi
-                  done < <(echo "${{ steps.range.outputs.range }}")
+                  done < shas.txt
                   
                   if [ "$missing" = "true" ]
                   then
@@ -132,7 +132,7 @@ jobs:
                 while read -r sha
                 do
                     [ -n "$sha" ] || continue
-                    msg="$(git log --format=%B -n 1 "$sha")"
+                    msg=`git log --format=%B -n 1 "$sha"`
                 
                     if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
                     then
