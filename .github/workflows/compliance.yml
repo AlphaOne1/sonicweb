@@ -63,7 +63,7 @@ jobs:
                   if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
                   then
                       # New branch or force push without previous SHA: fall back to last 200 commits
-                      git rev-list --max-count=200 "$AFTER" > shas.txt
+                      git rev-list "$AFTER" > shas.txt
                   else
                       git rev-list "$BEFORE".."$AFTER" > shas.txt
                   fi
