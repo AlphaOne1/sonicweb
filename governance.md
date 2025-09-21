@@ -18,7 +18,8 @@ _user_: anyone who interacts with the project.
 
 _contributor_: anyone who has contributed to the project in any way and to any
 degree. Contributions may include code, documentation, reviews, manual testing,
-etc. All contributors are listed in pyproject.toml.
+etc. All contributors are listed in the project's metadata
+(e.g. [AUTHORS.md](AUTHORS.md)).
 
 _core contributor_: anyone who has contributed repeatedly and significantly to
 the project. Core contributors are recognized by GitHub “Member” badges.
