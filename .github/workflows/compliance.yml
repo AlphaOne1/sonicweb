@@ -4,8 +4,12 @@
 name: Compliance Checks
 
 on:
-  - push
-  - pull_request
+  push:
+      branches:
+          - master
+  pull_request:
+      branches:
+          - master
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,3 +34,116 @@ jobs:
 
           - name: REUSE Compliance Check
             uses: fsfe/reuse-action@bb774aa972c2a89ff34781233d275075cbddf542 #v5.0.0
+
+    CheckSignedOffCommit:
+        if: github.event_name == 'push' && !startsWith(github.actor, 'dependabot')
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+              with:
+                  egress-policy: audit
+
+            - name: Checkout
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  fetch-depth: 0
+
+            - name: Determine pushed commits
+              id: range
+              run: |
+                  set -euo pipefail
+                  
+                  # Use GitHub-provided SHAs to build the range for this push
+                  BEFORE="${{ github.event.before }}"
+                  AFTER="${{ github.sha }}"
+                  
+                  if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
+                  then
+                      # New branch or force push without previous SHA: fall back to last 200 commits
+                      echo "range=$(git rev-list --max-count=200 "$AFTER")" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "range=$(git rev-list "$BEFORE".."$AFTER")" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Check for Signed-off-by
+              run: |
+                  set -euo pipefail
+                  missing=""
+                  
+                  # Include merge commits as well (their message may carry DCO)
+                  while read -r sha
+                  do
+                      [ -n "$sha" ] || continue
+                      msg="$(git log --format=%B -n 1 "$sha")"
+                  
+                      if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
+                      then
+                          echo "Commit $sha missing Signed-off-by"
+                          missing="true"
+                      fi
+                  done < <(echo "${{ steps.range.outputs.range }}")
+                  
+                  if [ "$missing" = "true" ]
+                  then
+                      echo "DCO check failed on push"
+                      exit 1
+                  fi
+                  
+                  echo "All pushed commits are signed"
+
+    CheckSignedOffPullRequest:
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'bypass-dco')
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: read
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+            with:
+              egress-policy: audit
+
+          - name: Checkout
+            uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+            with:
+              fetch-depth: 0
+
+          - name: Get PR commits
+            env:
+              GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            run: |
+              set -euo pipefail
+              gh --version
+              jq --version
+                
+              # Fetch all commits of the PR with pagination and extract SHAs
+              gh api -H "Accept: application/vnd.github+json" --paginate \
+                repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
+                | jq -r '.[].sha' > shas.txt
+
+          - name: Check for Signed-off-by
+            run: |
+                set -euo pipefail
+                missing=""
+
+                while read -r sha
+                do
+                    [ -n "$sha" ] || continue
+                    msg="$(git log --format=%B -n 1 "$sha")"
+                
+                    if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
+                    then
+                        echo "Commit $sha missing Signed-off-by"
+                        missing="true"
+                    fi
+                done < shas.txt
+
+                if [ "$missing" = "true" ]
+                then
+                    echo "DCO check failed"; exit 1
+                fi
+
+                echo "All commits are signed"

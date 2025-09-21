@@ -238,7 +238,7 @@ jobs:
                     | tee check.sha256 > /dev/null
             - name: Upload Checksums
               id: hashes
-              uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@v2.1.0 #must have semver!
+              uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # 2.1.0
               with:
                   path: release-assets/check.sha256
 
