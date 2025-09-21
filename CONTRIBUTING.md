@@ -112,7 +112,7 @@ Developer Certificate of Origin (DCO)
 -------------------------------------
 
 This project enforces the [DCO](https://developercertificate.org) (a copy of it
-is included [here](LICENSES/DCO.txt) in this project).
+is included [here](DCO.txt) in this project).
 Every commit must be signed off, i.e., the commit message contains a line like:
 
 Signed-off-by: Your Name <you@example.com>
