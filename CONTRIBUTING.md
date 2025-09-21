@@ -20,7 +20,7 @@ request that contributors create
 to first discuss any new ideas. Your ideas and suggestions are welcome!
 
 Please ensure that the tests are passing when submitting a pull request. If
-you're adding new features to *SonicWeb*, please include tests.
+you're adding new features or bugfixes to *SonicWeb*, please include tests.
 
 
 Where do I go from here?
@@ -59,8 +59,8 @@ Also make sure to sign off your commits, as we use [DCO](#developer-certificate-
 ### Test your feature
 
 After you have implemented your feature, add tests that cover all major code paths.
-A test coverage of 100% is not always possible. We acknowledge, that there are hard
-to trigger conditions, that you might check for, but are not producible in a test
+100% test coverage is not always possible. We acknowledge, that there are hard to
+trigger conditions, that you might check for, but are not producible in a test
 suite, but aim for the best. At least every code path of normal, input triggered
 use, should be covered.
 
@@ -90,6 +90,7 @@ tests may produce warnings. Take those warnings serious even if they seem harmle
 Too many harmless warnings could possibly overlay really serious ones, so all
 warnings are to be resolved.
 
+
 Merging a PR (maintainers only)
 -------------------------------
 
@@ -108,18 +109,21 @@ In addition to these automatic checks, the following conditions have to be met:
 
 Any maintainer is allowed to merge a PR if all of these conditions have been met.
 
+
 Developer Certificate of Origin (DCO)
 -------------------------------------
 
-This project enforces the [DCO](https://developercertificate.org) (a copy of it
-is included [here](DCO.txt) in this project).
+This project enforces the [Developer Certificate of Origin (DCO)](https://developercertificate.org)
+(a copy is included in [DCO.txt](DCO.txt)).
 Every commit must be signed off, i.e., the commit message contains a line like:
 
 Signed-off-by: Your Name <you@example.com>
 
-Use git commit -s to add this automatically. Pull requests and pushes without
-proper sign-offs will fail the compliance checks. You can alias `git commit`
-command to always include the flag as follows:
+Use `git commit -s` to add this automatically (this DCO “Signed-off-by” is a
+legal attestation and is different from cryptographic commit signing such as
+GPG/SSH). Pull requests and pushes without proper sign-offs will fail the
+compliance checks. You can alias `git commit` command to always include the
+flag as follows:
 
 ```shell
 git config --global alias.ci 'commit -s'
