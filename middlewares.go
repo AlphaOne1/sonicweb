@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlphaOne1/midgard/handler/add_header"
-	"github.com/AlphaOne1/midgard/util"
+	"github.com/AlphaOne1/midgard/handler/addheader"
+	"github.com/AlphaOne1/midgard/helper"
 
 	"github.com/corazawaf/coraza/v3"
 	corhttp "github.com/corazawaf/coraza/v3/http"
@@ -138,8 +138,8 @@ func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 		serverVal = serverVal + "/" + buildInfoTag
 	}
 
-	return util.Must(add_header.New(
-		add_header.WithHeaders(
+	return helper.Must(addheader.New(
+		addheader.WithHeaders(
 			append([][2]string{{"Server", serverVal}}, headers...),
 		),
 	))
