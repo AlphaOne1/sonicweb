@@ -21,9 +21,9 @@ import (
 	"github.com/AlphaOne1/geany"
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/defs"
-	"github.com/AlphaOne1/midgard/handler/access_log"
+	"github.com/AlphaOne1/midgard/handler/accesslog"
 	"github.com/AlphaOne1/midgard/handler/correlation"
-	"github.com/AlphaOne1/midgard/util"
+	"github.com/AlphaOne1/midgard/helper"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -161,8 +161,8 @@ func generateFileHandler(
 
 	mwStack = append(mwStack,
 		addHeaders(additionalHeaders),
-		util.Must(correlation.New()),
-		util.Must(access_log.New()),
+		helper.Must(correlation.New()),
+		helper.Must(accesslog.New()),
 		addTryFiles(tryFiles, statFS),
 		checkValidFilePath(),
 		func(next http.Handler) http.Handler {

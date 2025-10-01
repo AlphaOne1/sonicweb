@@ -52,8 +52,8 @@ that we resolve disagreements and differing views constructively. Remember that
 we're different. The strength of *SonicWeb* comes from its varied community,
 people from a wide range of backgrounds. Different people have different
 perspectives on issues. Being unable to understand why someone holds a viewpoint
-doesn't mean that they're wrong. Don't forget that it is human to err and
-blaming each other doesn't get us anywhere, rather offer to help resolving
+doesn't mean that they're wrong. Don't forget that it is human to make errors,
+and blaming each other doesn't get us anywhere. Rather offer to help to resolve
 issues and to help learn from mistakes.
 
 *Original text courtesy of the
