@@ -38,10 +38,9 @@ jobs:
     CheckSignedOffCommit:
         if: >
           github.event_name == 'push' &&
-          !startsWith(github.actor, 'dependabot') &&
-          github.event.pusher.name != 'web-flow' &&
-          github.event.pusher.name != 'github-actions[bot]' &&
-          github.event.pusher.name != 'github-merge-queue[bot]'
+          !contains(github.actor, '[bot]') &&
+          !contains(github.event.pusher.name, '[bot]') &&
+          github.event.pusher.name != 'web-flow'
         runs-on: ubuntu-latest
         permissions:
             contents: read
@@ -78,10 +77,18 @@ jobs:
                   set -euo pipefail
                   missing=""
                   
-                  # Include merge commits as well (their message may carry DCO)
                   while read -r sha
                   do
                       [ -n "$sha" ] || continue
+                      
+                      # Skip commits from bots
+                      committer_name=`git log --format=%cn -n 1 "$sha"`
+                      if echo "$committer_name" | grep -Fq '[bot]' || [ "$committer_name" = "web-flow" ]
+                      then
+                          echo "Skipping bot/web-flow commit $sha from $committer_name"
+                          continue
+                      fi
+                      
                       msg=`git log --format=%B -n 1 "$sha"`
                   
                       if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
@@ -137,6 +144,15 @@ jobs:
                 while read -r sha
                 do
                     [ -n "$sha" ] || continue
+                    
+                    # Skip commits from bots
+                    committer_name=`git log --format=%cn -n 1 "$sha"`
+                    if echo "$committer_name" | grep -Fq '[bot]' || [ "$committer_name" = "web-flow" ]
+                    then
+                        echo "Skipping bot/web-flow commit $sha from $committer_name"
+                        continue
+                    fi
+                    
                     msg=`git log --format=%B -n 1 "$sha"`
                 
                     if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
