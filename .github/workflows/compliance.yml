@@ -83,9 +83,12 @@ jobs:
                       
                       # Skip commits from bots
                       committer_name=`git log --format=%cn -n 1 "$sha"`
-                      if echo "$committer_name" | grep -Fq '[bot]' || [ "$committer_name" = "web-flow" ]
+                      committer_email=`git log --format=%ce -n 1 "$sha"`
+                      if    echo "$committer_name" | grep -Fq '[bot]' \
+                         || [ "$committer_name" = "web-flow" ]        \
+                         || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
                       then
-                          echo "Skipping bot/web-flow commit $sha from $committer_name"
+                          echo "Skipping commit $sha from $committer_name <$committer_email>"
                           continue
                       fi
                       
@@ -95,6 +98,11 @@ jobs:
                       then
                           echo "Commit $sha missing Signed-off-by"
                           missing="true"
+                  
+                          echo "Committer name:           $committer_name"
+                          echo "Committer email:          $committer_email"
+                          echo "github.actor:             ${{ github.actor }}"
+                          echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
                       fi
                   done < shas.txt
                   
@@ -147,9 +155,12 @@ jobs:
                     
                     # Skip commits from bots
                     committer_name=`git log --format=%cn -n 1 "$sha"`
-                    if echo "$committer_name" | grep -Fq '[bot]' || [ "$committer_name" = "web-flow" ]
+                    committer_email=`git log --format=%ce -n 1 "$sha"`
+                    if    echo "$committer_name" | grep -Fq '[bot]' \
+                       || [ "$committer_name" = "web-flow" ]        \
+                       || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
                     then
-                        echo "Skipping bot/web-flow commit $sha from $committer_name"
+                        echo "Skipping commit $sha from $committer_name <$committer_email>"
                         continue
                     fi
                     
@@ -159,6 +170,11 @@ jobs:
                     then
                         echo "Commit $sha missing Signed-off-by"
                         missing="true"
+                
+                        echo "Committer name:           $committer_name"
+                        echo "Committer email:          $committer_email"
+                        echo "github.actor:             ${{ github.actor }}"
+                        echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
                     fi
                 done < shas.txt
 
