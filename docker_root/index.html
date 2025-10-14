@@ -107,6 +107,8 @@
                 };
                 fallbackScript.onerror = () => {
                     console.error(`Fallback load failed: ${fallbackSrc}`);
+                    // proceed to next script to allow partial functionality (e.g., render without hljs)
+                    loadScript(scripts.slice(1), callback);
                 };
                 document.head.appendChild(fallbackScript);
             };
