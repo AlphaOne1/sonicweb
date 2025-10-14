@@ -50,14 +50,17 @@ ADD --chmod=0444                                                                
     --checksum=sha256:${HLJS_JS_SHA256}                                              \
     https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/highlight.min.js \
     /tmp/root/www/js/
+
 ADD --chmod=0444                                                                      \
     --checksum=sha256:${MARKED_SHA256}                                                \
     https://cdnjs.cloudflare.com/ajax/libs/marked/${MARKED_VER}/lib/marked.umd.min.js \
     /tmp/root/www/js/
+
 ADD --chmod=0444                                                                                   \
     --checksum=sha256:${GHMD_SHA256}                                                               \
     https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/${GHMD_VER}/github-markdown.min.css \
     /tmp/root/www/css/
+
 ADD --chmod=0444                                                                          \
     --checksum=sha256:${HLJS_CSS_SHA256}                                                  \
     https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/styles/github.min.css \

@@ -5,6 +5,9 @@ Release 1.6.1
 =============
 
 - added asset and container provenance
+- added SRI hashes for documentation demo page
+- leaner script loading in documentation demo page
+- dependency updates
 
 Release 1.6.0
 =============
