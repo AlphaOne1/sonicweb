@@ -59,11 +59,11 @@ jobs:
               id: range
               run: |
                   set -euo pipefail
-                  
+
                   # Use GitHub-provided SHAs to build the range for this push
                   BEFORE="${{ github.event.before }}"
                   AFTER="${{ github.sha }}"
-                  
+
                   if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
                   then
                       # New branch or force push without previous SHA
@@ -76,11 +76,11 @@ jobs:
               run: |
                   set -euo pipefail
                   missing=""
-                  
+
                   while read -r sha
                   do
                       [ -n "$sha" ] || continue
-                      
+
                       # Skip commits from bots
                       committer_name=`git log --format=%cn -n 1 "$sha"`
                       committer_email=`git log --format=%ce -n 1 "$sha"`
@@ -91,27 +91,27 @@ jobs:
                           echo "Skipping commit $sha from $committer_name <$committer_email>"
                           continue
                       fi
-                      
+
                       msg=`git log --format=%B -n 1 "$sha"`
-                  
+
                       if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
                       then
                           echo "Commit $sha missing Signed-off-by"
                           missing="true"
-                  
+
                           echo "Committer name:           $committer_name"
                           echo "Committer email:          $committer_email"
                           echo "github.actor:             ${{ github.actor }}"
                           echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
                       fi
                   done < shas.txt
-                  
+
                   if [ "$missing" = "true" ]
                   then
                       echo "DCO check failed on push"
                       exit 1
                   fi
-                  
+
                   echo "All pushed commits are signed"
 
     CheckSignedOffPullRequest:
@@ -138,7 +138,7 @@ jobs:
               set -euo pipefail
               gh --version
               jq --version
-                
+
               # Fetch all commits of the PR with pagination and extract SHAs
               gh api -H "Accept: application/vnd.github+json" --paginate \
                 repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
@@ -152,7 +152,7 @@ jobs:
                 while read -r sha
                 do
                     [ -n "$sha" ] || continue
-                    
+
                     # Skip commits from bots
                     committer_name=`git log --format=%cn -n 1 "$sha"`
                     committer_email=`git log --format=%ce -n 1 "$sha"`
@@ -163,14 +163,14 @@ jobs:
                         echo "Skipping commit $sha from $committer_name <$committer_email>"
                         continue
                     fi
-                    
+
                     msg=`git log --format=%B -n 1 "$sha"`
-                
+
                     if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
                     then
                         echo "Commit $sha missing Signed-off-by"
                         missing="true"
-                
+
                         echo "Committer name:           $committer_name"
                         echo "Committer email:          $committer_email"
                         echo "github.actor:             ${{ github.actor }}"
