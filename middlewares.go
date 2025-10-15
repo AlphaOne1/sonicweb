@@ -43,7 +43,7 @@ func wafMiddleware(configs []string) (func(http.Handler) http.Handler, error) {
 	}, nil
 }
 
-// headerParamToHeaders takes additional headers in the form of curl, e.g. "Content-Type: application/json",
+// headerParamToHeaders takes additional headers in the form of curl, e.g., "Content-Type: application/json",
 // and generates key-value pairs of them.
 func headerParamToHeaders(param []string) [][2]string {
 	headers := make([][2]string, 0, len(param))
