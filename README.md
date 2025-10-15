@@ -303,7 +303,7 @@ docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.6.0
 ```
 
 Note that without specifying the `:ro` flag, the content will be mounted as read-write. *SonicWeb* does not write into
-the mounted directory. Nevertheless it poses a potential risk. Also take care that the content of the mounts is
+the mounted directory. Nevertheless, it poses a potential risk. Also take care that the content of the mounts is
 readable by the non-root-user that *SonicWeb* uses (UID 65532).
 
 If telemetry is needed, port 8081 needs to be exposed additionally:

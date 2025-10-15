@@ -29,7 +29,7 @@ consensus cannot be reached. The project’s current BDFL is Alexander Adam
 (@AlphaOne1).
 
 
-Decision Making Process
+Decision-Making Process
 -----------------------
 
 Contributors try to reach consensus via discussion. When consensus cannot be
