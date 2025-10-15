@@ -283,7 +283,7 @@ docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.6.0
 
 and it will show this documentation. The entrypoint of the dockerfile just starts *SonicWeb* without any parameters.
 So `/www` is the default web root directory. Every parameter passed after the image name is appended as a parameter
-to *SonicWeb*. So running e.g.
+to *SonicWeb*. So running e.g.,
 
 ```shell
 docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.6.0 --log=debug
@@ -296,7 +296,7 @@ is equivalent to running:
 ```
 
 The docker image is prepared to have new web content mounted on `/www` replacing the default content entirely. A new
-web root directory, e.g. `myapp/` could be mounted like this:
+web root directory, e.g., `myapp/` could be mounted like this:
 
 ```shell
 docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.6.0
