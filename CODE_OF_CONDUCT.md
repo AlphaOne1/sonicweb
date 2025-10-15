@@ -47,7 +47,7 @@ mailing list, and other forums such as Skype, Google+ Hangouts, etc.
   appropriate for the community.
 
 __When we disagree, we try to understand why.__ Disagreements, both social and
-technical, happen all the time and *SonicWeb* is no exception. It is important
+technical, happen all the time, and *SonicWeb* is no exception. It is important
 that we resolve disagreements and differing views constructively. Remember that
 we're different. The strength of *SonicWeb* comes from its varied community,
 people from a wide range of backgrounds. Different people have different
