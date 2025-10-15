@@ -20,10 +20,12 @@ ARG USER
 # Centralized versions and checksums for third-party web assets
 ARG HLJS_VER=11.11.1
 ARG MARKED_VER=16.3.0
+ARG MARKED_HL_VER=2.2.2
 ARG GHMD_VER=5.8.1
 
 ARG HLJS_JS_SHA256=c4a399dd6f488bc97a3546e3476747b3e714c99c57b9473154c6fb8d259b9381
 ARG MARKED_SHA256=fe19dcc22695007cccbd794f859676e9d25356d48be2fe1a158650405a34e81f
+ARG MARKED_HL_SHA256=94854921cc0771c9b51277240ea326368d24ad05d334e8fdb0f896c68526f9b7
 ARG GHMD_SHA256=c47f5a601c095973e19c0a7d0418d35b2b209098955d2cc4136eb274f9083cc4
 ARG HLJS_CSS_SHA256=3a9a5def8b9c311e5ae43abde85c63133185eed4f0d9f67fea4b00a8308cf066
 
@@ -55,6 +57,11 @@ ADD --chmod=0444                                                                
     --checksum=sha256:${MARKED_SHA256}                                                \
     https://cdnjs.cloudflare.com/ajax/libs/marked/${MARKED_VER}/lib/marked.umd.min.js \
     /tmp/root/www/js/
+
+ADD --chmod=0444                                                                              \
+    --checksum=sha256:${MARKED_HL_SHA256}                                                     \
+    https://cdnjs.cloudflare.com/ajax/libs/marked-highlight/${MARKED_HL_VER}/index.umd.min.js \
+    /tmp/root/www/js/marked-highlight.umd.min.js
 
 ADD --chmod=0444                                                                                   \
     --checksum=sha256:${GHMD_SHA256}                                                               \
