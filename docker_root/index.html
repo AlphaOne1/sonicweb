@@ -128,11 +128,25 @@
                     return res.text();
                 })
                 .then(md => {
-                    if (typeof marked !== 'undefined') {
+                    if (typeof marked !== 'undefined' && typeof markedHighlight !== 'undefined') {
                         // We control the Markdown content; DOMPurify intentionally omitted
+                        const { Marked } = globalThis.marked;
+                        const { markedHighlight } = globalThis.markedHighlight;
+
+                        const marked = new Marked(
+                            markedHighlight({
+                                emptyLangClass: 'hljs',
+                                langPrefix: 'hljs language-',
+                                highlight: (code, lang, info) => {
+                                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                                    return hljs.highlight(code, { language }).value;
+                                }
+                            })
+                        );
+
                         target.innerHTML = marked.parse(md);
                     } else {
-                        console.warn('marked is not available; rendering raw content as plaintext.');
+                        console.warn('marked(-highlight) is not available; rendering raw content as plaintext.');
                         target.innerHTML = '';
                         const pre = document.createElement('pre');
                         pre.style.whiteSpace = 'pre-wrap';
@@ -181,6 +195,11 @@
                     [   'js/marked.umd.min.js',
                         'https://cdnjs.cloudflare.com/ajax/libs/marked/16.3.0/lib/marked.umd.min.js',
                         'sha384-28tGVU6cfNCYHN01DPkRbQ5zNcqr7cHx7RE2PA0Os8oQsE0H1dRIJBoGPX75oXDs'
+                    ],
+                    // 3) Load marked-highlight.js (local → CDN)
+                    [   'js/marked-highlight.umd.min.js',
+                        'https://cdnjs.cloudflare.com/ajax/libs/marked-highlight/2.2.2/index.umd.min.js',
+                        'sha384-+mT40US4xoeuAAclujvPMKhn+xurhsJhB+wvml506kimV5UmDNe6YOjMC4fpw6yk%'
                     ]
                 ],
                 () => {
@@ -188,23 +207,6 @@
                         return;
                     }
                     loaded = true;
-
-                    // 3) Configure marked highlighting only after both are available
-                    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
-                        marked.setOptions({
-                            highlight: (code, lang) => {
-                                if (lang && hljs.getLanguage(lang)) {
-                                    return hljs.highlight(code, {
-                                        language: lang,
-                                        ignoreIllegals: true
-                                    }).value;
-                                }
-                                return hljs.highlightAuto(code).value;
-                            }
-                        });
-                    } else {
-                        console.warn('highlight.js or marked not available; code blocks will not be highlighted.');
-                    }
 
                     // 4) Render once everything is ready
                     renderMarkdownFromFile('README.md', 'content', () => {
