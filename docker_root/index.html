@@ -49,7 +49,6 @@
         }
     </style>
 
-    <!-- Load GitHub Markdown CSS: local first, fallback to CDN -->
     <script>
         // Generation of SRI-Hash:
         //     curl -sSL <URL> | openssl dgst -sha256 -binary | openssl base64 -A
@@ -116,6 +115,13 @@
         }
 
         function renderMarkdownFromFile(filePath, elementID, callback) {
+            const target = document.getElementById(elementID);
+            if (!target) {
+                console.error(`Target element not found: #${elementID}`);
+                if (callback) callback();
+                return;
+            }
+
             fetch(filePath, { cache: 'no-cache' })
                 .then(res => {
                     if (!res.ok) throw new Error(`${filePath} not found (${res.status})`);
@@ -123,23 +129,31 @@
                 })
                 .then(md => {
                     if (typeof marked !== 'undefined') {
-                        // no DOMPurify, as we control the content of the Markdown here
-                        document.getElementById(elementID).innerHTML = marked.parse(md);
+                        // We control the Markdown content; DOMPurify intentionally omitted
+                        target.innerHTML = marked.parse(md);
                     } else {
-                        document.getElementById(elementID).innerHTML = "<p><strong>Error:</strong> Markdown parser not available.</p>";
+                        console.warn('marked is not available; rendering raw content as plaintext.');
+                        target.innerHTML = '';
+                        const pre = document.createElement('pre');
+                        pre.style.whiteSpace = 'pre-wrap';
+                        pre.style.wordBreak = 'break-word';
+                        pre.textContent = md; // safe plaintext fallback
+                        target.appendChild(pre);
                     }
                 })
                 .catch(err => {
-                    document.getElementById(elementID).innerHTML = `<p><strong>Error:</strong> ${err.message}</p>`;
+                    target.innerHTML = `<p><strong>Error:</strong> ${err.message}</p>`;
                     console.error(err);
                 })
-                .finally( () => {
+                .finally(() => {
                     if (callback) {
                         callback();
                     }
                 });
         }
-
+    </script>
+    <script defer>
+        // Load GitHub Markdown CSS: local first, fallback to CDN
         loadCSS(
             'css/github-markdown.min.css',
             'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css',
@@ -152,6 +166,56 @@
             'https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css',
             'sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L'
         );
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let loaded = false;
+
+            loadScript(
+                [
+                    // 1) Load highlight.js first (local → CDN)
+                    [   'js/highlight.min.js',
+                        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js',
+                        'sha384-RH2xi4eIQ/gjtbs9fUXM68sLSi99C7ZWBRX1vDrVv6GQXRibxXLbwO2NGZB74MbU'
+                    ],
+                    // 2) Load marked.js (local → CDN)
+                    [   'js/marked.umd.min.js',
+                        'https://cdnjs.cloudflare.com/ajax/libs/marked/16.3.0/lib/marked.umd.min.js',
+                        'sha384-28tGVU6cfNCYHN01DPkRbQ5zNcqr7cHx7RE2PA0Os8oQsE0H1dRIJBoGPX75oXDs'
+                    ]
+                ],
+                () => {
+                    if (loaded) {
+                        return;
+                    }
+                    loaded = true;
+
+                    // 3) Configure marked highlighting only after both are available
+                    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+                        marked.setOptions({
+                            highlight: (code, lang) => {
+                                if (lang && hljs.getLanguage(lang)) {
+                                    return hljs.highlight(code, {
+                                        language: lang,
+                                        ignoreIllegals: true
+                                    }).value;
+                                }
+                                return hljs.highlightAuto(code).value;
+                            }
+                        });
+                    } else {
+                        console.warn('highlight.js or marked not available; code blocks will not be highlighted.');
+                    }
+
+                    // 4) Render once everything is ready
+                    renderMarkdownFromFile('README.md', 'content', () => {
+                        const content = document.getElementById('content');
+                        if (content) {
+                            content.setAttribute('aria-busy', 'false');
+                        }
+                    });
+                }
+            );
+        });
     </script>
 </head>
 <body>
@@ -160,57 +224,12 @@
     <h1 class="visually-hidden"> SonicWeb Documentation </h1>
     <p><em> README.md is loading... </em></p>
 </main>
+
 <noscript>
     <p><strong> Note: </strong> JavaScript is required to render the Markdown content.
        Please enable JavaScript or view the raw README.md instead.
     </p>
 </noscript>
-<script defer>
-    document.addEventListener('DOMContentLoaded', () => {
-        let loaded = false;
 
-        // 1) Load highlight.js first (local → CDN)
-        loadScript(
-            [
-                [   'js/highlight.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js',
-                    'sha384-RH2xi4eIQ/gjtbs9fUXM68sLSi99C7ZWBRX1vDrVv6GQXRibxXLbwO2NGZB74MbU'
-                ],
-                [   'js/marked.umd.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/marked/16.3.0/lib/marked.umd.min.js',
-                    'sha384-28tGVU6cfNCYHN01DPkRbQ5zNcqr7cHx7RE2PA0Os8oQsE0H1dRIJBoGPX75oXDs'
-                ]
-            ],
-            () => {
-                if (loaded) {
-                    return;
-                }
-                loaded = true;
-
-                // 3) Configure marked highlighting only after both are available
-                if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
-                    marked.setOptions({
-                        highlight: (code, lang) => {
-                            if (lang && hljs.getLanguage(lang)) {
-                                return hljs.highlight(code, { language: lang }).value;
-                            }
-                            return hljs.highlightAuto(code).value;
-                        }
-                    });
-                } else {
-                    console.warn('highlight.js or marked not available; code blocks will not be highlighted.');
-                }
-
-                // 4) Render once everything is ready
-                renderMarkdownFromFile('README.md', 'content', () => {
-                    const content = document.getElementById('content');
-                    if (content) {
-                        content.setAttribute('aria-busy', 'false');
-                    }
-                });
-            }
-        );
-    });
-</script>
 </body>
 </html>
