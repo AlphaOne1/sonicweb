@@ -37,12 +37,12 @@ securityContext:
       drop:
       - ALL
     allowPrivilegeEscalation: false
-    secCompProfile:
+    seccompProfile:
         type: RuntimeDefault
   # readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 65532
-    runasGroup: 65532
+    runAsGroup: 65532
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:

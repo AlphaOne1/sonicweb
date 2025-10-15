@@ -115,7 +115,7 @@
             document.head.appendChild(script);
         }
 
-        function renderMarkdownFromFile(filePath, elementID) {
+        function renderMarkdownFromFile(filePath, elementID, callback) {
             fetch(filePath, { cache: 'no-cache' })
                 .then(res => {
                     if (!res.ok) throw new Error(`${filePath} not found (${res.status})`);
@@ -132,6 +132,11 @@
                 .catch(err => {
                     document.getElementById(elementID).innerHTML = `<p><strong>Error:</strong> ${err.message}</p>`;
                     console.error(err);
+                })
+                .finally( () => {
+                    if (callback) {
+                        callback();
+                    }
                 });
         }
 
@@ -197,11 +202,12 @@
                 }
 
                 // 4) Render once everything is ready
-                renderMarkdownFromFile('README.md', 'content');
-                const content = document.getElementById('content');
-                if (content) {
-                    content.setAttribute('aria-busy', 'false');
-                }
+                renderMarkdownFromFile('README.md', 'content', () => {
+                    const content = document.getElementById('content');
+                    if (content) {
+                        content.setAttribute('aria-busy', 'false');
+                    }
+                });
             }
         );
     });
