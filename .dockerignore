@@ -1,10 +1,4 @@
 # SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-/.idea
-.DS_Store
-go.work*
-sonic
-sonic-*-*
-SonicWeb-*.*
-/testcert
+docker_root/*.license
