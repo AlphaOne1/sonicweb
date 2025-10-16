@@ -61,6 +61,11 @@
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = localHref;
+
+            if (localHref.includes('dark')) {
+                link.media = '(prefers-color-scheme: dark)';
+            }
+
             link.onerror = () => {
                 console.warn(`CSS failed: ${localHref}, loading fallback...`);
                 const fallbackLink = document.createElement('link');
@@ -128,27 +133,37 @@
 
             fetch(filePath, { cache: 'no-cache' })
                 .then(res => {
-                    if (!res.ok) throw new Error(`${filePath} not found (${res.status})`);
+                    if (!res.ok) {
+                        throw new Error(`${filePath} not found (${res.status})`);
+                    }
+
                     return res.text();
                 })
                 .then(md => {
-                    if (typeof marked !== 'undefined' && typeof markedHighlight !== 'undefined') {
+                    if (globalThis.marked && (globalThis.markedHighlight || globalThis.markedHighlight?.markedHighlight)) {
                         // We control the Markdown content; DOMPurify intentionally omitted
                         const { Marked } = globalThis.marked;
-                        const { markedHighlight } = globalThis.markedHighlight;
+                        // Support both global shapes: function or { markedHighlight }
+                        const mh = globalThis.markedHighlight?.markedHighlight || globalThis.markedHighlight;
+                        const hasHljs = typeof hljs !== 'undefined' && typeof hljs.highlight === 'function';
 
-                        const marked = new Marked(
-                            markedHighlight({
+                        const parser = new Marked(
+                            mh({
                                 emptyLangClass: 'hljs',
                                 langPrefix: 'hljs language-',
-                                highlight: (code, lang, info) => {
+                                highlight: (code, lang) => {
+                                    if (!hasHljs) {
+                                        return code;
+                                    }
+
                                     const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+
                                     return hljs.highlight(code, { language }).value;
                                 }
                             })
                         );
 
-                        target.innerHTML = marked.parse(md);
+                        target.innerHTML = parser.parse(md);
                     } else {
                         console.warn('marked(-highlight) is not available; rendering raw content as plaintext.');
                         target.innerHTML = '';
@@ -173,17 +188,24 @@
     <script defer>
         // Load GitHub Markdown CSS: local first, fallback to CDN
         loadCSS(
-            'css/github-markdown.min.css',
+            'styles/github-markdown.min.css',
             'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css',
             'sha384-bKf/D9oOhMXM113OMRKT6sKFRT4jT3AulvzsGu563IJ5zmaH5LSA26VfwRJQ8GAR'
         );
 
-        // highlight.js theme CSS
+        // Replace the one load of hljs-CSS with two with media attribute
+        // Light/Default
         loadCSS(
-            'css/github.min.css',
+            'styles/github.min.css',
             'https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css',
             'sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L'
         );
+        // Dark (dimmed) – automatically only in dark mode through loadCSS magic
+        loadCSS(
+            'styles/github-dark-dimmed.min.css',
+            'https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark-dimmed.min.css',
+            'sha384-PiLidnnRuzFgp4qiN8oGNmktrV8ETL+6a8heAxljUX4A+3XWlocwaMn9duBUepfK',
+        )
 
         document.addEventListener('DOMContentLoaded', () => {
             let loaded = false;
@@ -203,7 +225,7 @@
                     // 3) Load marked-highlight.js (local → CDN)
                     [   'js/marked-highlight.umd.min.js',
                         'https://cdnjs.cloudflare.com/ajax/libs/marked-highlight/2.2.2/index.umd.min.js',
-                        'sha384-+mT40US4xoeuAAclujvPMKhn+xurhsJhB+wvml506kimV5UmDNe6YOjMC4fpw6yk%'
+                        'sha384-+mT40US4xoeuAAclujvPMKhn+xurhsJhB+wvml506kimV5UmDNe6YOjMC4fpw6yk'
                     ]
                 ],
                 () => {
