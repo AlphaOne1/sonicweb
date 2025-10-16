@@ -213,7 +213,7 @@ In some situations, it is necessary to add HTTP headers to the response.
 ./sonic-linux-amd64 -root testroot/ -header "Environment: production"
 ```
 
-To add a huge number of headers the `-headerfile` parameter can be used:
+To add a huge number of headers, the `-headerfile` parameter can be used:
 
 ```sh
 ./sonic-linux-amd64 -root testroot/ -headerfile additional_headers.conf
@@ -283,7 +283,7 @@ docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.6.0
 
 and it will show this documentation. The entrypoint of the dockerfile just starts *SonicWeb* without any parameters.
 So `/www` is the default web root directory. Every parameter passed after the image name is appended as a parameter
-to *SonicWeb*. So running e.g.,
+to *SonicWeb*. For example, running
 
 ```sh
 docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.6.0 --log=debug
@@ -304,7 +304,7 @@ docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.6.0
 
 Note that without specifying the `:ro` flag, the content will be mounted as read-write. *SonicWeb* does not write into
 the mounted directory. Nevertheless, it poses a potential risk. Also take care that the content of the mounts is
-readable by the non-root-user that *SonicWeb* uses (UID 65532).
+readable by the non-root user that *SonicWeb* uses (UID 65532).
 
 If telemetry is needed, port 8081 needs to be exposed additionally:
 

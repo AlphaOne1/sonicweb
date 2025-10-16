@@ -28,6 +28,7 @@ ARG MARKED_SHA256=fe19dcc22695007cccbd794f859676e9d25356d48be2fe1a158650405a34e8
 ARG MARKED_HL_SHA256=94854921cc0771c9b51277240ea326368d24ad05d334e8fdb0f896c68526f9b7
 ARG GHMD_SHA256=c47f5a601c095973e19c0a7d0418d35b2b209098955d2cc4136eb274f9083cc4
 ARG HLJS_CSS_SHA256=3a9a5def8b9c311e5ae43abde85c63133185eed4f0d9f67fea4b00a8308cf066
+ARG HLJS_DARK_CSS_SHA256=bc1116bfba58ee83794d53b8bd08e5ab13cba81bf03454cf67d6cfe435033cae
 
 RUN useradd --home     "/nonexistent"      \
             --shell    "/usr/sbin/nologin" \
@@ -36,11 +37,11 @@ RUN useradd --home     "/nonexistent"      \
             -r                             \
             "${USER}"
 
-RUN mkdir -p /tmp/root/bin     \
-             /tmp/root/etc     \
-             /tmp/root/tmp     \
-             /tmp/root/www     \
-             /tmp/root/www/css \
+RUN mkdir -p /tmp/root/bin        \
+             /tmp/root/etc        \
+             /tmp/root/tmp        \
+             /tmp/root/www        \
+             /tmp/root/www/styles \
              /tmp/root/www/js
 
 COPY --chmod=0755 sonic-linux-${TARGETARCH} /tmp/root/bin/sonicweb
@@ -66,12 +67,17 @@ ADD --chmod=0444                                                                
 ADD --chmod=0444                                                                                   \
     --checksum=sha256:${GHMD_SHA256}                                                               \
     https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/${GHMD_VER}/github-markdown.min.css \
-    /tmp/root/www/css/
+    /tmp/root/www/styles/
 
 ADD --chmod=0444                                                                          \
     --checksum=sha256:${HLJS_CSS_SHA256}                                                  \
     https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/styles/github.min.css \
-    /tmp/root/www/css/
+    /tmp/root/www/styles/
+
+ADD --chmod=0444                                                                                      \
+    --checksum=sha256:${HLJS_DARK_CSS_SHA256}                                                         \
+    https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/styles/github-dark-dimmed.min.css \
+    /tmp/root/www/styles/
 
 RUN getent passwd "${USER}" > /tmp/root/etc/passwd &&\
     getent group  "${USER}" > /tmp/root/etc/group  &&\
