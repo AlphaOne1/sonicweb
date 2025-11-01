@@ -224,9 +224,7 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 			// Enforce a conservative limit for each path segment (common FS limit: 255 bytes)
 			// This guards against overly long filenames like a single 256-char component.
 			if path != "" {
-				parts := strings.Split(path, "/")
-
-				for _, part := range parts {
+				for part := range strings.SplitSeq(path, "/") {
 					if part == "" {
 						continue
 					}
