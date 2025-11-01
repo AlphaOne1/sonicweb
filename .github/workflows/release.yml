@@ -6,7 +6,7 @@ name: Release
 on:
     release:
         types:
-            - published
+          - published
 
 permissions: read-all
 
@@ -21,109 +21,109 @@ jobs:
         strategy:
             matrix:
                 architecture:
-                    - "386"
-                    - "amd64"
-                    - "arm64"
+                  - "386"
+                  - "amd64"
+                  - "arm64"
                 os:
-                    - linux
-                    - windows
-                    - darwin
+                  - linux
+                  - windows
+                  - darwin
                 exclude:
-                    - os: darwin
-                      architecture: 386
+                  - os: darwin
+                    architecture: 386
                 include:
-                    - os: linux
-                      runner: ubuntu-latest
-                    - os: windows
-                      runner: windows-latest
-                    - os: darwin
-                      runner: macos-latest
+                  - os: linux
+                    runner: ubuntu-latest
+                  - os: windows
+                    runner: windows-latest
+                  - os: darwin
+                    runner: macos-latest
         runs-on: ${{ matrix.runner }}
         steps:
-            - name: Harden Runner
-              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
-              with:
-                  egress-policy: audit
+          - name: Harden Runner
+            uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+            with:
+                egress-policy: audit
 
-            - name: Checkout
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-              with:
-                  fetch-depth: 1
+          - name: Checkout
+            uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+            with:
+                fetch-depth: 1
 
-            - name: Install Go
-              uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
-              with:
-                  go-version-file: go.mod
+          - name: Install Go
+            uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+            with:
+                go-version-file: go.mod
 
-            - name: Install nfpm
-              if: matrix.os == 'linux'
-              run: |
-                  go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
-                  echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          - name: Install nfpm
+            if: matrix.os == 'linux'
+            run: |
+                go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
+                echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-            - name: Build
-              env:
-                  CGO_ENABLED: "0"
-                  GOOS: ${{matrix.os}}
-                  GOARCH: ${{matrix.architecture}}
-              run: |
-                  go version
-                  make
+          - name: Build
+            env:
+                CGO_ENABLED: "0"
+                GOOS: ${{matrix.os}}
+                GOARCH: ${{matrix.architecture}}
+            run: |
+                go version
+                make
 
-            - name: Upload Artifacts
-              if: matrix.os == 'linux'
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-              with:
-                  name: sonic-${{ matrix.os }}-${{ matrix.architecture }}
-                  path: |
-                      sonic-${{ matrix.os }}-${{ matrix.architecture }}
-                  compression-level: '9'
-                  retention-days: 2
+          - name: Upload Artifacts
+            if: matrix.os == 'linux'
+            uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+            with:
+                name: sonic-${{ matrix.os }}-${{ matrix.architecture }}
+                path: |
+                    sonic-${{ matrix.os }}-${{ matrix.architecture }}
+                compression-level: '9'
+                retention-days: 2
 
-            - name: Build Package
-              if: matrix.os == 'linux'
-              env:
-                  CGO_ENABLED: "0"
-                  GOOS: ${{matrix.os}}
-                  GOARCH: ${{matrix.architecture}}
-              run: make package
+          - name: Build Package
+            if: matrix.os == 'linux'
+            env:
+                CGO_ENABLED: "0"
+                GOOS: ${{matrix.os}}
+                GOARCH: ${{matrix.architecture}}
+            run: make package
 
-            - name: Compress xz
-              if: matrix.os != 'windows'
-              run: xz -T0 -9 sonic-*-*
+          - name: Compress xz
+            if: matrix.os != 'windows'
+            run: xz -T0 -9 sonic-*-*
 
-            - name: Compress 7z (Windows)
-              if: matrix.os == 'windows'
-              shell: powershell
-              run: |
-                  $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-                  if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
-                  & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
+          - name: Compress 7z (Windows)
+            if: matrix.os == 'windows'
+            shell: powershell
+            run: |
+                $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+                if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
+                & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonic-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonic-${{ matrix.os }}-${{ matrix.architecture }}.exe"
 
-            - name: Upload Non-Windows Release (via GitHub CLI)
-              if: matrix.os != 'windows'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              shell: bash
-              run: |
-                  shopt -s nullglob
-                  for file in sonic-*-* SonicWeb*.rpm SonicWeb*.deb
-                  do
-                      gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
-                  done
+          - name: Upload Non-Windows Release (via GitHub CLI)
+            if: matrix.os != 'windows'
+            env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            shell: bash
+            run: |
+                shopt -s nullglob
+                for file in sonic-*-* SonicWeb*.rpm SonicWeb*.deb
+                do
+                    gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
+                done
 
-            - name: Upload Windows Release (via GitHub CLI)
-              if: matrix.os == 'windows'
-              shell: powershell
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  Set-StrictMode -Version Latest
-                  $ErrorActionPreference = 'Stop'
-                  $tag = "${{ github.event.release.tag_name }}"
-                  Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object {
-                      gh release upload $tag $_.FullName --clobber
-                  }
+          - name: Upload Windows Release (via GitHub CLI)
+            if: matrix.os == 'windows'
+            shell: powershell
+            env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            run: |
+                Set-StrictMode -Version Latest
+                $ErrorActionPreference = 'Stop'
+                $tag = "${{ github.event.release.tag_name }}"
+                Get-ChildItem -File -Path . -Filter 'sonic-*-*.7z' | ForEach-Object {
+                    gh release upload $tag $_.FullName --clobber
+                }
 
     BuildDockerMultiArch:
         permissions:
@@ -134,68 +134,68 @@ jobs:
             digest: ${{ steps.docker_build.outputs.digest }}
             imageName: ${{ steps.vars.outputs.IMAGE_NAME}}
         steps:
-            - name: Harden Runner
-              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
-              with:
-                  egress-policy: audit
+          - name: Harden Runner
+            uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+            with:
+                egress-policy: audit
 
-            - name: Generate Variables
-              id: vars
-              shell: bash
-              run: |
-                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
-                  echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          - name: Generate Variables
+            id: vars
+            shell: bash
+            run: |
+                echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+                echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-            - name: Checkout
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-              with:
-                  fetch-depth: 1
+          - name: Checkout
+            uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+            with:
+                fetch-depth: 1
 
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+          - name: Set up QEMU
+            uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+          - name: Set up Docker Buildx
+            uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-            - name: Login to GHCR
-              uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
+          - name: Login to GHCR
+            uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+            with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Download Artifacts
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-              with:
-                  pattern: sonic-linux-*
-                  merge-multiple: true
-                  path: .
+          - name: Download Artifacts
+            uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+            with:
+                pattern: sonic-linux-*
+                merge-multiple: true
+                path: .
 
-            - name: Build Docker Image
-              id: docker_build
-              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-              with:
-                  context: .
-                  platforms: linux/amd64,linux/arm64
-                  pull: true
-                  push: true
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-                  build-args: |
-                      VERSION=${{ github.event.release.tag_name }}
-                      REVISION=${{ github.sha }}
-                      CREATED=${{ github.event.release.created_at }}
-                  tags: |
-                      ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-                      ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-${{ github.sha }}
-                      ${{ env.IMAGE_NAME }}:latest
+          - name: Build Docker Image
+            id: docker_build
+            uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+            with:
+                context: .
+                platforms: linux/amd64,linux/arm64
+                pull: true
+                push: true
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+                build-args: |
+                    VERSION=${{ github.event.release.tag_name }}
+                    REVISION=${{ github.sha }}
+                    CREATED=${{ github.event.release.created_at }}
+                tags: |
+                    ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+                    ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}-${{ github.sha }}
+                    ${{ env.IMAGE_NAME }}:latest
 
-            - name: Inspect final manifests
-              run: |
-                  set -euo pipefail
-                  docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
-                  docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
-                  docker manifest inspect "${IMAGE_NAME}:latest"
+          - name: Inspect final manifests
+            run: |
+                set -euo pipefail
+                docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
+                docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
+                docker manifest inspect "${IMAGE_NAME}:latest"
 
     ChecksumReleaseAssets:
         needs: Build
@@ -204,43 +204,43 @@ jobs:
         outputs:
             hashBase64File: ${{ steps.hashes.outputs.handle }}
         steps:
-            - name: Harden Runner
-              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
-              with:
-                  egress-policy: audit
+          - name: Harden Runner
+            uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+            with:
+                egress-policy: audit
 
-            - name: Checkout
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-              with:
-                  fetch-depth: 1
+          - name: Checkout
+            uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+            with:
+                fetch-depth: 1
 
-            - name: Download all release assets via GitHub CLI
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  set -euo pipefail
-                  mkdir -p release-assets
-                  cd release-assets
-                  # gets all assets of the release
-                  gh release download "${{ github.event.release.tag_name }}" --clobber
-                  echo "Downloaded assets:"
-                  ls -lah
+          - name: Download all release assets via GitHub CLI
+            env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            run: |
+                set -euo pipefail
+                mkdir -p release-assets
+                cd release-assets
+                # gets all assets of the release
+                gh release download "${{ github.event.release.tag_name }}" --clobber
+                echo "Downloaded assets:"
+                ls -lah
 
-            - name: Generate Checksums
-              working-directory: release-assets
-              run: |
-                  set -euo pipefail
-                  # Robustly hash all regular files in this directory, then base64 and write via tee.
-                  LC_ALL=C find . -maxdepth 1 -type f -printf '%P\0' \
-                    | sort -z \
-                    | xargs -0 sha256sum -- \
-                    | base64 -w0 \
-                    | tee check.sha256 > /dev/null
-            - name: Upload Checksums
-              id: hashes
-              uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # 2.1.0
-              with:
-                  path: release-assets/check.sha256
+          - name: Generate Checksums
+            working-directory: release-assets
+            run: |
+                set -euo pipefail
+                # Robustly hash all regular files in this directory, then base64 and write via tee.
+                LC_ALL=C find . -maxdepth 1 -type f -printf '%P\0' \
+                  | sort -z \
+                  | xargs -0 sha256sum -- \
+                  | base64 -w0 \
+                  | tee check.sha256 > /dev/null
+          - name: Upload Checksums
+            id: hashes
+            uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # 2.1.0
+            with:
+                path: release-assets/check.sha256
 
     ContainerProvenance:
         permissions:
@@ -248,7 +248,7 @@ jobs:
             id-token: write # for creating OIDC tokens for signing.
             packages: write # for uploading attestations.
         needs:
-            - BuildDockerMultiArch
+          - BuildDockerMultiArch
         name: Container Provenance
         if: startsWith(github.ref, 'refs/tags/')
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!

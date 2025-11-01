@@ -6,10 +6,10 @@ name: Compliance Checks
 on:
   push:
       branches:
-          - master
+         - master
   pull_request:
       branches:
-          - master
+        - master
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,82 +37,82 @@ jobs:
 
     CheckSignedOffCommit:
         if: >
-          github.event_name == 'push' &&
-          !contains(github.actor, '[bot]') &&
-          !contains(github.event.pusher.name, '[bot]') &&
-          github.event.pusher.name != 'web-flow'
+            github.event_name == 'push' &&
+            !contains(github.actor, '[bot]') &&
+            !contains(github.event.pusher.name, '[bot]') &&
+            github.event.pusher.name != 'web-flow'
         runs-on: ubuntu-latest
         permissions:
             contents: read
         steps:
-            - name: Harden Runner
-              uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
-              with:
-                  egress-policy: audit
+          - name: Harden Runner
+            uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+            with:
+                egress-policy: audit
 
-            - name: Checkout
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-              with:
-                  fetch-depth: 0
+          - name: Checkout
+            uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+            with:
+                fetch-depth: 0
 
-            - name: Determine pushed commits
-              id: range
-              run: |
-                  set -euo pipefail
+          - name: Determine pushed commits
+            id: range
+            run: |
+                set -euo pipefail
 
-                  # Use GitHub-provided SHAs to build the range for this push
-                  BEFORE="${{ github.event.before }}"
-                  AFTER="${{ github.sha }}"
+                # Use GitHub-provided SHAs to build the range for this push
+                BEFORE="${{ github.event.before }}"
+                AFTER="${{ github.sha }}"
 
-                  if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
-                  then
-                      # New branch or force push without previous SHA
-                      git rev-list --no-merges "$AFTER" > shas.txt
-                  else
-                      git rev-list --no-merges "$BEFORE".."$AFTER" > shas.txt
-                  fi
+                if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
+                then
+                    # New branch or force push without previous SHA
+                    git rev-list --no-merges "$AFTER" > shas.txt
+                else
+                    git rev-list --no-merges "$BEFORE".."$AFTER" > shas.txt
+                fi
 
-            - name: Check for Signed-off-by
-              run: |
-                  set -euo pipefail
-                  missing=""
+          - name: Check for Signed-off-by
+            run: |
+                set -euo pipefail
+                missing=""
 
-                  while read -r sha
-                  do
-                      [ -n "$sha" ] || continue
+                while read -r sha
+                do
+                    [ -n "$sha" ] || continue
 
-                      # Skip commits from bots
-                      committer_name=`git log --format=%cn -n 1 "$sha"`
-                      committer_email=`git log --format=%ce -n 1 "$sha"`
-                      if    echo "$committer_name" | grep -Fq '[bot]' \
-                         || [ "$committer_name" = "web-flow" ]        \
-                         || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
-                      then
-                          echo "Skipping commit $sha from $committer_name <$committer_email>"
-                          continue
-                      fi
+                    # Skip commits from bots
+                    committer_name=`git log --format=%cn -n 1 "$sha"`
+                    committer_email=`git log --format=%ce -n 1 "$sha"`
+                    if    echo "$committer_name" | grep -Fq '[bot]' \
+                       || [ "$committer_name" = "web-flow" ]        \
+                       || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
+                    then
+                        echo "Skipping commit $sha from $committer_name <$committer_email>"
+                        continue
+                    fi
 
-                      msg=`git log --format=%B -n 1 "$sha"`
+                    msg=`git log --format=%B -n 1 "$sha"`
 
-                      if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
-                      then
-                          echo "Commit $sha missing Signed-off-by"
-                          missing="true"
+                    if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
+                    then
+                        echo "Commit $sha missing Signed-off-by"
+                        missing="true"
 
-                          echo "Committer name:           $committer_name"
-                          echo "Committer email:          $committer_email"
-                          echo "github.actor:             ${{ github.actor }}"
-                          echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
-                      fi
-                  done < shas.txt
+                        echo "Committer name:           $committer_name"
+                        echo "Committer email:          $committer_email"
+                        echo "github.actor:             ${{ github.actor }}"
+                        echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
+                    fi
+                done < shas.txt
 
-                  if [ "$missing" = "true" ]
-                  then
-                      echo "DCO check failed on push"
-                      exit 1
-                  fi
+                if [ "$missing" = "true" ]
+                then
+                    echo "DCO check failed on push"
+                    exit 1
+                fi
 
-                  echo "All pushed commits are signed"
+                echo "All pushed commits are signed"
 
     CheckSignedOffPullRequest:
         if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'bypass-dco')
@@ -124,25 +124,25 @@ jobs:
           - name: Harden Runner
             uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
             with:
-              egress-policy: audit
+                egress-policy: audit
 
           - name: Checkout
             uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
             with:
-              fetch-depth: 0
+                fetch-depth: 0
 
           - name: Get PR commits
             env:
-              GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             run: |
-              set -euo pipefail
-              gh --version
-              jq --version
+                set -euo pipefail
+                gh --version
+                jq --version
 
-              # Fetch all commits of the PR with pagination and extract SHAs
-              gh api -H "Accept: application/vnd.github+json" --paginate \
-                repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
-                | jq -r '.[].sha' > shas.txt
+                # Fetch all commits of the PR with pagination and extract SHAs
+                gh api -H "Accept: application/vnd.github+json" --paginate \
+                  repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
+                  | jq -r '.[].sha' > shas.txt
 
           - name: Check for Signed-off-by
             run: |
