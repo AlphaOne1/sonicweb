@@ -388,7 +388,7 @@ func BenchmarkHandler(b *testing.B) {
 
 	client := &http.Client{}
 
-	for range b.N {
+	for b.Loop() {
 		req, _ := http.NewRequestWithContext(
 			b.Context(),
 			http.MethodGet,
