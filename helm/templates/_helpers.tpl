@@ -1,9 +1,10 @@
-{{/*
+{{- /*
 SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 SPDX-License-Identifier: MPL-2.0
 
 Expand the name of the chart.
-*/}}
+*/ -}}
+
 {{- define "SonicWeb.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
