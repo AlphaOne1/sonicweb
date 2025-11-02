@@ -125,7 +125,9 @@ spec:
                     set -e
                     # IDs und Revisions definieren
                     # Beispiel: Go Dashboard
-                    wget -qO /dashboards/promhttp-go-stats.json https://grafana.com/api/dashboards/13240/revisions/2/download
+                    wget -qO - https://grafana.com/api/dashboards/13240/revisions/2/download  \
+                      | sed 's/"${DS_PROMETHEUS}"/"prometheus"/g' \
+                      > /dashboards/promhttp-go-stats.json
                 volumeMounts:
                   - name: grafana-dashboards
                     mountPath: /dashboards
