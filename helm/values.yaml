@@ -8,6 +8,9 @@
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
+# controls whether the generated files should be used for `podman kube` command
+podmanKube: false
+
 # Controls if monitoring setup should be included.
 includeMonitoring: false
 

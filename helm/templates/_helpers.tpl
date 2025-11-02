@@ -21,7 +21,7 @@ If release name contains chart name it will be used as a full name.
 {{- $name := default .Chart.Name .Values.nameOverride }}
 {{- $relName := .Release.Name }}
 {{- if .Values.podmanKube }}
-{{- $relName := "SonicWeb"}}
+{{- $relName = "SonicWeb"}}
 {{- end }}
 {{- if contains $name $relName }}
 {{- $relName | trunc 63 | trimSuffix "-" }}
@@ -55,7 +55,11 @@ Selector labels
 */}}
 {{- define "SonicWeb.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "SonicWeb.name" . }}
+{{- if .Values.podmanKube }}
+app.kubernetes.io/instance: SonicWeb
+{{- else }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
 {{- end }}
 
 {{/*
