@@ -1,5 +1,7 @@
-# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
-# SPDX-License-Identifier: MPL-2.0
+{{- /*
+SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+SPDX-License-Identifier: MPL-2.0
+*/ -}}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -42,6 +44,9 @@ spec:
                 ports:
                   - name: http
                     containerPort: {{ .Values.service.port }}
+                    protocol: TCP
+                  - name: metrics
+                    containerPort: {{ .Values.service.metricsPort }}
                     protocol: TCP
                 livenessProbe:
                     {{- toYaml .Values.livenessProbe | nindent 20 }}

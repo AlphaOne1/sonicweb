@@ -1,9 +1,10 @@
-{{/*
+{{- /*
 SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 SPDX-License-Identifier: MPL-2.0
 
 Expand the name of the chart.
-*/}}
+*/ -}}
+
 {{- define "SonicWeb.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
@@ -18,10 +19,14 @@ If release name contains chart name it will be used as a full name.
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- $relName := .Release.Name }}
+{{- if .Values.podmanKube }}
+{{- $relName = "SonicWeb"}}
+{{- end }}
+{{- if contains $name $relName }}
+{{- $relName | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s" $relName $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -50,7 +55,11 @@ Selector labels
 */}}
 {{- define "SonicWeb.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "SonicWeb.name" . }}
+{{- if .Values.podmanKube }}
+app.kubernetes.io/instance: SonicWeb
+{{- else }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
 {{- end }}
 
 {{/*
