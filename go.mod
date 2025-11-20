@@ -17,11 +17,7 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.60.0
 	go.opentelemetry.io/otel/sdk v1.38.0
 	go.opentelemetry.io/otel/sdk/metric v1.38.0
-<<<<<<< HEAD
 	golang.org/x/crypto v0.45.0
-=======
-	golang.org/x/crypto v0.44.0
->>>>>>> 9b8cfef (Bump golang.org/x/crypto from 0.43.0 to 0.44.0)
 )
 
 require (
