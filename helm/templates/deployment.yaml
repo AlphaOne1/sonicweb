@@ -4,7 +4,7 @@ SPDX-License-Identifier: MPL-2.0
 */ -}}
 
 apiVersion: apps/v1
-kind: Deployment
+kind:       Deployment
 metadata:
     name: {{ include "SonicWeb.fullname" . }}
     labels:
@@ -36,27 +36,27 @@ spec:
             securityContext:
                 {{- toYaml .Values.podSecurityContext | nindent 16 }}
             containers:
-              - name: {{ .Chart.Name }}
-                securityContext:
-                    {{- toYaml .Values.securityContext | nindent 20 }}
-                image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-                imagePullPolicy: {{ .Values.image.pullPolicy }}
-                ports:
-                  - name: http
-                    containerPort: {{ .Values.service.port }}
-                    protocol: TCP
-                  - name: metrics
-                    containerPort: {{ .Values.service.metricsPort }}
-                    protocol: TCP
-                livenessProbe:
-                    {{- toYaml .Values.livenessProbe | nindent 20 }}
-                readinessProbe:
-                    {{- toYaml .Values.readinessProbe | nindent 20 }}
-                resources:
-                    {{- toYaml .Values.resources | nindent 20 }}
+                -   name: {{ .Chart.Name }}
+                    securityContext:
+                        {{- toYaml .Values.securityContext | nindent 24 }}
+                    image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+                    imagePullPolicy: {{ .Values.image.pullPolicy }}
+                    ports:
+                        -   name:     http
+                            containerPort: {{ .Values.service.port }}
+                            protocol: TCP
+                        -   name:     metrics
+                            containerPort: {{ .Values.service.metricsPort }}
+                            protocol: TCP
+                    livenessProbe:
+                        {{- toYaml .Values.livenessProbe | nindent 24 }}
+                    readinessProbe:
+                        {{- toYaml .Values.readinessProbe | nindent 24 }}
+                    resources:
+                        {{- toYaml .Values.resources | nindent 24 }}
                 {{- with .Values.volumeMounts }}
-                volumeMounts:
-                    {{- toYaml . | nindent 20 }}
+                    volumeMounts:
+                        {{- toYaml . | nindent 24 }}
                 {{- end }}
             {{- with .Values.volumes }}
             volumes:

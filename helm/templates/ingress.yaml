@@ -5,7 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 
 {{- if .Values.ingress.enabled -}}
 apiVersion: networking.k8s.io/v1
-kind: Ingress
+kind:       Ingress
 metadata:
     name: {{ include "SonicWeb.fullname" . }}
     labels:
@@ -21,28 +21,28 @@ spec:
     {{- if .Values.ingress.tls }}
     tls:
         {{- range .Values.ingress.tls }}
-      - hosts:
+        -   hosts:
         {{- range .hosts }}
-          - {{ . | quote }}
+                - {{ . | quote }}
         {{- end }}
-        secretName: {{ .secretName }}
+            secretName: {{ .secretName }}
         {{- end }}
     {{- end }}
     rules:
         {{- range .Values.ingress.hosts }}
-      - host: {{ .host | quote }}
-        http:
-            paths:
+        -   host: {{ .host | quote }}
+            http:
+                paths:
                 {{- range .paths }}
-              - path: {{ .path }}
+                    -   path: {{ .path }}
                 {{- with .pathType }}
-                pathType: {{ . }}
+                        pathType: {{ . }}
                 {{- end }}
-                backend:
-                    service:
-                        name: {{ include "SonicWeb.fullname" $ }}
-                        port:
-                            number: {{ $.Values.service.port }}
+                        backend:
+                            service:
+                                name: {{ include "SonicWeb.fullname" $ }}
+                                port:
+                                    number: {{ $.Values.service.port }}
                 {{- end }}
         {{- end }}
 {{- end }}
