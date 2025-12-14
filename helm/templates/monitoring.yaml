@@ -7,13 +7,13 @@ SPDX-License-Identifier: MPL-2.0
 apiVersion: v1
 kind: Service
 metadata:
-    name: prometheus
+    name: {{ include "SonicWeb.fullname" . }}-prometheus
     labels:
-        app: prometheus
+        app: {{ include "SonicWeb.fullname" . }}-prometheus
 spec:
     type: ClusterIP
     selector:
-        app: prometheus
+        app: {{ include "SonicWeb.fullname" . }}-prometheus
     ports:
         -   name: web
             port: 9090
@@ -23,18 +23,18 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: prometheus
+    name: {{ include "SonicWeb.fullname" . }}-prometheus
     labels:
-        app: prometheus
+        app: {{ include "SonicWeb.fullname" . }}-prometheus
 spec:
     replicas: 1
     selector:
         matchLabels:
-            app: prometheus
+            app: {{ include "SonicWeb.fullname" . }}-prometheus
     template:
         metadata:
             labels:
-                app: prometheus
+                app: {{ include "SonicWeb.fullname" . }}-prometheus
         spec:
             containers:
                 -   name: prometheus
@@ -54,14 +54,14 @@ spec:
             volumes:
                 -   name: prometheus-config
                     configMap:
-                        name: prometheus-config
+                        name: {{ include "SonicWeb.fullname" . }}-prometheus-config
                 -   name: prometheus-storage
                     emptyDir: { }
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: prometheus-config
+    name: {{ include "SonicWeb.fullname" . }}-prometheus-config
 data:
     prometheus.yml: |
         global:
@@ -75,13 +75,13 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-    name: grafana
+    name: {{ include "SonicWeb.fullname" . }}-grafana
     labels:
-        app: grafana
+        app: {{ include "SonicWeb.fullname" . }}-grafana
 spec:
     type: ClusterIP
     selector:
-        app: grafana
+        app: {{ include "SonicWeb.fullname" . }}-grafana
     ports:
         -   name: web
             port: 3000
@@ -91,18 +91,18 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: grafana
+    name: {{ include "SonicWeb.fullname" . }}-grafana
     labels:
-        app: grafana
+        app: {{ include "SonicWeb.fullname" . }}-grafana
 spec:
     replicas: 1
     selector:
         matchLabels:
-            app: grafana
+            app: {{ include "SonicWeb.fullname" . }}-grafana
     template:
         metadata:
             labels:
-                app: grafana
+                app: {{ include "SonicWeb.fullname" . }}-grafana
         spec:
             initContainers:
                 -   name: wait-for-prometheus
@@ -111,8 +111,8 @@ spec:
                         - sh
                         - -c
                         - |
-                            echo "Waiting for Prometheus at http://prometheus:9090/-/ready";
-                            until wget -qO- http://prometheus:9090/-/ready >/dev/null 2>&1; do
+                            echo "Waiting for Prometheus at http://{{ include "SonicWeb.fullname" . }}-prometheus:9090/-/ready";
+                            until wget -qO- http://{{ include "SonicWeb.fullname" . }}-prometheus:9090/-/ready >/dev/null 2>&1; do
                               sleep 2;
                             done
                             echo "Prometheus is ready"
@@ -141,12 +141,12 @@ spec:
                         -   name: GF_SECURITY_ADMIN_USER
                             valueFrom:
                                 secretKeyRef:
-                                    name: grafana-admin-secret
+                                    name: {{ include "SonicWeb.fullname" . }}-grafana-admin-secret
                                     key: admin-user
                         -   name: GF_SECURITY_ADMIN_PASSWORD
                             valueFrom:
                                 secretKeyRef:
-                                    name: grafana-admin-secret
+                                    name: {{ include "SonicWeb.fullname" . }}-grafana-admin-secret
                                     key: admin-password
                     volumeMounts:
                         -   name: grafana-provisioning-datasources
@@ -158,17 +158,17 @@ spec:
             volumes:
                 -   name: grafana-provisioning-datasources
                     configMap:
-                        name: grafana-provisioning-datasources
+                        name: {{ include "SonicWeb.fullname" . }}-grafana-provisioning-datasources
                 -   name: grafana-provisioning-dashboards
                     configMap:
-                        name: grafana-provisioning-dashboards
+                        name: {{ include "SonicWeb.fullname" . }}-grafana-provisioning-dashboards
                 -   name: grafana-dashboards
                     emptyDir: { }
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-    name: grafana-admin-secret
+    name: {{ include "SonicWeb.fullname" . }}-grafana-admin-secret
 type: Opaque
 stringData:
     admin-user: {{ .Values.monitoring.grafana.adminUser     | quote }}
@@ -177,7 +177,7 @@ stringData:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: grafana-provisioning-datasources
+    name: {{ include "SonicWeb.fullname" . }}-grafana-provisioning-datasources
 data:
     datasources.yml: |
         apiVersion: 1
@@ -186,7 +186,7 @@ data:
                 type: prometheus
                 uid: prometheus
                 access: proxy
-                url: http://prometheus:9090
+                url: http://{{ include "SonicWeb.fullname" . }}-prometheus:9090
                 isDefault: true
                 jsonData:
                     timeInterval: 15s
@@ -194,7 +194,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: grafana-provisioning-dashboards
+    name: {{ include "SonicWeb.fullname" . }}-grafana-provisioning-dashboards
 data:
     dashboards.yml: |
         apiVersion: 1
