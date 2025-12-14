@@ -5,7 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 
 {{- if .Values.ingress.enabled -}}
 apiVersion: networking.k8s.io/v1
-kind:       Ingress
+kind: Ingress
 metadata:
     name: {{ include "SonicWeb.fullname" . }}
     labels:

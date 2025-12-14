@@ -4,7 +4,7 @@ SPDX-License-Identifier: MPL-2.0
 */ -}}
 
 apiVersion: apps/v1
-kind:       Deployment
+kind: Deployment
 metadata:
     name: {{ include "SonicWeb.fullname" . }}
     labels:
@@ -42,10 +42,10 @@ spec:
                     image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
                     imagePullPolicy: {{ .Values.image.pullPolicy }}
                     ports:
-                        -   name:     http
+                        -   name: http
                             containerPort: {{ .Values.service.port }}
                             protocol: TCP
-                        -   name:     metrics
+                        -   name: metrics
                             containerPort: {{ .Values.service.metricsPort }}
                             protocol: TCP
                     livenessProbe:

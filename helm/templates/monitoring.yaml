@@ -5,7 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 
 {{ if .Values.monitoring.enabled}}
 apiVersion: v1
-kind:       Service
+kind: Service
 metadata:
     name: prometheus
     labels:
@@ -15,13 +15,13 @@ spec:
     selector:
         app: prometheus
     ports:
-        -   name:       web
-            port:       9090
+        -   name: web
+            port: 9090
             targetPort: 9090
-            protocol:   TCP
+            protocol: TCP
 ---
 apiVersion: apps/v1
-kind:       Deployment
+kind: Deployment
 metadata:
     name: prometheus
     labels:
@@ -37,7 +37,7 @@ spec:
                 app: prometheus
         spec:
             containers:
-                -   name:  prometheus
+                -   name: prometheus
                     image: prom/prometheus:v3.8.0
                     args:
                         - --config.file=/etc/prometheus/prometheus.yml
@@ -45,11 +45,11 @@ spec:
                         - --storage.tsdb.retention.time=7d
                     ports:
                         -   containerPort: 9090
-                            name:          web
+                            name: web
                     volumeMounts:
-                        -   name:      prometheus-config
+                        -   name: prometheus-config
                             mountPath: /etc/prometheus
-                        -   name:      prometheus-storage
+                        -   name: prometheus-storage
                             mountPath: /prometheus
             volumes:
                 -   name: prometheus-config
@@ -59,7 +59,7 @@ spec:
                     emptyDir: { }
 ---
 apiVersion: v1
-kind:       ConfigMap
+kind: ConfigMap
 metadata:
     name: prometheus-config
 data:
@@ -67,13 +67,13 @@ data:
         global:
             scrape_interval: 15s
         scrape_configs:
-            -   job_name:     'sonicweb'
+            -   job_name: 'sonicweb'
                 metrics_path: /metrics
                 static_configs:
                     -   targets: [ '{{ include "SonicWeb.fullname" . }}:{{ .Values.service.metricsPort }}' ]
 ---
 apiVersion: v1
-kind:       Service
+kind: Service
 metadata:
     name: grafana
     labels:
@@ -83,13 +83,13 @@ spec:
     selector:
         app: grafana
     ports:
-        -   name:       web
-            port:       3000
+        -   name: web
+            port: 3000
             targetPort: 3000
-            protocol:   TCP
+            protocol: TCP
 ---
 apiVersion: apps/v1
-kind:       Deployment
+kind: Deployment
 metadata:
     name: grafana
     labels:
@@ -105,8 +105,8 @@ spec:
                 app: grafana
         spec:
             initContainers:
-                -   name:  wait-for-prometheus
-                    image: busybox:latest
+                -   name: wait-for-prometheus
+                    image: busybox:stable
                     command:
                         - sh
                         - -c
@@ -116,8 +116,8 @@ spec:
                               sleep 2;
                             done
                             echo "Prometheus is ready"
-                -   name:  fetch-grafana-dashboards
-                    image: busybox:latest
+                -   name: fetch-grafana-dashboards
+                    image: busybox:stable
                     command:
                         - sh
                         - -c
@@ -129,25 +129,31 @@ spec:
                               | sed 's/"${DS_PROMETHEUS}"/"prometheus"/g' \
                               > /dashboards/promhttp-go-stats.json
                     volumeMounts:
-                        -   name:      grafana-dashboards
+                        -   name: grafana-dashboards
                             mountPath: /dashboards
             containers:
-                -   name:  grafana
-                    image: grafana/grafana:latest
+                -   name: grafana
+                    image: grafana/grafana:12.3
                     ports:
                         -   containerPort: 3000
-                            name:          web
+                            name: web
                     env:
-                        -   name:  GF_SECURITY_ADMIN_USER
-                            value: admin
-                        -   name:  GF_SECURITY_ADMIN_PASSWORD
-                            value: admin
+                        -   name: GF_SECURITY_ADMIN_USER
+                            valueFrom:
+                                secretKeyRef:
+                                    name: grafana-admin-secret
+                                    key: admin-user
+                        -   name: GF_SECURITY_ADMIN_PASSWORD
+                            valueFrom:
+                                secretKeyRef:
+                                    name: grafana-admin-secret
+                                    key: admin-password
                     volumeMounts:
-                        -   name:      grafana-provisioning-datasources
+                        -   name: grafana-provisioning-datasources
                             mountPath: /etc/grafana/provisioning/datasources
-                        -   name:      grafana-provisioning-dashboards
+                        -   name: grafana-provisioning-dashboards
                             mountPath: /etc/grafana/provisioning/dashboards
-                        -   name:      grafana-dashboards
+                        -   name: grafana-dashboards
                             mountPath: /var/lib/grafana/dashboards
             volumes:
                 -   name: grafana-provisioning-datasources
@@ -160,36 +166,45 @@ spec:
                     emptyDir: { }
 ---
 apiVersion: v1
-kind:       ConfigMap
+kind: Secret
+metadata:
+    name: grafana-admin-secret
+type: Opaque
+stringData:
+    admin-user: {{ .Values.monitoring.grafana.adminUser     | quote }}
+    admin-password: {{ .Values.monitoring.grafana.adminPassword | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
 metadata:
     name: grafana-provisioning-datasources
 data:
     datasources.yml: |
         apiVersion: 1
         datasources:
-            -   name:      Prometheus
-                type:      prometheus
-                uid:       prometheus
-                access:    proxy
-                url:       http://prometheus:9090
+            -   name: Prometheus
+                type: prometheus
+                uid: prometheus
+                access: proxy
+                url: http://prometheus:9090
                 isDefault: true
                 jsonData:
                     timeInterval: 15s
 ---
 apiVersion: v1
-kind:       ConfigMap
+kind: ConfigMap
 metadata:
     name: grafana-provisioning-dashboards
 data:
     dashboards.yml: |
         apiVersion: 1
         providers:
-            -   name:                  'default'
-                orgId:                 1
-                folder:                ''
-                type:                  file
-                disableDeletion:       false
-                allowUiUpdates:        true
+            -   name: 'default'
+                orgId: 1
+                folder: ''
+                type: file
+                disableDeletion: false
+                allowUiUpdates: true
                 updateIntervalSeconds: 30
                 options:
                     path: /var/lib/grafana/dashboards

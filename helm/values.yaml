@@ -15,6 +15,8 @@ podmanKube: false
 monitoring:
     # Controls if monitoring setup should be included.
     enabled: false
+    adminUser: admin
+    adminPassword: "" # empty, provide with --set monitoring.adminPassword=<> if needed
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
