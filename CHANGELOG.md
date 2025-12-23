@@ -1,6 +1,12 @@
 <!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
+Release 1.6.2
+=============
+
+- added monitoring to deployment configuration
+- update dependencies
+
 Release 1.6.1
 =============
 
