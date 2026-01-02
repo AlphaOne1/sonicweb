@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD033 MD041 -->
-<!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
 <p align="center">
