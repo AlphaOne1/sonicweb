@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
@@ -33,7 +34,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.38.0"
 )
 
 const OTLPProtocolGRPC = "grpc"
@@ -114,6 +115,14 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 	if loggerProvider != nil {
 		shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
 		global.SetLoggerProvider(loggerProvider)
+
+		slog.SetDefault(
+			slog.New(&TeeLogHandler{
+				Handler: []slog.Handler{
+					slog.Default().Handler(),
+					otelslog.NewHandler("otel", otelslog.WithLoggerProvider(loggerProvider)),
+				},
+			}))
 	}
 
 	return shutdown, err
@@ -157,6 +166,7 @@ func newPropagator() propagation.TextMapPropagator {
 func newResource(ctx context.Context) (*resource.Resource, error) {
 	res, err := resource.New(
 		ctx,
+		resource.WithSchemaURL(semconv.SchemaURL),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(ServerName),
 			semconv.ServiceVersionKey.String(buildInfoTag),
@@ -362,9 +372,7 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 	envExporters := os.Getenv("OTEL_LOGS_EXPORTER")
 
 	if envExporters == OTLPExporterNone || envExporters == "" {
-		envExporters = OTLPExporterConsole
-	} else {
-		envExporters = envExporters + "," + OTLPExporterConsole
+		return nil, nil //nolint:nilnil // it is completely valid to have no provider set
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")

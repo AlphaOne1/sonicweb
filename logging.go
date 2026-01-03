@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -47,4 +48,51 @@ func setupLogging(logLevel string, logStyle string) error {
 	}
 
 	return nil
+}
+
+type TeeLogHandler struct {
+	Handler []slog.Handler
+}
+
+func (t *TeeLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	for _, h := range t.Handler {
+		if h.Enabled(ctx, level) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *TeeLogHandler) Handle(ctx context.Context, r slog.Record) error {
+	errs := make([]error, 0)
+
+	for _, h := range t.Handler {
+		c := r.Clone()
+		if err := h.Handle(ctx, c); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func (t *TeeLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	handlers := make([]slog.Handler, 0, len(t.Handler))
+
+	for _, h := range t.Handler {
+		handlers = append(handlers, h.WithAttrs(attrs))
+	}
+
+	return &TeeLogHandler{Handler: handlers}
+}
+
+func (t *TeeLogHandler) WithGroup(name string) slog.Handler {
+	handlers := make([]slog.Handler, 0, len(t.Handler))
+
+	for _, h := range t.Handler {
+		handlers = append(handlers, h.WithGroup(name))
+	}
+
+	return &TeeLogHandler{Handler: handlers}
 }
