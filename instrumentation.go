@@ -64,32 +64,48 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 	prop := newPropagator()
 	otel.SetTextMapPropagator(prop)
 
-	// Set up a trace provider.
-	tracerProvider, err := newTracerProvider()
+	// Get the common resources to use
+	res, err := newResource(ctx)
 	if err != nil {
 		handleErr(err)
 		return shutdown, err
 	}
-	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
-	otel.SetTracerProvider(tracerProvider)
+
+	// Set up a trace provider.
+	tracerProvider, err := newTracerProvider(ctx, res)
+	if err != nil {
+		handleErr(err)
+		return shutdown, err
+	}
+
+	if tracerProvider != nil {
+		shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
+		otel.SetTracerProvider(tracerProvider)
+	}
 
 	// Set up meter provider.
-	meterProvider, err := newMeterProvider()
+	meterProvider, err := newMeterProvider(ctx, res)
 	if err != nil {
 		handleErr(err)
 		return shutdown, err
 	}
-	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
-	otel.SetMeterProvider(meterProvider)
+
+	if meterProvider != nil {
+		shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+		otel.SetMeterProvider(meterProvider)
+	}
 
 	// Set up a logger provider.
-	loggerProvider, err := newLoggerProvider()
+	loggerProvider, err := newLoggerProvider(ctx, res)
 	if err != nil {
 		handleErr(err)
 		return shutdown, err
 	}
-	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
-	global.SetLoggerProvider(loggerProvider)
+
+	if loggerProvider != nil {
+		shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
+		global.SetLoggerProvider(loggerProvider)
+	}
 
 	return shutdown, err
 }
@@ -126,6 +142,25 @@ func newPropagator() propagation.TextMapPropagator {
 	return propagation.NewCompositeTextMapPropagator(propagators...)
 }
 
+// newResource configures a resource to be used by the telemetry providers.
+// Attributes configured in the environment variable `OTEL_RESOURCE_ATTRIBUTES` are added.
+// It should contain a comma-separated list of key-value-pairs the form `key0=val0,key1=val1,...`.
+func newResource(ctx context.Context) (*resource.Resource, error) {
+	return resource.New(
+		ctx,
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(ServerName),
+			semconv.ServiceVersionKey.String(buildInfoTag),
+		),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+		resource.WithProcess(),
+		resource.WithContainer(),
+		resource.WithOS(),
+		resource.WithHost(),
+	)
+}
+
 // newTracerProvider creates a new trace provider based on the environment variables. For the environment variable
 // `OTEL_TRACES_EXPORTER` it supports the values `otlp`, `console` and `none`, with `none` being the default.
 //
@@ -144,7 +179,7 @@ func newPropagator() propagation.TextMapPropagator {
 //   - OTEL_EXPORTER_OTLP_CLIENT_KEY,         OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY
 //   - OTEL_TRACES_SAMPLER
 //   - OTEL_TRACES_SAMPLER_ARG
-func newTracerProvider() (*trace.TracerProvider, error) {
+func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.TracerProvider, error) {
 	traceExporters := make([]trace.SpanExporter, 0, 1)
 
 	envExporters := os.Getenv("OTEL_TRACES_EXPORTER")
@@ -167,9 +202,9 @@ func newTracerProvider() (*trace.TracerProvider, error) {
 		case "otlp":
 			switch protocol {
 			case "grpc":
-				se, err = otlptracegrpc.New(context.TODO())
+				se, err = otlptracegrpc.New(ctx)
 			case "http":
-				se, err = otlptracehttp.New(context.TODO())
+				se, err = otlptracehttp.New(ctx)
 			default:
 				err = fmt.Errorf("unsupported protocol %q for exporter %q", protocol, exporter)
 			}
@@ -184,10 +219,14 @@ func newTracerProvider() (*trace.TracerProvider, error) {
 		traceExporters = append(traceExporters, se)
 	}
 
-	tracerProviderOptions := make([]trace.TracerProviderOption, 0, len(traceExporters))
+	tracerProviderOptions := make([]trace.TracerProviderOption, 0, len(traceExporters)+1)
 
 	for _, t := range traceExporters {
 		tracerProviderOptions = append(tracerProviderOptions, trace.WithBatcher(t))
+	}
+
+	if res != nil {
+		tracerProviderOptions = append(tracerProviderOptions, trace.WithResource(res))
 	}
 
 	tracerProvider := trace.NewTracerProvider(
@@ -197,8 +236,9 @@ func newTracerProvider() (*trace.TracerProvider, error) {
 	return tracerProvider, nil
 }
 
-// newMeterProvider creates a new meter provider based on the environment variables. For the environment variable
-// `OTEL_METRICS_EXPORTER` it supports the values `otlp`, `console` and `none`, with `none` being the default.
+// newMeterProvider creates a new meter provider based on the environment variables.
+// For the environment variable `OTEL_METRICS_EXPORTER` it supports the values `otlp`,
+// `prometheus`, `console` and `none`, with `none` being the default.
 //
 // Environment variable processing:
 // manual:
@@ -217,8 +257,8 @@ func newTracerProvider() (*trace.TracerProvider, error) {
 //   - OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION
 //   - OTEL_METRIC_EXPORT_INTERVAL
 //   - OTEL_METRIC_EXPORT_TIMEOUT
-func newMeterProvider() (*metric.MeterProvider, error) {
-	metricExporters := make([]metric.Exporter, 0, 1)
+func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.MeterProvider, error) {
+	metricReaders := make([]metric.Reader, 0, 1)
 
 	envExporters := os.Getenv("OTEL_METRICS_EXPORTER")
 
@@ -233,6 +273,7 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 	}
 
 	for _, exporter := range strings.Split(envExporters, ",") {
+		var mr metric.Reader
 		var me metric.Exporter
 		var err error
 
@@ -240,12 +281,14 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 		case "otlp":
 			switch protocol {
 			case "grpc":
-				me, err = otlpmetricgrpc.New(context.TODO())
+				me, err = otlpmetricgrpc.New(ctx)
 			case "http":
-				me, err = otlpmetrichttp.New(context.TODO())
+				me, err = otlpmetrichttp.New(ctx)
 			default:
 				err = fmt.Errorf("unsupported protocol %q for exporter %q", protocol, exporter)
 			}
+		case "prometheus":
+			mr, err = prometheus.New()
 		case "console":
 			me, err = stdoutmetric.New()
 		}
@@ -254,13 +297,21 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 			return nil, err
 		}
 
-		metricExporters = append(metricExporters, me)
+		if me != nil {
+			mr = metric.NewPeriodicReader(me)
+		}
+
+		metricReaders = append(metricReaders, mr)
 	}
 
-	meterProviderOptions := make([]metric.Option, 0, len(metricExporters))
+	meterProviderOptions := make([]metric.Option, 0, len(metricReaders)+1)
 
-	for _, m := range metricExporters {
-		meterProviderOptions = append(meterProviderOptions, metric.WithReader(metric.NewPeriodicReader(m)))
+	for _, r := range metricReaders {
+		meterProviderOptions = append(meterProviderOptions, metric.WithReader(r))
+	}
+
+	if res != nil {
+		meterProviderOptions = append(meterProviderOptions, metric.WithResource(res))
 	}
 
 	meterProvider := metric.NewMeterProvider(
@@ -292,7 +343,7 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 //   - OTEL_BLRP_MAX_QUEUE_SIZE
 //   - OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT
 //   - OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT
-func newLoggerProvider() (*log.LoggerProvider, error) {
+func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.LoggerProvider, error) {
 	logExporters := make([]log.Exporter, 0, 1)
 
 	envExporters := os.Getenv("OTEL_LOGS_EXPORTER")
@@ -315,9 +366,9 @@ func newLoggerProvider() (*log.LoggerProvider, error) {
 		case "otlp":
 			switch protocol {
 			case "grpc":
-				le, err = otlploggrpc.New(context.TODO())
+				le, err = otlploggrpc.New(ctx)
 			case "http":
-				le, err = otlploghttp.New(context.TODO())
+				le, err = otlploghttp.New(ctx)
 			default:
 				err = fmt.Errorf("unsupported protocol %q for exporter %q", protocol, exporter)
 			}
@@ -332,10 +383,14 @@ func newLoggerProvider() (*log.LoggerProvider, error) {
 		logExporters = append(logExporters, le)
 	}
 
-	loggerProviderOptions := make([]log.LoggerProviderOption, 0, len(logExporters))
+	loggerProviderOptions := make([]log.LoggerProviderOption, 0, len(logExporters)+1)
 
 	for _, l := range logExporters {
 		loggerProviderOptions = append(loggerProviderOptions, log.WithProcessor(log.NewBatchProcessor(l)))
+	}
+
+	if res != nil {
+		loggerProviderOptions = append(loggerProviderOptions, log.WithResource(res))
 	}
 
 	loggerProvider := log.NewLoggerProvider(
