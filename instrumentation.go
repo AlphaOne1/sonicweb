@@ -362,7 +362,9 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 	envExporters := os.Getenv("OTEL_LOGS_EXPORTER")
 
 	if envExporters == OTLPExporterNone || envExporters == "" {
-		return nil, nil //nolint:nilnil // it is completely valid to have no provider set
+		envExporters = OTLPExporterConsole
+	} else {
+		envExporters = envExporters + "," + OTLPExporterConsole
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
