@@ -36,6 +36,15 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 )
 
+const OTLPProtocolGRPC = "grpc"
+const OTLPProtocolHTTP = "http"
+const OTLPExporterConsole = "console"
+const OTLPExporterNone = "none"
+const OTLPExporterOTLP = "otlp"
+const OTLPExporterPrometheus = "prometheus"
+
+var ErrUnsupportedOTLPProtocol = errors.New("unsupported protocol")
+
 // setupOTelSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
@@ -121,7 +130,7 @@ func newPropagator() propagation.TextMapPropagator {
 	propagators := make([]propagation.TextMapPropagator, 0, 2)
 
 	if envPropagators := os.Getenv("OTEL_PROPAGATORS"); envPropagators != "" {
-		for _, p := range strings.Split(envPropagators, ",") {
+		for p := range strings.SplitSeq(envPropagators, ",") {
 			switch p {
 			case "baggage":
 				propagators = append(propagators, propagation.Baggage{})
@@ -146,7 +155,7 @@ func newPropagator() propagation.TextMapPropagator {
 // Attributes configured in the environment variable `OTEL_RESOURCE_ATTRIBUTES` are added.
 // It should contain a comma-separated list of key-value-pairs the form `key0=val0,key1=val1,...`.
 func newResource(ctx context.Context) (*resource.Resource, error) {
-	return resource.New(
+	res, err := resource.New(
 		ctx,
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(ServerName),
@@ -159,6 +168,12 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 		resource.WithOS(),
 		resource.WithHost(),
 	)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not create resource: %w", err)
+	}
+
+	return res, nil
 }
 
 // newTracerProvider creates a new trace provider based on the environment variables. For the environment variable
@@ -184,8 +199,8 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 
 	envExporters := os.Getenv("OTEL_TRACES_EXPORTER")
 
-	if envExporters == "none" || envExporters == "" {
-		return nil, nil
+	if envExporters == OTLPExporterNone || envExporters == "" {
+		return nil, nil //nolint:nilnil // it is completely valid to have no provider set
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
@@ -194,29 +209,30 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 		protocol = specializedProtocol
 	}
 
-	for _, exporter := range strings.Split(envExporters, ",") {
-		var se trace.SpanExporter
+	for exporter := range strings.SplitSeq(envExporters, ",") {
+		var exp trace.SpanExporter
 		var err error
 
 		switch exporter {
-		case "otlp":
+		case OTLPExporterOTLP:
 			switch protocol {
-			case "grpc":
-				se, err = otlptracegrpc.New(ctx)
-			case "http":
-				se, err = otlptracehttp.New(ctx)
+			case OTLPProtocolGRPC:
+				exp, err = otlptracegrpc.New(ctx)
+			case OTLPProtocolHTTP:
+				exp, err = otlptracehttp.New(ctx)
 			default:
-				err = fmt.Errorf("unsupported protocol %q for exporter %q", protocol, exporter)
+				err = ErrUnsupportedOTLPProtocol
 			}
-		case "console":
-			se, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
+		case OTLPExporterConsole:
+			exp, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
+				exporter, protocol, err)
 		}
 
-		traceExporters = append(traceExporters, se)
+		traceExporters = append(traceExporters, exp)
 	}
 
 	tracerProviderOptions := make([]trace.TracerProviderOption, 0, len(traceExporters)+1)
@@ -229,9 +245,7 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 		tracerProviderOptions = append(tracerProviderOptions, trace.WithResource(res))
 	}
 
-	tracerProvider := trace.NewTracerProvider(
-		tracerProviderOptions...,
-	)
+	tracerProvider := trace.NewTracerProvider(tracerProviderOptions...)
 
 	return tracerProvider, nil
 }
@@ -262,8 +276,8 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 
 	envExporters := os.Getenv("OTEL_METRICS_EXPORTER")
 
-	if envExporters == "none" || envExporters == "" {
-		return nil, nil
+	if envExporters == OTLPExporterNone || envExporters == "" {
+		return nil, nil //nolint:nilnil // it is completely valid to have no provider set
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
@@ -272,36 +286,37 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 		protocol = specializedProtocol
 	}
 
-	for _, exporter := range strings.Split(envExporters, ",") {
-		var mr metric.Reader
-		var me metric.Exporter
+	for exporter := range strings.SplitSeq(envExporters, ",") {
+		var reader metric.Reader
+		var exp metric.Exporter
 		var err error
 
 		switch exporter {
-		case "otlp":
+		case OTLPExporterOTLP:
 			switch protocol {
-			case "grpc":
-				me, err = otlpmetricgrpc.New(ctx)
-			case "http":
-				me, err = otlpmetrichttp.New(ctx)
+			case OTLPProtocolGRPC:
+				exp, err = otlpmetricgrpc.New(ctx)
+			case OTLPProtocolHTTP:
+				exp, err = otlpmetrichttp.New(ctx)
 			default:
-				err = fmt.Errorf("unsupported protocol %q for exporter %q", protocol, exporter)
+				err = ErrUnsupportedOTLPProtocol
 			}
-		case "prometheus":
-			mr, err = prometheus.New()
-		case "console":
-			me, err = stdoutmetric.New()
+		case OTLPExporterPrometheus:
+			reader, err = prometheus.New()
+		case OTLPExporterConsole:
+			exp, err = stdoutmetric.New()
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
+				exporter, protocol, err)
 		}
 
-		if me != nil {
-			mr = metric.NewPeriodicReader(me)
+		if exp != nil {
+			reader = metric.NewPeriodicReader(exp)
 		}
 
-		metricReaders = append(metricReaders, mr)
+		metricReaders = append(metricReaders, reader)
 	}
 
 	meterProviderOptions := make([]metric.Option, 0, len(metricReaders)+1)
@@ -314,9 +329,7 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 		meterProviderOptions = append(meterProviderOptions, metric.WithResource(res))
 	}
 
-	meterProvider := metric.NewMeterProvider(
-		meterProviderOptions...,
-	)
+	meterProvider := metric.NewMeterProvider(meterProviderOptions...)
 
 	return meterProvider, nil
 }
@@ -348,8 +361,8 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 
 	envExporters := os.Getenv("OTEL_LOGS_EXPORTER")
 
-	if envExporters == "none" || envExporters == "" {
-		return nil, nil
+	if envExporters == OTLPExporterNone || envExporters == "" {
+		return nil, nil //nolint:nilnil // it is completely valid to have no provider set
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
@@ -358,29 +371,30 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 		protocol = specializedProtocol
 	}
 
-	for _, exporter := range strings.Split(envExporters, ",") {
-		var le log.Exporter
+	for exporter := range strings.SplitSeq(envExporters, ",") {
+		var exp log.Exporter
 		var err error
 
 		switch exporter {
-		case "otlp":
+		case OTLPExporterOTLP:
 			switch protocol {
-			case "grpc":
-				le, err = otlploggrpc.New(ctx)
-			case "http":
-				le, err = otlploghttp.New(ctx)
+			case OTLPProtocolGRPC:
+				exp, err = otlploggrpc.New(ctx)
+			case OTLPProtocolHTTP:
+				exp, err = otlploghttp.New(ctx)
 			default:
-				err = fmt.Errorf("unsupported protocol %q for exporter %q", protocol, exporter)
+				err = ErrUnsupportedOTLPProtocol
 			}
-		case "console":
-			le, err = stdoutlog.New()
+		case OTLPExporterConsole:
+			exp, err = stdoutlog.New()
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not instantiate log exporter %v with protocol %v: %w",
+				exporter, protocol, err)
 		}
 
-		logExporters = append(logExporters, le)
+		logExporters = append(logExporters, exp)
 	}
 
 	loggerProviderOptions := make([]log.LoggerProviderOption, 0, len(logExporters)+1)
@@ -393,9 +407,7 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 		loggerProviderOptions = append(loggerProviderOptions, log.WithResource(res))
 	}
 
-	loggerProvider := log.NewLoggerProvider(
-		loggerProviderOptions...,
-	)
+	loggerProvider := log.NewLoggerProvider(loggerProviderOptions...)
 
 	return loggerProvider, nil
 }
