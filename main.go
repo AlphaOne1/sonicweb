@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"flag"
@@ -108,7 +109,7 @@ func setupFlags() ServerConfig {
 	flag.StringVar(&config.InstrumentPort, "iport", "8081", "port to listen on for instrumentation")
 	flag.StringVar(&config.InstrumentAddress, "iaddress", "", "address to listen on for instrumentation")
 	flag.BoolVar(&config.EnableTelemetry, "telemetry", true, "enable telemetry support")
-	flag.StringVar(&config.TraceEndpoint, "trace-endpoint", "", "endpoint for tracing data")
+	flag.StringVar(&config.TraceEndpoint, "trace-endpoint", "", "deprecated, endpoint for tracing data")
 	flag.BoolVar(&config.EnablePprof, "pprof", false, "enable pprof support")
 	flag.StringVar(&config.LogLevel, "log", "info", "log level, valid options are debug, info, warn and error")
 	flag.StringVar(&config.LogStyle, "logstyle", "auto", "log style, valid options are auto, text and json")
@@ -208,15 +209,49 @@ func main() {
 
 	slog.Info("using base path", slog.String("path", config.BasePath))
 
-	if len(config.TraceEndpoint) > 0 {
-		if _, err := initTracer(config.TraceEndpoint); err != nil {
-			slog.Error("could not initialize tracing", slog.String("error", err.Error()))
-			exitFunc(1)
+	var metricHandler http.Handler
+
+	if config.EnableTelemetry {
+		// handling of deprecated trace-endpoint parameter
+		if len(config.TraceEndpoint) > 0 {
+			if value, isSet := os.LookupEnv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); isSet {
+				if value != config.TraceEndpoint {
+					slog.Warn("deprecated trace-endpoint parameter is set, "+
+						"differs from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, and takes precedence",
+						slog.String("trace-endpoint", config.TraceEndpoint),
+						slog.String("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", value))
+				}
+			}
+
+			if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", config.TraceEndpoint); err != nil {
+				slog.Error("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+					slog.String("error", err.Error()))
+				os.Exit(1)
+			}
+
+			slog.Warn("trace-endpoint parameter is deprecated, " +
+				"please use environment variable OTEL_EXPORTER_OTLP_TRACES_ENDPOINT instead")
 		}
 
-		slog.Info("tracing initialized")
+		otelShutdown, tmpHandler, err := setupOTelSDK(context.Background())
+		if err != nil {
+			slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+
+		metricHandler = tmpHandler
+
+		defer func() {
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer shutdownCancel()
+			if err := otelShutdown(shutdownCtx); err != nil {
+				slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
+			}
+		}()
+
+		slog.Info("telemetry initialized")
 	} else {
-		slog.Info("tracing disabled")
+		slog.Info("telemetry disabled")
 	}
 
 	slog.Info("registering handler for FileServer")
@@ -297,12 +332,8 @@ func main() {
 		}
 	}()
 
-	// set up opentelemetry with prometheus metricsExporter
-	setupMetricsInstrumentation(
-		&config.InstrumentAddress,
-		&config.InstrumentPort,
-		config.EnableTelemetry,
-		config.EnablePprof)
+	// set up OpenTelemetry with prometheus metricsExporter
+	go serveMetrics(config.InstrumentAddress, config.InstrumentPort, metricHandler, config.EnablePprof)
 
 	fileServerShutdownErr := waitServerShutdown(&server, "file")
 

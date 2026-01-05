@@ -17,7 +17,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -34,7 +33,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.38.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
 
 const OTLPProtocolGRPC = "grpc"
@@ -48,9 +47,10 @@ var ErrUnsupportedOTLPProtocol = errors.New("unsupported protocol")
 
 // setupOTelSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
-func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
+func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handler, error) {
 	var shutdownFuncs []func(context.Context) error
 	var err error
+	var metricHandler http.Handler
 
 	// shutdown calls cleanup functions registered via shutdownFuncs.
 	// The errors from the calls are joined.
@@ -70,6 +70,9 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 		err = errors.Join(inErr, shutdown(ctx))
 	}
 
+	// Set some environment variables to reasonable values
+	setupEnvDefaults()
+
 	// Set up a propagator.
 	prop := newPropagator()
 	otel.SetTextMapPropagator(prop)
@@ -78,14 +81,14 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 	res, err := newResource(ctx)
 	if err != nil {
 		handleErr(err)
-		return shutdown, err
+		return shutdown, nil, err
 	}
 
 	// Set up a trace provider.
 	tracerProvider, err := newTracerProvider(ctx, res)
 	if err != nil {
 		handleErr(err)
-		return shutdown, err
+		return shutdown, nil, err
 	}
 
 	if tracerProvider != nil {
@@ -94,10 +97,10 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 	}
 
 	// Set up meter provider.
-	meterProvider, err := newMeterProvider(ctx, res)
+	meterProvider, metricHandler, err := newMeterProvider(ctx, res)
 	if err != nil {
 		handleErr(err)
-		return shutdown, err
+		return shutdown, nil, err
 	}
 
 	if meterProvider != nil {
@@ -109,7 +112,7 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 	loggerProvider, err := newLoggerProvider(ctx, res)
 	if err != nil {
 		handleErr(err)
-		return shutdown, err
+		return shutdown, nil, err
 	}
 
 	if loggerProvider != nil {
@@ -125,7 +128,26 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, error) {
 			}))
 	}
 
-	return shutdown, err
+	return shutdown, metricHandler, err
+}
+
+// setupEnvDefaults sets some OpenTelemetry related configuration environment variables to reasonable values.
+func setupEnvDefaults() {
+	defaults := map[string]string{
+		"OTEL_EXPORTER_OTLP_COMPRESSION": "gzip",
+		"OTEL_EXPORTER_OTLP_PROTOCOL":    OTLPProtocolGRPC,
+	}
+
+	for k, v := range defaults {
+		if _, isSet := os.LookupEnv(k); !isSet {
+			if err := os.Setenv(k, v); err != nil {
+				slog.Error("failed to set default environment variable",
+					slog.String("name", k),
+					slog.String("value", v),
+					slog.String("error", err.Error()))
+			}
+		}
+	}
 }
 
 // newPropagator creates a composite propagator based on the environment variable OTEL_PROPAGATORS. Supported
@@ -281,13 +303,13 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 //   - OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION
 //   - OTEL_METRIC_EXPORT_INTERVAL
 //   - OTEL_METRIC_EXPORT_TIMEOUT
-func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.MeterProvider, error) {
+func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.MeterProvider, http.Handler, error) {
 	metricReaders := make([]metric.Reader, 0, 1)
 
 	envExporters := os.Getenv("OTEL_METRICS_EXPORTER")
 
 	if envExporters == OTLPExporterNone || envExporters == "" {
-		return nil, nil //nolint:nilnil // it is completely valid to have no provider set
+		return nil, nil, nil //nolint:nilnil // it is completely valid to have no provider set
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
@@ -295,6 +317,8 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 	if specializedProtocol := os.Getenv("OTEL_EXPORTER_OTLP_METRIC_PROTOCOL"); specializedProtocol != "" {
 		protocol = specializedProtocol
 	}
+
+	var metricHandler http.Handler
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
 		var reader metric.Reader
@@ -313,12 +337,13 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 			}
 		case OTLPExporterPrometheus:
 			reader, err = prometheus.New()
+			metricHandler = promhttp.Handler()
 		case OTLPExporterConsole:
 			exp, err = stdoutmetric.New()
 		}
 
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
+			return nil, nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
 				exporter, protocol, err)
 		}
 
@@ -341,7 +366,7 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 
 	meterProvider := metric.NewMeterProvider(meterProviderOptions...)
 
-	return meterProvider, nil
+	return meterProvider, metricHandler, nil
 }
 
 // newLoggerProvider creates a new logger provider based on the environment variables. For the environment variable
@@ -422,87 +447,10 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 	return loggerProvider, nil
 }
 
-// initTracer initializes the tracing functionality. If used, the tracing
-// backend will report tracing data to the provided tracing endpoint.
-func initTracer(endpoint string) (*trace.TracerProvider, error) {
-	// // Create stdout exporter to be able to retrieve
-	// // the collected spans.
-
-	// exporter, err := stdouttrace.New(stdout.WithPrettyPrint())
-
-	exporter, err := otlptracehttp.New(context.Background(),
-		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
-		otlptracehttp.WithEndpoint(endpoint),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not get telemetry exporter: %w", err)
-	}
-
-	// For the demonstration, use trace.AlwaysSample sampler to sample all traces.
-	// In a production application, use trace.ProbabilitySampler with a desired probability.
-	tracerProvider := trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceName(ServerName))),
-		trace.WithSampler(trace.AlwaysSample()),
-	)
-
-	otel.SetTracerProvider(tracerProvider)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	))
-
-	return tracerProvider, nil
-}
-
-// setupMetricsInstrumentation sets up the telemetry functionality.
-// If either telemetry or pprof are enabled, serveMetrics is called subsequently to
-// open a telemetry and/or profiling providing server port.
-func setupMetricsInstrumentation(
-	instrumentAddress *string,
-	instrumentPort *string,
-	enableTelemetry bool,
-	enablePprof bool) {
-
-	if !enableTelemetry && !enablePprof {
-		return
-	}
-
-	if enableTelemetry {
-		metricsExporter, metricsExporterErr := prometheus.New()
-
-		if metricsExporterErr != nil {
-			slog.Error("could not create prometheus exporter", slog.String("error", metricsExporterErr.Error()))
-			os.Exit(1)
-		}
-
-		baseResource, baseResourceErr := resource.Merge(resource.Default(),
-			resource.NewSchemaless(
-				attribute.KeyValue{
-					Key:   "service.name",
-					Value: attribute.StringValue("sonic-web"),
-				}))
-
-		if baseResourceErr != nil {
-			slog.Error("could not create base resource", slog.String("error", baseResourceErr.Error()))
-		}
-
-		meterProvider := metric.NewMeterProvider(
-			metric.WithReader(metricsExporter),
-			metric.WithResource(baseResource))
-
-		otel.SetMeterProvider(meterProvider)
-	}
-
-	go serveMetrics(*instrumentAddress, *instrumentPort, enableTelemetry, enablePprof)
-}
-
 // serveMetrics sets up the metrics functionality. It opens a separate port, and metrics collectors can fetch their
 // data from there. For profiling purposes, if enabled, also the pprof endpoints are added on the same port.
-func serveMetrics(address string, port string, enableTelemetry, enablePprof bool) {
-	if !enableTelemetry && !enablePprof {
+func serveMetrics(address string, port string, metricHandler http.Handler, enablePprof bool) {
+	if metricHandler == nil && !enablePprof {
 		return
 	}
 
@@ -521,11 +469,11 @@ func serveMetrics(address string, port string, enableTelemetry, enablePprof bool
 		slog.Info("serving pprof disabled")
 	}
 
-	if enableTelemetry {
-		slog.Info("serving telemetry", slog.String("address", listenAddress+"/metrics"))
-		mux.Handle("GET /metrics", promhttp.Handler())
+	if metricHandler != nil {
+		slog.Info("serving metrics", slog.String("address", listenAddress+"/metrics"))
+		mux.Handle("GET /metrics", metricHandler)
 	} else {
-		slog.Info("serving telemetry disabled")
+		slog.Info("serving metrics disabled")
 	}
 
 	server := http.Server{
