@@ -120,7 +120,29 @@ func setupFlags() ServerConfig {
 	return config
 }
 
-var errConversion = errors.New("conversion error")
+func setupTraceEnvVars(traceEndpoint string) {
+	if len(traceEndpoint) > 0 {
+		if value, isSet := os.LookupEnv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); isSet {
+			if value != traceEndpoint {
+				slog.Warn("deprecated trace-endpoint parameter is set, "+
+					"differs from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, and takes precedence",
+					slog.String("trace-endpoint", traceEndpoint),
+					slog.String("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", value))
+			}
+		}
+
+		if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", traceEndpoint); err != nil {
+			slog.Error("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+				slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+
+		slog.Warn("trace-endpoint parameter is deprecated, " +
+			"please use environment variable OTEL_EXPORTER_OTLP_TRACES_ENDPOINT instead")
+	}
+}
+
+var ErrConversion = errors.New("conversion error")
 
 // generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
@@ -157,7 +179,7 @@ func generateFileHandler(
 	statFS, statFSOK := root.FS().(fs.StatFS)
 
 	if !statFSOK {
-		return nil, fmt.Errorf("could not get StatFS from RootFS: %w", errConversion)
+		return nil, fmt.Errorf("could not get StatFS from RootFS: %w", ErrConversion)
 	}
 
 	mwStack = append(mwStack,
@@ -213,25 +235,7 @@ func main() {
 
 	if config.EnableTelemetry {
 		// handling of deprecated trace-endpoint parameter
-		if len(config.TraceEndpoint) > 0 {
-			if value, isSet := os.LookupEnv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); isSet {
-				if value != config.TraceEndpoint {
-					slog.Warn("deprecated trace-endpoint parameter is set, "+
-						"differs from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, and takes precedence",
-						slog.String("trace-endpoint", config.TraceEndpoint),
-						slog.String("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", value))
-				}
-			}
-
-			if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", config.TraceEndpoint); err != nil {
-				slog.Error("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
-					slog.String("error", err.Error()))
-				os.Exit(1)
-			}
-
-			slog.Warn("trace-endpoint parameter is deprecated, " +
-				"please use environment variable OTEL_EXPORTER_OTLP_TRACES_ENDPOINT instead")
-		}
+		setupTraceEnvVars(config.TraceEndpoint)
 
 		otelShutdown, tmpHandler, err := setupOTelSDK(context.Background())
 		if err != nil {
@@ -242,7 +246,7 @@ func main() {
 		metricHandler = tmpHandler
 
 		defer func() {
-			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
 			defer shutdownCancel()
 			if err := otelShutdown(shutdownCtx); err != nil {
 				slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))

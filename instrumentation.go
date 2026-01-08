@@ -47,10 +47,11 @@ var ErrUnsupportedOTLPProtocol = errors.New("unsupported protocol")
 
 // setupOTelSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
+//
+//nolint:funlen // cannot go around the steps, splitting will confuse more than longer function
 func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handler, error) {
 	var shutdownFuncs []func(context.Context) error
 	var err error
-	var metricHandler http.Handler
 
 	// shutdown calls cleanup functions registered via shutdownFuncs.
 	// The errors from the calls are joined.
@@ -157,6 +158,8 @@ func setupEnvDefaults() {
 // Environment variable processing:
 // manual:
 //   - OTEL_PROPAGATORS
+//
+//nolint:ireturn // the result is an interface, no choice here
 func newPropagator() propagation.TextMapPropagator {
 	propagators := make([]propagation.TextMapPropagator, 0, 2)
 
@@ -208,6 +211,34 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 	return res, nil
 }
 
+// newTraceExporter initializes a trace.SpanExporter based on the provided exporter name and protocol.
+//
+//nolint:ireturn
+func newTraceExporter(ctx context.Context, name, protocol string) (trace.SpanExporter, error) {
+	var exp trace.SpanExporter
+	var err error
+
+	switch name {
+	case OTLPExporterOTLP:
+		switch protocol {
+		case OTLPProtocolGRPC:
+			exp, err = otlptracegrpc.New(ctx)
+		case OTLPProtocolHTTP:
+			exp, err = otlptracehttp.New(ctx)
+		default:
+			err = ErrUnsupportedOTLPProtocol
+		}
+	case OTLPExporterConsole:
+		exp, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating trace exporter: %w", err)
+	}
+
+	return exp, nil
+}
+
 // newTracerProvider creates a new trace provider based on the environment variables. For the environment variable
 // `OTEL_TRACES_EXPORTER` it supports the values `otlp`, `console` and `none`, with `none` being the default.
 //
@@ -242,22 +273,7 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 	}
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		var exp trace.SpanExporter
-		var err error
-
-		switch exporter {
-		case OTLPExporterOTLP:
-			switch protocol {
-			case OTLPProtocolGRPC:
-				exp, err = otlptracegrpc.New(ctx)
-			case OTLPProtocolHTTP:
-				exp, err = otlptracehttp.New(ctx)
-			default:
-				err = ErrUnsupportedOTLPProtocol
-			}
-		case OTLPExporterConsole:
-			exp, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
-		}
+		exp, err := newTraceExporter(ctx, exporter, protocol)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
@@ -280,6 +296,40 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 	tracerProvider := trace.NewTracerProvider(tracerProviderOptions...)
 
 	return tracerProvider, nil
+}
+
+// newMeterReader initializes and returns a metric.Exporter, metric.Reader,
+// and optional http.Handler based on the given name and protocol.
+//
+//nolint:ireturn
+func newMeterReader(ctx context.Context, name, protocol string) (metric.Exporter, metric.Reader, http.Handler, error) {
+	var reader metric.Reader
+	var exp metric.Exporter
+	var metricHandler http.Handler
+	var err error
+
+	switch name {
+	case OTLPExporterOTLP:
+		switch protocol {
+		case OTLPProtocolGRPC:
+			exp, err = otlpmetricgrpc.New(ctx)
+		case OTLPProtocolHTTP:
+			exp, err = otlpmetrichttp.New(ctx)
+		default:
+			err = ErrUnsupportedOTLPProtocol
+		}
+	case OTLPExporterPrometheus:
+		reader, err = prometheus.New()
+		metricHandler = promhttp.Handler()
+	case OTLPExporterConsole:
+		exp, err = stdoutmetric.New()
+	}
+
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error creating meter reader: %w", err)
+	}
+
+	return exp, reader, metricHandler, nil
 }
 
 // newMeterProvider creates a new meter provider based on the environment variables.
@@ -309,7 +359,7 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 	envExporters := os.Getenv("OTEL_METRICS_EXPORTER")
 
 	if envExporters == OTLPExporterNone || envExporters == "" {
-		return nil, nil, nil //nolint:nilnil // it is completely valid to have no provider set
+		return nil, nil, nil
 	}
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
@@ -321,25 +371,10 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 	var metricHandler http.Handler
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		var reader metric.Reader
-		var exp metric.Exporter
-		var err error
+		exp, reader, tmpHandler, err := newMeterReader(ctx, exporter, protocol)
 
-		switch exporter {
-		case OTLPExporterOTLP:
-			switch protocol {
-			case OTLPProtocolGRPC:
-				exp, err = otlpmetricgrpc.New(ctx)
-			case OTLPProtocolHTTP:
-				exp, err = otlpmetrichttp.New(ctx)
-			default:
-				err = ErrUnsupportedOTLPProtocol
-			}
-		case OTLPExporterPrometheus:
-			reader, err = prometheus.New()
-			metricHandler = promhttp.Handler()
-		case OTLPExporterConsole:
-			exp, err = stdoutmetric.New()
+		if tmpHandler != nil {
+			metricHandler = tmpHandler
 		}
 
 		if err != nil {
@@ -367,6 +402,34 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 	meterProvider := metric.NewMeterProvider(meterProviderOptions...)
 
 	return meterProvider, metricHandler, nil
+}
+
+// newLoggerExporter creates a log exporter based on the provided name and protocol or returns an error if unsupported.
+//
+//nolint:ireturn
+func newLoggerExporter(ctx context.Context, name, protocol string) (log.Exporter, error) {
+	var exp log.Exporter
+	var err error
+
+	switch name {
+	case OTLPExporterOTLP:
+		switch protocol {
+		case OTLPProtocolGRPC:
+			exp, err = otlploggrpc.New(ctx)
+		case OTLPProtocolHTTP:
+			exp, err = otlploghttp.New(ctx)
+		default:
+			err = ErrUnsupportedOTLPProtocol
+		}
+	case OTLPExporterConsole:
+		exp, err = stdoutlog.New()
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating logger exporter: %w", err)
+	}
+
+	return exp, nil
 }
 
 // newLoggerProvider creates a new logger provider based on the environment variables. For the environment variable
@@ -407,22 +470,7 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 	}
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		var exp log.Exporter
-		var err error
-
-		switch exporter {
-		case OTLPExporterOTLP:
-			switch protocol {
-			case OTLPProtocolGRPC:
-				exp, err = otlploggrpc.New(ctx)
-			case OTLPProtocolHTTP:
-				exp, err = otlploghttp.New(ctx)
-			default:
-				err = ErrUnsupportedOTLPProtocol
-			}
-		case OTLPExporterConsole:
-			exp, err = stdoutlog.New()
-		}
+		exp, err := newLoggerExporter(ctx, exporter, protocol)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not instantiate log exporter %v with protocol %v: %w",
