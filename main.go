@@ -144,7 +144,7 @@ func setupTraceEnvVars(traceEndpoint string) {
 
 var ErrConversion = errors.New("conversion error")
 
-// generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
+// generateFileHandler generates the handlers to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
 	enableTelemetry bool,
 	enableTracing bool,
@@ -258,7 +258,7 @@ func main() {
 		slog.Info("telemetry disabled")
 	}
 
-	slog.Info("registering handler for FileServer")
+	slog.Info("registering handlers for FileServer")
 
 	tlsConfig, tlsConfigErr := generateTLSConfig(
 		config.TLSCert,
@@ -301,7 +301,7 @@ func main() {
 		*config.WafCfg)
 
 	if handlerErr != nil {
-		slog.Error("could not generate file handler", slog.String("error", handlerErr.Error()))
+		slog.Error("could not generate file handlers", slog.String("error", handlerErr.Error()))
 		exitFunc(1)
 	}
 

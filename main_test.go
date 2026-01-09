@@ -379,7 +379,7 @@ func BenchmarkHandler(b *testing.B) {
 		nil)
 
 	if fileHandlerErr != nil {
-		b.Fatalf("could not generate file handler: %v", fileHandlerErr)
+		b.Fatalf("could not generate file handlers: %v", fileHandlerErr)
 	}
 
 	server := httptest.NewServer(fileHandler)
@@ -423,7 +423,7 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 		nil)
 
 	if fileHandlerErr != nil {
-		t.Fatalf("could not generate file handler: %v", fileHandlerErr)
+		t.Fatalf("could not generate file handlers: %v", fileHandlerErr)
 	}
 
 	// Basic input constraints to keep fuzzing focused and avoid trivial rejections

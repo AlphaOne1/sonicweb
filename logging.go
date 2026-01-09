@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 )
 
 var errLogConfig = errors.New("invalid log configuration")
@@ -51,16 +52,20 @@ func setupLogging(logLevel string, logStyle string) error {
 }
 
 type MultiHandler struct {
-	Handler []slog.Handler
+	handlers []slog.Handler
 }
 
 func NewMultiHandler(handlers ...slog.Handler) *MultiHandler {
-	return &MultiHandler{Handler: handlers}
+	return &MultiHandler{handlers: slices.DeleteFunc(
+		handlers,
+		func(h slog.Handler) bool {
+			return h == nil
+		})}
 }
 
 func (t *MultiHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	for _, h := range t.Handler {
-		if h.Enabled(ctx, level) {
+	for _, h := range t.handlers {
+		if h != nil && h.Enabled(ctx, level) {
 			return true
 		}
 	}
@@ -71,10 +76,12 @@ func (t *MultiHandler) Enabled(ctx context.Context, level slog.Level) bool {
 func (t *MultiHandler) Handle(ctx context.Context, r slog.Record) error {
 	errs := make([]error, 0)
 
-	for _, h := range t.Handler {
-		c := r.Clone()
-		if err := h.Handle(ctx, c); err != nil {
-			errs = append(errs, err)
+	for _, h := range t.handlers {
+		if h != nil {
+			c := r.Clone()
+			if err := h.Handle(ctx, c); err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
 
@@ -82,21 +89,25 @@ func (t *MultiHandler) Handle(ctx context.Context, r slog.Record) error {
 }
 
 func (t *MultiHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	handlers := make([]slog.Handler, 0, len(t.Handler))
+	handlers := make([]slog.Handler, 0, len(t.handlers))
 
-	for _, h := range t.Handler {
-		handlers = append(handlers, h.WithAttrs(attrs))
+	for _, h := range t.handlers {
+		if h != nil {
+			handlers = append(handlers, h.WithAttrs(attrs))
+		}
 	}
 
-	return &MultiHandler{Handler: handlers}
+	return &MultiHandler{handlers: handlers}
 }
 
 func (t *MultiHandler) WithGroup(name string) slog.Handler {
-	handlers := make([]slog.Handler, 0, len(t.Handler))
+	handlers := make([]slog.Handler, 0, len(t.handlers))
 
-	for _, h := range t.Handler {
-		handlers = append(handlers, h.WithGroup(name))
+	for _, h := range t.handlers {
+		if h != nil {
+			handlers = append(handlers, h.WithGroup(name))
+		}
 	}
 
-	return &MultiHandler{Handler: handlers}
+	return &MultiHandler{handlers: handlers}
 }

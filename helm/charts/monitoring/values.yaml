@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 grafana:
-    enabled:          true
     fullnameOverride: "monitoring-grafana"
     # Plugin Installation hinzufügen
     plugins:
@@ -28,7 +27,6 @@ grafana:
             access: proxy
 
 alloy:
-    enabled:          true
     fullnameOverride: "monitoring-alloy"
     alloy:
         # Öffnet die OTLP-Ports am Kubernetes Service
@@ -82,7 +80,6 @@ alloy:
                      }
 
 metrics:
-    enabled:          true
     fullnameOverride: "monitoring-metrics"
     server:
         persistentVolume:
@@ -91,7 +88,6 @@ metrics:
             retentionPeriod: 24h
 
 logs:
-    enabled:          true
     fullnameOverride: "monitoring-logs"
     server:
         persistentVolume:
@@ -99,7 +95,6 @@ logs:
         retentionPeriod: 1h
 
 traces:
-    enabled:          true
     fullnameOverride: "monitoring-vt-single" # Muss zum Service-Namen im Subchart passen
     server:
         persistentVolume:

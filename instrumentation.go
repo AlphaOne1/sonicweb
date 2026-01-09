@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
@@ -23,7 +24,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/exporters/prometheus"
+	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
@@ -162,7 +163,7 @@ func newPropagator() propagation.TextMapPropagator {
 
 	if envPropagators := os.Getenv("OTEL_PROPAGATORS"); envPropagators != "" {
 		for p := range strings.SplitSeq(envPropagators, ",") {
-			switch p {
+			switch strings.TrimSpace(p) {
 			case "baggage":
 				propagators = append(propagators, propagation.Baggage{})
 			case "tracecontext":
@@ -227,6 +228,8 @@ func newTraceExporter(ctx context.Context, name, protocol string) (trace.SpanExp
 		}
 	case OTLPExporterConsole:
 		exp, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
+	default:
+		slog.Warn("unsupported trace exporter", slog.String("name", name))
 	}
 
 	if err != nil {
@@ -270,14 +273,16 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 	}
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		exp, err := newTraceExporter(ctx, exporter, protocol)
+		exp, err := newTraceExporter(ctx, strings.TrimSpace(exporter), protocol)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
 				exporter, protocol, err)
 		}
 
-		traceExporters = append(traceExporters, exp)
+		if exp != nil {
+			traceExporters = append(traceExporters, exp)
+		}
 	}
 
 	tracerProviderOptions := make([]trace.TracerProviderOption, 0, len(traceExporters)+1)
@@ -316,10 +321,13 @@ func newMeterReader(ctx context.Context, name, protocol string) (metric.Exporter
 			err = ErrUnsupportedOTLPProtocol
 		}
 	case OTLPExporterPrometheus:
-		reader, err = prometheus.New()
-		metricHandler = promhttp.Handler()
+		reg := prometheus.NewRegistry()                                  // create explicit registry
+		reader, err = otelprom.New(otelprom.WithRegisterer(reg))         // create reader that writes to that registry
+		metricHandler = promhttp.HandlerFor(reg, promhttp.HandlerOpts{}) // create handlers reading exactly that registry
 	case OTLPExporterConsole:
 		exp, err = stdoutmetric.New()
+	default:
+		slog.Warn("unsupported metric exporter", slog.String("name", name))
 	}
 
 	if err != nil {
@@ -361,21 +369,21 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 
 	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
 
-	if specializedProtocol := os.Getenv("OTEL_EXPORTER_OTLP_METRIC_PROTOCOL"); specializedProtocol != "" {
+	if specializedProtocol := os.Getenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"); specializedProtocol != "" {
 		protocol = specializedProtocol
 	}
 
 	var metricHandler http.Handler
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		exp, reader, tmpHandler, err := newMeterReader(ctx, exporter, protocol)
+		exp, reader, tmpHandler, err := newMeterReader(ctx, strings.TrimSpace(exporter), protocol)
 
 		if tmpHandler != nil {
 			metricHandler = tmpHandler
 		}
 
 		if err != nil {
-			return nil, nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
+			return nil, nil, fmt.Errorf("could not instantiate metrics exporter %v with protocol %v: %w",
 				exporter, protocol, err)
 		}
 
@@ -383,7 +391,9 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 			reader = metric.NewPeriodicReader(exp)
 		}
 
-		metricReaders = append(metricReaders, reader)
+		if reader != nil {
+			metricReaders = append(metricReaders, reader)
+		}
 	}
 
 	meterProviderOptions := make([]metric.Option, 0, len(metricReaders)+1)
@@ -420,6 +430,8 @@ func newLoggerExporter(ctx context.Context, name, protocol string) (log.Exporter
 		}
 	case OTLPExporterConsole:
 		exp, err = stdoutlog.New()
+	default:
+		slog.Warn("unsupported log exporter", slog.String("name", name))
 	}
 
 	if err != nil {
@@ -467,14 +479,16 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 	}
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		exp, err := newLoggerExporter(ctx, exporter, protocol)
+		exp, err := newLoggerExporter(ctx, strings.TrimSpace(exporter), protocol)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not instantiate log exporter %v with protocol %v: %w",
 				exporter, protocol, err)
 		}
 
-		logExporters = append(logExporters, exp)
+		if exp != nil {
+			logExporters = append(logExporters, exp)
+		}
 	}
 
 	loggerProviderOptions := make([]log.LoggerProviderOption, 0, len(logExporters)+1)
