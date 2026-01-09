@@ -121,12 +121,9 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handle
 		global.SetLoggerProvider(loggerProvider)
 
 		slog.SetDefault(
-			slog.New(&TeeLogHandler{
-				Handler: []slog.Handler{
-					slog.Default().Handler(),
-					otelslog.NewHandler("otel", otelslog.WithLoggerProvider(loggerProvider)),
-				},
-			}))
+			slog.New(NewMultiHandler(
+				slog.Default().Handler(),
+				otelslog.NewHandler("otel", otelslog.WithLoggerProvider(loggerProvider)))))
 	}
 
 	return shutdown, metricHandler, err

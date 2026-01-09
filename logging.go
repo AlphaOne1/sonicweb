@@ -50,11 +50,15 @@ func setupLogging(logLevel string, logStyle string) error {
 	return nil
 }
 
-type TeeLogHandler struct {
+type MultiHandler struct {
 	Handler []slog.Handler
 }
 
-func (t *TeeLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func NewMultiHandler(handlers ...slog.Handler) *MultiHandler {
+	return &MultiHandler{Handler: handlers}
+}
+
+func (t *MultiHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	for _, h := range t.Handler {
 		if h.Enabled(ctx, level) {
 			return true
@@ -64,7 +68,7 @@ func (t *TeeLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return false
 }
 
-func (t *TeeLogHandler) Handle(ctx context.Context, r slog.Record) error {
+func (t *MultiHandler) Handle(ctx context.Context, r slog.Record) error {
 	errs := make([]error, 0)
 
 	for _, h := range t.Handler {
@@ -77,22 +81,22 @@ func (t *TeeLogHandler) Handle(ctx context.Context, r slog.Record) error {
 	return errors.Join(errs...)
 }
 
-func (t *TeeLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+func (t *MultiHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	handlers := make([]slog.Handler, 0, len(t.Handler))
 
 	for _, h := range t.Handler {
 		handlers = append(handlers, h.WithAttrs(attrs))
 	}
 
-	return &TeeLogHandler{Handler: handlers}
+	return &MultiHandler{Handler: handlers}
 }
 
-func (t *TeeLogHandler) WithGroup(name string) slog.Handler {
+func (t *MultiHandler) WithGroup(name string) slog.Handler {
 	handlers := make([]slog.Handler, 0, len(t.Handler))
 
 	for _, h := range t.Handler {
 		handlers = append(handlers, h.WithGroup(name))
 	}
 
-	return &TeeLogHandler{Handler: handlers}
+	return &MultiHandler{Handler: handlers}
 }
