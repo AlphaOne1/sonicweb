@@ -8,3 +8,5 @@ sonic
 sonic-*-*
 SonicWeb-*.*
 /testcert
+helm/**/*.tgz
+helm/**/Chart.lock

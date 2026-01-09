@@ -14,7 +14,7 @@ podmanKube: false
 # monitoring settings
 monitoring:
     # Controls if monitoring setup should be included.
-    enabled: false
+    enabled: true
     grafana:
         adminUser: admin
         adminPassword: "" # empty, _must_ be provided with --set monitoring.adminPassword=<>

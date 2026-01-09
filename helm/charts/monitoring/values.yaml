@@ -1,0 +1,107 @@
+# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
+grafana:
+    enabled:          true
+    fullnameOverride: "monitoring-grafana"
+    # Plugin Installation hinzufügen
+    plugins:
+        - victoriametrics-logs-datasource
+    sidecar:
+        datasources:
+            enabled:         true
+            label:           grafana_datasource
+            searchNamespace: ALL
+    additionalDataSources:
+        -   name:      VictoriaMetrics
+            type:      prometheus
+            url:       http://monitoring-metrics-server:8428
+            access:    proxy
+            isDefault: true
+        -   name:   VictoriaLogs
+            type:   victoriametrics-logs-datasource # Offizieller Plugin-Typ
+            url:    http://monitoring-logs-server:9428
+            access: proxy
+        -   name:   VictoriaTraces
+            type:   jaeger
+            url:    http://monitoring-vt-single-server:10428
+            access: proxy
+
+alloy:
+    enabled:          true
+    fullnameOverride: "monitoring-alloy"
+    alloy:
+        # Öffnet die OTLP-Ports am Kubernetes Service
+        extraPorts:
+            -   name:       otlp-grpc
+                port:       4317
+                targetPort: 4317
+                protocol:   TCP
+            -   name:       otlp-http
+                port:       4318
+                targetPort: 4318
+                protocol:   TCP
+        configMap:
+            create:  true
+            content: |
+                     // OTLP Receiver fuer Metriken, Logs und Traces
+                     otelcol.receiver.otlp "default" {
+                       grpc { endpoint = "0.0.0.0:4317" }
+                       http { endpoint = "0.0.0.0:4318" }
+                       output {
+                         metrics = [otelcol.exporter.prometheus.vmetrics.input]
+                         logs    = [otelcol.exporter.otlp.vlogs.input]
+                         traces  = [otelcol.exporter.otlp.vtraces.input]
+                       }
+                     }
+                     
+                     // Forwarding zu VictoriaMetrics
+                     otelcol.exporter.prometheus "vmetrics" {
+                       forward_to = [prometheus.remote_write.vmetrics.receiver]
+                     }
+                     prometheus.remote_write "vmetrics" {
+                       endpoint {
+                         url = "http://monitoring-metrics-server:8428/api/v1/write"
+                       }
+                     }
+                     
+                     // Forwarding zu VictoriaLogs via OTLP
+                     otelcol.exporter.otlp "vlogs" {
+                       client {
+                         endpoint = "monitoring-logs-server:9428"
+                         tls { insecure = true }
+                       }
+                     }
+                     
+                     // Forwarding zu VictoriaTraces via OTLP
+                     otelcol.exporter.otlp "vtraces" {
+                       client {
+                         endpoint = "monitoring-vt-single-server:10428"
+                         tls { insecure = true }
+                       }
+                     }
+
+metrics:
+    enabled:          true
+    fullnameOverride: "monitoring-metrics"
+    server:
+        persistentVolume:
+            enabled: false
+        extraArgs:
+            retentionPeriod: 24h
+
+logs:
+    enabled:          true
+    fullnameOverride: "monitoring-logs"
+    server:
+        persistentVolume:
+            enabled: false
+        retentionPeriod: 1h
+
+traces:
+    enabled:          true
+    fullnameOverride: "monitoring-vt-single" # Muss zum Service-Namen im Subchart passen
+    server:
+        persistentVolume:
+            enabled: false
+        retentionPeriod: 1h

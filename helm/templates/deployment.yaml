@@ -48,6 +48,19 @@ spec:
                         -   name: metrics
                             containerPort: {{ .Values.service.metricsPort }}
                             protocol: TCP
+                {{- if .Values.monitoring.enabled }}
+                    env:
+                        -   name: OTEL_LOGS_EXPORTER
+                            value: otlp
+                        -   name: OTEL_METRICS_EXPORTER
+                            value: otlp
+                        -   name: OTEL_TRACES_EXPORTER
+                            value: otlp
+                        -   name: OTEL_EXPORTER_OTLP_PROTOCOL
+                            value: grpc
+                        -   name: OTEL_EXPORTER_OTLP_ENDPOINT
+                            value: monitoring-alloy:4317
+                {{- end }}
                     livenessProbe:
                         {{- toYaml .Values.livenessProbe | nindent 24 }}
                     readinessProbe:
