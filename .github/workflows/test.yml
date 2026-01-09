@@ -23,7 +23,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Harden Runner
-            uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+            uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
             with:
                 egress-policy: audit
 
@@ -48,7 +48,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Harden Runner
-            uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+            uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
             with:
                 egress-policy: audit
 
@@ -81,7 +81,7 @@ jobs:
         runs-on: ${{matrix.platform}}
         steps:
           - name: Harden Runner
-            uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+            uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
             with:
                 egress-policy: audit
 
@@ -100,7 +100,7 @@ jobs:
 
           - name: Upload test results to Codecov
             if: ${{ !cancelled() }}
-            uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1.1.1
+            uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
             with:
                 token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -108,7 +108,7 @@ jobs:
             run: go tool cover -func=coverage.txt
 
           - name: Upload coverage to Codecov
-            uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+            uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
             with:
                 token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -125,7 +125,7 @@ jobs:
         runs-on: ${{ matrix.platform }}
         steps:
           - name: Harden Runner
-            uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+            uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
             with:
                 egress-policy: audit
 
@@ -145,7 +145,7 @@ jobs:
 
           - name: Upload fuzz failure seed corpus as run artifact
             if: failure()
-            uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+            uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
             with:
                 name: testdata
                 if-no-files-found: ignore
