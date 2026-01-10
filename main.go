@@ -134,7 +134,7 @@ func setupTraceEnvVars(traceEndpoint string) {
 		if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", traceEndpoint); err != nil {
 			slog.Error("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
 				slog.String("error", err.Error()))
-			os.Exit(1)
+			exitFunc(1)
 		}
 
 		slog.Warn("trace-endpoint parameter is deprecated, " +
@@ -240,7 +240,7 @@ func main() {
 		otelShutdown, tmpHandler, err := setupOTelSDK(context.Background())
 		if err != nil {
 			slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
-			os.Exit(1)
+			exitFunc(1)
 		}
 
 		metricHandler = tmpHandler

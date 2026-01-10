@@ -547,7 +547,7 @@ func serveMetrics(address string, port string, metricHandler http.Handler, enabl
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("error serving metrics", slog.String("error", err.Error()))
-			os.Exit(1)
+			exitFunc(1)
 		}
 		slog.Info("metrics server stopped to accept new connections")
 	}()

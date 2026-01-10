@@ -3,7 +3,7 @@
 
 grafana:
     fullnameOverride: "monitoring-grafana"
-    # Plugin Installation hinzufügen
+    # add plugin installation
     plugins:
         - victoriametrics-logs-datasource
     sidecar:
@@ -18,7 +18,7 @@ grafana:
             access:    proxy
             isDefault: true
         -   name:   VictoriaLogs
-            type:   victoriametrics-logs-datasource # Offizieller Plugin-Typ
+            type:   victoriametrics-logs-datasource # official plugin type
             url:    http://monitoring-logs-server:9428
             access: proxy
         -   name:   VictoriaTraces
@@ -29,7 +29,7 @@ grafana:
 alloy:
     fullnameOverride: "monitoring-alloy"
     alloy:
-        # Öffnet die OTLP-Ports am Kubernetes Service
+        # opens the OTLP ports on the kubernetes service
         extraPorts:
             -   name:       otlp-grpc
                 port:       4317
@@ -42,7 +42,7 @@ alloy:
         configMap:
             create:  true
             content: |
-                     // OTLP Receiver fuer Metriken, Logs und Traces
+                     // OTLP receiver for metrics, logs and traces
                      otelcol.receiver.otlp "default" {
                        grpc { endpoint = "0.0.0.0:4317" }
                        http { endpoint = "0.0.0.0:4318" }
@@ -53,7 +53,7 @@ alloy:
                        }
                      }
                      
-                     // Forwarding zu VictoriaMetrics
+                     // forwarding to VictoriaMetrics
                      otelcol.exporter.prometheus "vmetrics" {
                        forward_to = [prometheus.remote_write.vmetrics.receiver]
                      }
@@ -63,7 +63,7 @@ alloy:
                        }
                      }
                      
-                     // Forwarding zu VictoriaLogs via OTLP
+                     // forwarding to VictoriaLogs via OTLP
                      otelcol.exporter.otlp "vlogs" {
                        client {
                          endpoint = "monitoring-logs-server:9428"
@@ -71,7 +71,7 @@ alloy:
                        }
                      }
                      
-                     // Forwarding zu VictoriaTraces via OTLP
+                     // forwarding to VictoriaTraces via OTLP
                      otelcol.exporter.otlp "vtraces" {
                        client {
                          endpoint = "monitoring-vt-single-server:10428"
@@ -95,7 +95,7 @@ logs:
         retentionPeriod: 1h
 
 traces:
-    fullnameOverride: "monitoring-vt-single" # Muss zum Service-Namen im Subchart passen
+    fullnameOverride: "monitoring-vt-single" # must fit to the service namen in the subchart
     server:
         persistentVolume:
             enabled: false

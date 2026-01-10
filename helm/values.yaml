@@ -12,6 +12,9 @@ replicaCount: 1
 podmanKube: false
 
 # monitoring settings
+# The monitoring subchart is not intended to replace a robust monitoring solution. Its primary use is to
+# verify the monitoring functionality of SonicWeb. It can be used as a starting point for a more robust
+# productive monitoring solution.
 monitoring:
     # Controls if monitoring setup should be included.
     enabled: false
