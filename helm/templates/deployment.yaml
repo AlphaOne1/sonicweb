@@ -59,7 +59,7 @@ spec:
                         -   name: OTEL_EXPORTER_OTLP_PROTOCOL
                             value: grpc
                         -   name: OTEL_EXPORTER_OTLP_ENDPOINT
-                            value: monitoring-alloy:4317
+                            value: {{ .Values.monitoring.alloy.fullnameOverride }}:4317
                 {{- end }}
                     livenessProbe:
                         {{- toYaml .Values.livenessProbe | nindent 24 }}

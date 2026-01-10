@@ -1,0 +1,43 @@
+apiVersion: v1
+Kind: ConfigMap
+metadata:
+    name: alloy-otel-collector-config
+data:
+    config: |
+        // OTLP receiver for metrics, logs and traces
+        otelcol.receiver.otlp "default" {
+            grpc { endpoint = "0.0.0.0:4317" }
+            http { endpoint = "0.0.0.0:4318" }
+            output {
+                metrics = [otelcol.exporter.prometheus.vmetrics.input]
+                logs    = [otelcol.exporter.otlp.vlogs.input]
+                traces  = [otelcol.exporter.otlp.vtraces.input]
+            }
+        }
+
+        // forwarding to VictoriaMetrics
+        otelcol.exporter.prometheus "vmetrics" {
+            forward_to = [prometheus.remote_write.vmetrics.receiver]
+        }
+
+        prometheus.remote_write "vmetrics" {
+            endpoint {
+                url = "http://{{ .Values.metrics.fullnameOverride }}-server:8428/api/v1/write"
+            }
+        }
+
+        // forwarding to VictoriaLogs via OTLP
+        otelcol.exporter.otlp "vlogs" {
+            client {
+                endpoint = "{{ .Values.logs.fullnameOverride }}-server:9428"
+                tls { insecure = true }
+            }
+        }
+
+        // forwarding to VictoriaTraces via OTLP
+        otelcol.exporter.otlp "vtraces" {
+            client {
+                endpoint = "{{ .Values.traces.fullnameOverride }}-server:10428"
+                tls { insecure = true }
+            }
+        }

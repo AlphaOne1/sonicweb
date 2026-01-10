@@ -22,6 +22,9 @@ monitoring:
         adminUser: admin
         adminPassword: "" # empty, _must_ be provided with --set monitoring.grafana.adminPassword=<...>
 
+    alloy:
+        fullNameOverride: monitoring-alloy
+
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
     repository: ghcr.io/alphaone1/sonicweb
@@ -102,6 +105,11 @@ resources:
     requests:
         cpu: 100m
         memory: 20Mi
+    # depending on your use case, you might want to either limit the resources
+    # or let them scale until the limit of the namespace
+    #limits:
+    #    cpu: 1
+    #    memory: 256Mi
 
 # This is to set up the liveness and readiness probes more information can be found here:
 # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
