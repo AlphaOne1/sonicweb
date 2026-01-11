@@ -50,7 +50,8 @@ spec:
                             protocol: TCP
                 {{- if .Values.monitoring.enabled }}
                     {{- $alloyHost := default (printf "%s-alloy" .Release.Name)
-                                              (dig "monitoring" "alloy" "fullnameOverride" "" .Values) }}
+                                              (dig "monitoring" "alloy" "fullnameOverride" ""
+                                                   ( .Values | toYaml | fromYaml )) }}
                     env:
                         -   name: OTEL_LOGS_EXPORTER
                             value: otlp
