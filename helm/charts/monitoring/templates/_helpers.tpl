@@ -15,21 +15,17 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "monitoring.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{-     .Values.fullnameOverride | trunc 63 | trimSuffix "-" | lower }}
-{{- else }}
-{{-     $name := default .Chart.Name .Values.nameOverride }}
-{{-     $relName := .Release.Name }}
-{{-     if .Values.podmanKube }}
-{{-         $relName = "monitoring"}}
-{{-     end }}
-{{-     if contains $name $relName }}
-{{-         $relName | trunc 63 | trimSuffix "-" | lower }}
-{{-     else }}
-{{-         printf "%s-%s" $relName $name | trunc 63 | trimSuffix "-" | lower }}
-{{-     end }}
-{{- end }}
-{{- end }}
+{{- if .Values.fullnameOverride -}}
+{{-     .Values.fullnameOverride | trunc 63 | trimSuffix "-" | lower -}}
+{{- else -}}
+{{-     $name := default .Chart.Name .Values.nameOverride -}}
+{{-     if contains $name .Release.Name -}}
+{{-         .Release.Name | trunc 63 | trimSuffix "-" | lower -}}
+{{-     else -}}
+{{-         printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" | lower -}}
+{{-     end -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Create chart name and version as used by the chart label.
