@@ -1,5 +1,7 @@
-# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
-# SPDX-License-Identifier: MPL-2.0
+{{- /*
+SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+SPDX-License-Identifier: MPL-2.0
+*/ -}}
 
 # Alloy: Accessible only from pods within the same namespace
 apiVersion: networking.k8s.io/v1
@@ -9,12 +11,12 @@ metadata:
 spec:
     podSelector:
         matchLabels:
-            app.kubernetes.io/instance: {{ .Values.alloy.fullnameOverride }}
+            app.kubernetes.io/name: alloy
     policyTypes:
         - Ingress
     ingress:
         -   from:
-                -   podSelector: { } # Allows access from all pods in the same namespace
+                -   podSelector: { } # Allows all pods in the same namespace (e.g., SonicWeb)
 
 ---
 # Victoria Instances: Access restricted to Alloy (Write) and Grafana (Read)
@@ -25,25 +27,24 @@ metadata:
 spec:
     podSelector:
         matchExpressions:
-            -   key:      app.kubernetes.io/instance
+            -   key:      app.kubernetes.io/name
                 operator: In
                 values:
-                    - {{ .Values.metrics.fullnameOverride }}
-                    - {{ .Values.logs.fullnameOverride }}
-                    - {{ .Values.traces.fullnameOverride }}
+                    - metrics
+                    - logs
+                    - vt-single
     policyTypes:
         - Ingress
     ingress:
         -   from:
                 -   podSelector:
                         matchLabels:
-                            app.kubernetes.io/instance: {{ .Values.alloy.fullnameOverride }}
+                            app.kubernetes.io/name: alloy
                 -   podSelector:
                         matchLabels:
-                            app.kubernetes.io/instance: {{ .Values.grafana.fullnameOverride }}
-
+                            app.kubernetes.io/name: grafana
 ---
-# Grafana: Allow access via Ingress (from outside the namespace)
+# Grafana: Allow access via Ingress
 apiVersion: networking.k8s.io/v1
 kind:       NetworkPolicy
 metadata:
@@ -51,13 +52,11 @@ metadata:
 spec:
     podSelector:
         matchLabels:
-            app.kubernetes.io/instance: {{ .Values.grafana.fullnameOverride }}
+            app.kubernetes.io/name: grafana
     policyTypes:
         - Ingress
     ingress:
         -   from:
-                # Allows access from Ingress Controllers (often in a different namespace)
-                # or externally via LoadBalancer
                 -   ipBlock:
                         cidr: 0.0.0.0/0
             ports:
