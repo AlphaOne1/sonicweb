@@ -49,6 +49,8 @@ spec:
                             containerPort: {{ .Values.service.metricsPort }}
                             protocol: TCP
                 {{- if .Values.monitoring.enabled }}
+                    {{- $alloyHost := default (printf "%s-alloy" .Release.Name)
+                                              (dig "monitoring" "alloy" "fullnameOverride" "" .Values) }}
                     env:
                         -   name: OTEL_LOGS_EXPORTER
                             value: otlp
@@ -59,8 +61,7 @@ spec:
                         -   name: OTEL_EXPORTER_OTLP_PROTOCOL
                             value: grpc
                         -   name: OTEL_EXPORTER_OTLP_ENDPOINT
-                            value: http://{{ default (printf "%s-alloy" .Release.Name)
-                                                     .Values.monitoring.alloy.fullnameOverride }}:4317
+                            value: http://{{ $alloyHost }}:4317
                 {{- end }}
                     livenessProbe:
                         {{- toYaml .Values.livenessProbe | nindent 24 }}
