@@ -7,7 +7,7 @@ SPDX-License-Identifier: MPL-2.0
 Expand the name of the chart.
 */ -}}
 {{- define "monitoring.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" | lower }}
 {{- end }}
 
 {{/*
