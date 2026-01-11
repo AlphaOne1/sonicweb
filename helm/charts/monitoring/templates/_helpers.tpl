@@ -51,11 +51,7 @@ Selector labels
 */}}
 {{- define "monitoring.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "monitoring.name" . }}
-{{- if .Values.podmanKube }}
-app.kubernetes.io/instance: monitoring
-{{- else }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
 {{- end }}
 
 {{/*
