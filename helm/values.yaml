@@ -14,7 +14,7 @@ replicaCount: 1
 # production monitoring solution.
 monitoring:
     # Controls if monitoring setup should be included.
-    enabled: true
+    enabled: false
     grafana:
         adminUser: admin
         adminPassword: "" # empty, _must_ be provided with --set monitoring.grafana.adminPassword=<...>
