@@ -1,10 +1,11 @@
 {{- /*
 SPDX-FileCopyrightText: 2026 The monitoring contributors.
 SPDX-License-Identifier: MPL-2.0
-
-Expand the name of the chart.
 */ -}}
 
+{{- /*
+Expand the name of the chart.
+*/ -}}
 {{- define "monitoring.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
