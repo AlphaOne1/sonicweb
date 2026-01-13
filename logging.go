@@ -56,11 +56,13 @@ type MultiHandler struct {
 }
 
 func NewMultiHandler(handlers ...slog.Handler) *MultiHandler {
-	return &MultiHandler{handlers: slices.DeleteFunc(
+	tmp := slices.DeleteFunc(
 		handlers,
 		func(h slog.Handler) bool {
 			return h == nil
-		})}
+		})
+
+	return &MultiHandler{handlers: tmp}
 }
 
 func (t *MultiHandler) Enabled(ctx context.Context, level slog.Level) bool {
