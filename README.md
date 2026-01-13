@@ -94,31 +94,31 @@ Getting Started
 
 *SonicWeb* is controlled solely by command line arguments. They are as follows:
 
-| Parameter                    | Description                                         | Default           | Multiple |
-|------------------------------|-----------------------------------------------------|-------------------|----------|
-| -root           \<path\>     | root directory of content                           | `/www`            |          |
-| -base           \<path\>     | base path to publish the content                    | `/`               |          |
-| -port           \<port\>     | port to listen on for web requests                  | `8080`            |          |
-| -address        \<address\>  | address to listen on for web requests               | all               |          |
-| -tlscert        \<certfile\> | TLS certificate file                                | n/a               |          |
-| -tlskey         \<keyfile\>  | TLS key file                                        | n/a               |          |
-| -clientca       \<cafile\>   | client certificate authority for mTLS               | n/a               | &check;  |
-| -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval  | n/a               | &check;  |
-| -certcache      \<path\>     | directory for certificate cache                     | os temp directory |          |
-| -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval        | n/a               |          |
-| -header         \<header\>   | additional header                                   | n/a               | &check;  |
-| -headerfile     \<file\>     | file containing additional headers                  | n/a               | &check;  |
-| -tryfile        \<fileexp\>  | always try to load file expression first            | n/a               | &check;  |
-| -wafcfg         \<file-glob> | configuration for Web Application Firewall          | n/a               | &check;  |
-| -iport          \<port\>     | port to listen on for telemetry requests            | `8081`            |          |
-| -iaddress       \<address\>  | address to listen on for telemetry requests         | all               |          |
-| -telemetry      {true,false} | enable/disable telemetry support                    | `true`            |          |
-| -trace-endpoint {address}    | deprecated, use OTEL_*_ENDPOINT environment instead | `""`              |          |
-| -pprof          {true,false} | enable/disable pprof support                        | `false`           |          |
-| -log            \<level\>    | log level (debug, info, warn, error)                | `info`            |          |
-| -logstyle       \<style\>    | log style (auto, text, json)                        | `auto`            |          |
-| -help                        | print the argument overview and exit                | n/a               |          |
-| -version                     | print just version information and exit             | n/a               |          |
+| Parameter                    | Description                                        | Default           | Multiple |
+|------------------------------|----------------------------------------------------|-------------------|----------|
+| -root           \<path\>     | root directory of content                          | `/www`            |          |
+| -base           \<path\>     | base path to publish the content                   | `/`               |          |
+| -port           \<port\>     | port to listen on for web requests                 | `8080`            |          |
+| -address        \<address\>  | address to listen on for web requests              | all               |          |
+| -tlscert        \<certfile\> | TLS certificate file                               | n/a               |          |
+| -tlskey         \<keyfile\>  | TLS key file                                       | n/a               |          |
+| -clientca       \<cafile\>   | client certificate authority for mTLS              | n/a               | &check;  |
+| -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               | &check;  |
+| -certcache      \<path\>     | directory for certificate cache                    | os temp directory |          |
+| -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |          |
+| -header         \<header\>   | additional header                                  | n/a               | &check;  |
+| -headerfile     \<file\>     | file containing additional headers                 | n/a               | &check;  |
+| -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | &check;  |
+| -wafcfg         \<file-glob> | configuration for Web Application Firewall         | n/a               | &check;  |
+| -iport          \<port\>     | port to listen on for telemetry requests           | `8081`            |          |
+| -iaddress       \<address\>  | address to listen on for telemetry requests        | all               |          |
+| -telemetry      {true,false} | enable/disable telemetry support                   | `true`            |          |
+| -trace-endpoint {address}    | deprecated, use OTEL_EXPORTER_OTLP_TRACES_ENDPOINT environment instead | `""`|    |
+| -pprof          {true,false} | enable/disable pprof support                       | `false`           |          |
+| -log            \<level\>    | log level (debug, info, warn, error)               | `info`            |          |
+| -logstyle       \<style\>    | log style (auto, text, json)                       | `auto`            |          |
+| -help                        | print the argument overview and exit               | n/a               |          |
+| -version                     | print just version information and exit            | n/a               |          |
 
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 

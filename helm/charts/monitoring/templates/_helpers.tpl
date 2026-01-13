@@ -1,5 +1,5 @@
 {{- /*
-SPDX-FileCopyrightText: 2026 The monitoring contributors.
+SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 SPDX-License-Identifier: MPL-2.0
 */ -}}
 

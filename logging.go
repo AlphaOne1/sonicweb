@@ -74,7 +74,7 @@ func (t *MultiHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (t *MultiHandler) Handle(ctx context.Context, r slog.Record) error {
-	errs := make([]error, 0)
+	var errs []error
 
 	for _, h := range t.handlers {
 		c := r.Clone()
