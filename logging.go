@@ -57,7 +57,7 @@ type MultiHandler struct {
 
 func NewMultiHandler(handlers ...slog.Handler) *MultiHandler {
 	tmp := slices.Clone(handlers)
-	slices.DeleteFunc(
+	tmp = slices.DeleteFunc(
 		tmp,
 		func(h slog.Handler) bool {
 			return h == nil
