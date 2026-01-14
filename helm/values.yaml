@@ -62,7 +62,7 @@ securityContext:
     allowPrivilegeEscalation: false
     seccompProfile:
         type: RuntimeDefault
-  # readOnlyRootFilesystem: true
+    #readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 65532
     runAsGroup: 65532
