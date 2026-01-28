@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package service provides a Group type for managing multiple HTTP servers.
 package service
 
