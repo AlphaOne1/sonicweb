@@ -14,8 +14,9 @@ import (
 // ReadTimeout defines the maximum duration for reading the entire request, including the body, from the client.
 const ReadTimeout = 2 * time.Second
 
-// WriteTimeout defines the maximum duration before timing out writes of the response.
-const WriteTimeout = 5 * time.Second
+// WriteTimeout defines the maximum duration before timing out writes of the response. Adjusted to support the standard
+// 30 seconds CPU profiles of pprof.
+const WriteTimeout = 35 * time.Second
 
 // IdleTimeout defines the maximum amount of time to wait for the next request when keep-alives are enabled.
 const IdleTimeout = 30 * time.Second

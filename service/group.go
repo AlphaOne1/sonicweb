@@ -70,6 +70,18 @@ func WithServers(servers []*http.Server, serverNames []string) Option {
 			return fmt.Errorf("%w: %d vs %d", ErrServerNameLenMismatch, len(servers), len(serverNames))
 		}
 
+		var errs []error
+
+		for i, s := range servers {
+			if s == nil {
+				errs = append(errs, fmt.Errorf("%w: %q", ErrNilServer, serverNames[i]))
+			}
+		}
+
+		if len(errs) > 0 {
+			return errors.Join(errs...)
+		}
+
 		g.servers = append(g.servers, servers...)
 		g.serverNames = append(g.serverNames, serverNames...)
 
@@ -233,7 +245,7 @@ func (g *Group) handleServerCycle(ctx context.Context, server *http.Server, list
 		select {
 		case <-time.After(serverShutdownTimeout):
 			// this is a timeout applied _after_ the shutdown timeout of Shutdown
-			slog.Info("server shutdown timed out", slog.String("name", serverName))
+			g.log.Info("server shutdown timed out", slog.String("name", serverName))
 		case err := <-serveErrCh:
 			if err != nil {
 				g.log.Error("server stopped with error",
