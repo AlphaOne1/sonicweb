@@ -16,11 +16,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sonic/instrumentation"
-	"sonic/service"
 	"strings"
+	"syscall"
 	"time"
 	_ "time/tzdata"
+
+	"sonic/instrumentation"
+	"sonic/service"
 
 	"github.com/AlphaOne1/geany"
 	"github.com/AlphaOne1/midgard"
@@ -354,13 +356,16 @@ func main() {
 	if servicesErr != nil {
 		slog.Error("failed to initialize service group", slog.String("error", servicesErr.Error()))
 		exitFunc(1)
+	} else if services == nil {
+		slog.Error("failed to initialize service group, is nil")
+		exitFunc(1)
 	}
 
 	signalShutdown, signalShutdownFunc := context.WithCancel(context.Background())
 
 	go func() {
 		shutdownChan := make(chan os.Signal, 1)
-		signal.Notify(shutdownChan, os.Interrupt)
+		signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM)
 
 		<-shutdownChan
 

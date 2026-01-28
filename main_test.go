@@ -189,7 +189,7 @@ func TestSonicMain(t *testing.T) {
 
 		if err != nil {
 			runtime.Gosched()
-			fmt.Printf("received error: %v\n", err)
+			slog.Info("received error", slog.String("error", err.Error()))
 			time.Sleep(500 * time.Millisecond)
 
 			continue
