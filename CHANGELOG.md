@@ -1,6 +1,14 @@
-<!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
+Release 1.7.0
+=============
+
+- added monitoring to deployment configuration
+- reworked Open Telemetry integration
+- moved instrumentation and server lifecycle into submodules
+- update dependencies
+
 Release 1.6.1
 =============
 
