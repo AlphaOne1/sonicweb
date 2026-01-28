@@ -65,7 +65,7 @@ func WithServer(server *http.Server, serverName string) Option {
 
 // WithServers adds the provided HTTP servers and their corresponding names to the Group configuration.
 func WithServers(servers []*http.Server, serverNames []string) Option {
-	return func(g *Group) error {
+	return func(g *Group) error { //nolint:varnamelen // the name g is set in this file for groups, not changing here
 		if len(servers) != len(serverNames) {
 			return fmt.Errorf("%w: %d vs %d", ErrServerNameLenMismatch, len(servers), len(serverNames))
 		}
