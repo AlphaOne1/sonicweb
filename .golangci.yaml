@@ -80,6 +80,8 @@ linters:
                         - "go.opentelemetry.io/otel/semconv/v1.37.0"
                         - "go.uber.org/automaxprocs/maxprocs"
                         - "golang.org/x/crypto/acme"
+                        - "sonic/instrumentation"
+                        - "sonic/service"
                 test:
                     files:
                         - "**/*_test.go"

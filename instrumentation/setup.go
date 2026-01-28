@@ -1,18 +1,18 @@
 // SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
-package main
+package instrumentation
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
-	"net/http/pprof"
 	"os"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,27 +30,52 @@ import (
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/log"
+	otellog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
 
+// OTLPProtocolGRPC specifies the protocol string for gRPC in OpenTelemetry exporters.
 const OTLPProtocolGRPC = "grpc"
+
+// OTLPProtocolHTTP specifies the protocol string for HTTP in OpenTelemetry exporters.
 const OTLPProtocolHTTP = "http"
+
+// OTLPExporterConsole represents the constant name for the console-based OpenTelemetry exporter.
 const OTLPExporterConsole = "console"
+
+// OTLPExporterNone represents the "none" value for disabling OTLP exporters in telemetry configurations.
 const OTLPExporterNone = "none"
+
+// OTLPExporterOTLP represents the constant name for the OTLP-based OpenTelemetry exporter.
 const OTLPExporterOTLP = "otlp"
+
+// OTLPExporterPrometheus represents the constant name for the Prometheus-based OpenTelemetry exporter.
 const OTLPExporterPrometheus = "prometheus"
 
+// MinShutdownTimeout defines the minimum timeout duration for cleanup operations during a shutdown sequence.
+const MinShutdownTimeout = 5 * time.Second
+
+// ErrUnsupportedOTLPProtocol indicates that the provided OTLP protocol is not supported.
 var ErrUnsupportedOTLPProtocol = errors.New("unsupported protocol")
 
-// setupOTelSDK bootstraps the OpenTelemetry pipeline.
+// SetupOTelSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 //
 //nolint:funlen // cannot go around the steps, splitting will confuse more than longer function
-func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handler, error) {
+func SetupOTelSDK(
+	ctx context.Context,
+	serverName string,
+	buildInfoTag string,
+	log *slog.Logger) (func(context.Context) error, http.Handler, *slog.Logger, error) {
+
+	if log == nil {
+		// get a "do nothing" logger if none is set
+		log = slog.New(slog.DiscardHandler)
+	}
+
 	var shutdownFuncs []func(context.Context) error
 	var err error
 
@@ -59,7 +84,7 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handle
 	// Each registered cleanup will be invoked once.
 	shutdown := func(ctx context.Context) error {
 		var err error
-		for _, fn := range shutdownFuncs {
+		for _, fn := range slices.Backward(shutdownFuncs) {
 			err = errors.Join(err, fn(ctx))
 		}
 		shutdownFuncs = nil
@@ -69,28 +94,38 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handle
 
 	// handleErr calls shutdown for cleanup and makes sure that all errors are returned.
 	handleErr := func(inErr error) {
-		err = errors.Join(inErr, shutdown(ctx))
+		shutdownCtx := context.WithoutCancel(ctx)
+		var cancel context.CancelFunc = func() {}
+
+		if t, hasDeadline := ctx.Deadline(); ctx.Err() != nil ||
+			hasDeadline && time.Until(t) < MinShutdownTimeout {
+			shutdownCtx, cancel = context.WithTimeout(context.WithoutCancel(ctx), MinShutdownTimeout)
+		}
+
+		defer cancel()
+
+		err = errors.Join(inErr, shutdown(shutdownCtx))
 	}
 
 	// Set some environment variables to reasonable values
-	setupEnvDefaults()
+	setupEnvDefaults(log)
 
 	// Set up a propagator.
-	prop := newPropagator()
+	prop := newPropagator(log)
 	otel.SetTextMapPropagator(prop)
 
 	// Get the common resources to use
-	res, err := newResource(ctx)
-	if err != nil {
-		handleErr(err)
-		return shutdown, nil, err
+	res, rscErr := newResource(ctx, serverName, buildInfoTag)
+	if rscErr != nil {
+		handleErr(rscErr)
+		return shutdown, nil, nil, err
 	}
 
 	// Set up a trace provider.
-	tracerProvider, err := newTracerProvider(ctx, res)
-	if err != nil {
-		handleErr(err)
-		return shutdown, nil, err
+	tracerProvider, trcErr := newTracerProvider(ctx, res, log)
+	if trcErr != nil {
+		handleErr(trcErr)
+		return shutdown, nil, nil, err
 	}
 
 	if tracerProvider != nil {
@@ -99,10 +134,10 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handle
 	}
 
 	// Set up meter provider.
-	meterProvider, metricHandler, err := newMeterProvider(ctx, res)
-	if err != nil {
-		handleErr(err)
-		return shutdown, nil, err
+	meterProvider, metricHandler, mtrErr := newMeterProvider(ctx, res, log)
+	if mtrErr != nil {
+		handleErr(mtrErr)
+		return shutdown, nil, nil, err
 	}
 
 	if meterProvider != nil {
@@ -111,27 +146,26 @@ func setupOTelSDK(ctx context.Context) (func(context.Context) error, http.Handle
 	}
 
 	// Set up a logger provider.
-	loggerProvider, err := newLoggerProvider(ctx, res)
-	if err != nil {
-		handleErr(err)
-		return shutdown, nil, err
+	loggerProvider, logErr := newLoggerProvider(ctx, res, log)
+	if logErr != nil {
+		handleErr(logErr)
+		return shutdown, nil, nil, err
 	}
+
+	var resultLogger *slog.Logger
 
 	if loggerProvider != nil {
 		shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
 		global.SetLoggerProvider(loggerProvider)
 
-		slog.SetDefault(
-			slog.New(NewMultiHandler(
-				slog.Default().Handler(),
-				otelslog.NewHandler("otel", otelslog.WithLoggerProvider(loggerProvider)))))
+		resultLogger = slog.New(otelslog.NewHandler("otel", otelslog.WithLoggerProvider(loggerProvider)))
 	}
 
-	return shutdown, metricHandler, err
+	return shutdown, metricHandler, resultLogger, err
 }
 
 // setupEnvDefaults sets some OpenTelemetry related configuration environment variables to reasonable values.
-func setupEnvDefaults() {
+func setupEnvDefaults(log *slog.Logger) {
 	defaults := map[string]string{
 		"OTEL_EXPORTER_OTLP_COMPRESSION": "gzip",
 		"OTEL_EXPORTER_OTLP_PROTOCOL":    OTLPProtocolGRPC,
@@ -140,7 +174,7 @@ func setupEnvDefaults() {
 	for k, v := range defaults {
 		if _, isSet := os.LookupEnv(k); !isSet {
 			if err := os.Setenv(k, v); err != nil {
-				slog.Error("failed to set default environment variable",
+				log.Error("failed to set default environment variable",
 					slog.String("name", k),
 					slog.String("value", v),
 					slog.String("error", err.Error()))
@@ -158,7 +192,7 @@ func setupEnvDefaults() {
 //   - OTEL_PROPAGATORS
 //
 //nolint:ireturn // the result is an interface, no choice here
-func newPropagator() propagation.TextMapPropagator {
+func newPropagator(log *slog.Logger) propagation.TextMapPropagator {
 	propagators := make([]propagation.TextMapPropagator, 0, 2)
 
 	if envPropagators := os.Getenv("OTEL_PROPAGATORS"); envPropagators != "" {
@@ -169,7 +203,7 @@ func newPropagator() propagation.TextMapPropagator {
 			case "tracecontext":
 				propagators = append(propagators, propagation.TraceContext{})
 			default:
-				slog.Warn("unsupported propagator in OTEL_PROPAGATORS", slog.String("name", p))
+				log.Warn("unsupported propagator in OTEL_PROPAGATORS", slog.String("name", p))
 			}
 		}
 	}
@@ -186,12 +220,12 @@ func newPropagator() propagation.TextMapPropagator {
 // newResource configures a resource to be used by the telemetry providers.
 // Attributes configured in the environment variable `OTEL_RESOURCE_ATTRIBUTES` are added.
 // It should contain a comma-separated list of key-value-pairs the form `key0=val0,key1=val1,...`.
-func newResource(ctx context.Context) (*resource.Resource, error) {
+func newResource(ctx context.Context, serverName, buildInfoTag string) (*resource.Resource, error) {
 	res, err := resource.New(
 		ctx,
 		resource.WithSchemaURL(semconv.SchemaURL),
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(ServerName),
+			semconv.ServiceNameKey.String(serverName),
 			semconv.ServiceVersionKey.String(buildInfoTag),
 		),
 		resource.WithFromEnv(),
@@ -212,7 +246,7 @@ func newResource(ctx context.Context) (*resource.Resource, error) {
 // newTraceExporter initializes a trace.SpanExporter based on the provided exporter name and protocol.
 //
 //nolint:ireturn
-func newTraceExporter(ctx context.Context, name, protocol string) (trace.SpanExporter, error) {
+func newTraceExporter(ctx context.Context, name, protocol string, log *slog.Logger) (trace.SpanExporter, error) {
 	var exp trace.SpanExporter
 	var err error
 
@@ -229,7 +263,7 @@ func newTraceExporter(ctx context.Context, name, protocol string) (trace.SpanExp
 	case OTLPExporterConsole:
 		exp, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
 	default:
-		slog.Warn("unsupported trace exporter", slog.String("name", name))
+		log.Warn("unsupported trace exporter", slog.String("name", name))
 	}
 
 	if err != nil {
@@ -257,7 +291,7 @@ func newTraceExporter(ctx context.Context, name, protocol string) (trace.SpanExp
 //   - OTEL_EXPORTER_OTLP_CLIENT_KEY,         OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY
 //   - OTEL_TRACES_SAMPLER
 //   - OTEL_TRACES_SAMPLER_ARG
-func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.TracerProvider, error) {
+func newTracerProvider(ctx context.Context, res *resource.Resource, log *slog.Logger) (*trace.TracerProvider, error) {
 	traceExporters := make([]trace.SpanExporter, 0, 1)
 
 	envExporters := os.Getenv("OTEL_TRACES_EXPORTER")
@@ -273,7 +307,7 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 	}
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		exp, err := newTraceExporter(ctx, strings.TrimSpace(exporter), protocol)
+		exp, err := newTraceExporter(ctx, strings.TrimSpace(exporter), protocol, log)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not instantiate trace exporter %v with protocol %v: %w",
@@ -304,7 +338,12 @@ func newTracerProvider(ctx context.Context, res *resource.Resource) (*trace.Trac
 // and optional http.Handler based on the given name and protocol.
 //
 //nolint:ireturn
-func newMeterReader(ctx context.Context, name, protocol string) (metric.Exporter, metric.Reader, http.Handler, error) {
+func newMeterReader(
+	ctx context.Context,
+	name string,
+	protocol string,
+	log *slog.Logger) (metric.Exporter, metric.Reader, http.Handler, error) {
+
 	var reader metric.Reader
 	var exp metric.Exporter
 	var metricHandler http.Handler
@@ -327,7 +366,7 @@ func newMeterReader(ctx context.Context, name, protocol string) (metric.Exporter
 	case OTLPExporterConsole:
 		exp, err = stdoutmetric.New()
 	default:
-		slog.Warn("unsupported metric exporter", slog.String("name", name))
+		log.Warn("unsupported metric exporter", slog.String("name", name))
 	}
 
 	if err != nil {
@@ -358,7 +397,11 @@ func newMeterReader(ctx context.Context, name, protocol string) (metric.Exporter
 //   - OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION
 //   - OTEL_METRIC_EXPORT_INTERVAL
 //   - OTEL_METRIC_EXPORT_TIMEOUT
-func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.MeterProvider, http.Handler, error) {
+func newMeterProvider(
+	ctx context.Context,
+	res *resource.Resource,
+	log *slog.Logger) (*metric.MeterProvider, http.Handler, error) {
+
 	metricReaders := make([]metric.Reader, 0, 1)
 
 	envExporters := os.Getenv("OTEL_METRICS_EXPORTER")
@@ -376,7 +419,7 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 	var metricHandler http.Handler
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		exp, reader, tmpHandler, err := newMeterReader(ctx, strings.TrimSpace(exporter), protocol)
+		exp, reader, tmpHandler, err := newMeterReader(ctx, strings.TrimSpace(exporter), protocol, log)
 
 		if tmpHandler != nil {
 			metricHandler = tmpHandler
@@ -414,8 +457,8 @@ func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.Mete
 // newLoggerExporter creates a log exporter based on the provided name and protocol or returns an error if unsupported.
 //
 //nolint:ireturn
-func newLoggerExporter(ctx context.Context, name, protocol string) (log.Exporter, error) {
-	var exp log.Exporter
+func newLoggerExporter(ctx context.Context, name, protocol string, log *slog.Logger) (otellog.Exporter, error) {
+	var exp otellog.Exporter
 	var err error
 
 	switch name {
@@ -431,7 +474,7 @@ func newLoggerExporter(ctx context.Context, name, protocol string) (log.Exporter
 	case OTLPExporterConsole:
 		exp, err = stdoutlog.New()
 	default:
-		slog.Warn("unsupported log exporter", slog.String("name", name))
+		log.Warn("unsupported log exporter", slog.String("name", name))
 	}
 
 	if err != nil {
@@ -463,8 +506,8 @@ func newLoggerExporter(ctx context.Context, name, protocol string) (log.Exporter
 //   - OTEL_BLRP_MAX_QUEUE_SIZE
 //   - OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT
 //   - OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT
-func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.LoggerProvider, error) {
-	logExporters := make([]log.Exporter, 0, 1)
+func newLoggerProvider(ctx context.Context, res *resource.Resource, log *slog.Logger) (*otellog.LoggerProvider, error) {
+	logExporters := make([]otellog.Exporter, 0, 1)
 
 	envExporters := os.Getenv("OTEL_LOGS_EXPORTER")
 
@@ -479,7 +522,7 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 	}
 
 	for exporter := range strings.SplitSeq(envExporters, ",") {
-		exp, err := newLoggerExporter(ctx, strings.TrimSpace(exporter), protocol)
+		exp, err := newLoggerExporter(ctx, strings.TrimSpace(exporter), protocol, log)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not instantiate log exporter %v with protocol %v: %w",
@@ -491,68 +534,17 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 		}
 	}
 
-	loggerProviderOptions := make([]log.LoggerProviderOption, 0, len(logExporters)+1)
+	loggerProviderOptions := make([]otellog.LoggerProviderOption, 0, len(logExporters)+1)
 
 	for _, l := range logExporters {
-		loggerProviderOptions = append(loggerProviderOptions, log.WithProcessor(log.NewBatchProcessor(l)))
+		loggerProviderOptions = append(loggerProviderOptions, otellog.WithProcessor(otellog.NewBatchProcessor(l)))
 	}
 
 	if res != nil {
-		loggerProviderOptions = append(loggerProviderOptions, log.WithResource(res))
+		loggerProviderOptions = append(loggerProviderOptions, otellog.WithResource(res))
 	}
 
-	loggerProvider := log.NewLoggerProvider(loggerProviderOptions...)
+	loggerProvider := otellog.NewLoggerProvider(loggerProviderOptions...)
 
 	return loggerProvider, nil
-}
-
-// serveMetrics sets up the metrics functionality. It opens a separate port, and metrics collectors can fetch their
-// data from there. For profiling purposes, if enabled, also the pprof endpoints are added on the same port.
-func serveMetrics(address string, port string, metricHandler http.Handler, enablePprof bool) {
-	if metricHandler == nil && !enablePprof {
-		return
-	}
-
-	listenAddress := net.JoinHostPort(address, port)
-
-	mux := http.NewServeMux()
-
-	if enablePprof {
-		slog.Info("serving pprof", slog.String("address", listenAddress+"/debug/pprof"))
-		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
-		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
-		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
-		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
-		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
-	} else {
-		slog.Info("serving pprof disabled")
-	}
-
-	if metricHandler != nil {
-		slog.Info("serving metrics", slog.String("address", listenAddress+"/metrics"))
-		mux.Handle("GET /metrics", metricHandler)
-	} else {
-		slog.Info("serving metrics disabled")
-	}
-
-	server := http.Server{
-		Addr:              listenAddress,
-		Handler:           mux,
-		ReadHeaderTimeout: ReadTimeout,
-		ReadTimeout:       ReadTimeout,
-	}
-
-	defer func() { _ = server.Close() }()
-
-	go func() {
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("error serving metrics", slog.String("error", err.Error()))
-			exitFunc(1)
-		}
-		slog.Info("metrics server stopped to accept new connections")
-	}()
-
-	if shutdownErr := waitServerShutdown(&server, "metrics"); shutdownErr != nil {
-		slog.Error("error shutting down metrics server", slog.String("error", shutdownErr.Error()))
-	}
 }

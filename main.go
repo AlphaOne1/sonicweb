@@ -15,6 +15,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"sonic/instrumentation"
+	"sonic/service"
 	"strings"
 	"time"
 	_ "time/tzdata"
@@ -33,6 +36,9 @@ const ServerName = "SonicWeb"
 
 // ReadTimeout is the timeout used to read header and body content.
 const ReadTimeout = 2 * time.Second
+
+// ServerShutdownTimeout is the timeout given to the server to do a controlled shutdown.
+const ServerShutdownTimeout = 5 * time.Second
 
 var buildInfoTag = ""  // buildInfoTag holds the tag information of the version control system
 var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is overridden for testing
@@ -237,7 +243,12 @@ func main() {
 		// handling of deprecated trace-endpoint parameter
 		setupTraceEnvVars(config.TraceEndpoint)
 
-		otelShutdown, tmpHandler, err := setupOTelSDK(context.Background())
+		otelShutdown, tmpHandler, logger, err := instrumentation.SetupOTelSDK(
+			context.Background(),
+			"monitoring",
+			buildInfoTag,
+			slog.Default())
+
 		if err != nil {
 			slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
 			exitFunc(1)
@@ -245,8 +256,15 @@ func main() {
 
 		metricHandler = tmpHandler
 
+		if logger != nil {
+			slog.SetDefault(
+				slog.New(instrumentation.NewMultiHandler(
+					slog.Default().Handler(),
+					logger.Handler())))
+		}
+
 		defer func() {
-			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), ServerShutdownTimeout)
 			defer shutdownCancel()
 			if err := otelShutdown(shutdownCtx); err != nil {
 				slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
@@ -309,43 +327,58 @@ func main() {
 	http.DefaultServeMux = http.NewServeMux()
 	http.Handle("GET "+config.BasePath, handler)
 
-	go func() {
-		var listenErr error
+	monitoringServer, monitoringServerErr := instrumentation.Server(
+		config.InstrumentAddress,
+		config.InstrumentPort,
+		metricHandler,
+		config.EnablePprof,
+		slog.Default())
 
-		if tlsConfig != nil {
-			slog.Info("starting tls server",
-				slog.String("address", server.Addr),
-				slog.Duration("t_init", time.Since(startInit)),
-				slog.String("cert", config.TLSCert),
-				slog.String("key", config.TLSKey),
-				slog.Any("acmeDomains", *config.AcmeDomains),
-			)
-
-			listenErr = server.ListenAndServeTLS("", "")
-		} else {
-			slog.Info("starting server",
-				slog.String("address", server.Addr),
-				slog.Duration("t_init", time.Since(startInit)))
-
-			listenErr = server.ListenAndServe()
-		}
-
-		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-			slog.Error("error listening", slog.String("error", listenErr.Error()))
-			exitFunc(1)
-		}
-	}()
-
-	// set up OpenTelemetry with prometheus metricsExporter
-	go serveMetrics(config.InstrumentAddress, config.InstrumentPort, metricHandler, config.EnablePprof)
-
-	fileServerShutdownErr := waitServerShutdown(&server, "file")
-
-	if fileServerShutdownErr != nil {
-		slog.Error("error shutting down server", slog.String("error", fileServerShutdownErr.Error()))
+	if monitoringServerErr != nil {
+		slog.Error("failed to initialize monitoring server", slog.String("error", monitoringServerErr.Error()))
+		exitFunc(1)
 	}
 
-	waitServersShutdown()
+	serviceOptions := []service.Option{
+		service.WithLogger(slog.Default()),
+		service.WithShutdownTimeout(ServerShutdownTimeout),
+		service.WithServer(&server, ServerName),
+	}
+
+	if monitoringServer != nil {
+		serviceOptions = append(serviceOptions, service.WithServer(monitoringServer, "instrumentation"))
+	}
+
+	services, servicesErr := service.NewGroup(serviceOptions...)
+
+	if servicesErr != nil {
+		slog.Error("failed to initialize service group", slog.String("error", servicesErr.Error()))
+		exitFunc(1)
+	}
+
+	signalShutdown, signalShutdownFunc := context.WithCancel(context.Background())
+
+	go func() {
+		shutdownChan := make(chan os.Signal, 1)
+		signal.Notify(shutdownChan, os.Interrupt)
+
+		<-shutdownChan
+
+		slog.Info("received shutdown signal, shutting down")
+
+		signalShutdownFunc()
+	}()
+
+	if serveErr := services.StartAll(signalShutdown); serveErr != nil {
+		slog.Error("failed to start server", slog.String("error", serveErr.Error()))
+		exitFunc(1)
+	}
+
+	slog.Info("started server",
+		slog.String("address", server.Addr),
+		slog.Duration("t_init", time.Since(startInit)))
+
+	services.WaitAllServersShutdown()
 
 	exitFunc(0)
 }
