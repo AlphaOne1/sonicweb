@@ -7,10 +7,30 @@ grafana:
         datasources:
             enabled: true
             # This label is important! The sidecar looks for it.
-            label: grafana_datasource 
+            label: grafana_datasource
     plugins:
+        - victoriametrics-metrics-datasource
         - victoriametrics-logs-datasource
-    allowedAccessCidr: 0.0.0.0/0
+    dashboardProviders:
+        dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+                -   name:            'default'
+                    orgId:           1
+                    folder:          ''
+                    type:            file
+                    disableDeletion: false
+                    editable:        true
+                    options:
+                        path: /var/lib/grafana/dashboards/default
+    dashboards:
+        default:
+            golang:
+                gnetId: 6671
+                revision: 2
+                datasource:
+                    -   name: DS_PROMETHEUS
+                        value: victoriametrics
 
 alloy:
 #    fullnameOverride: "monitoring-alloy"
