@@ -267,6 +267,7 @@ func main() {
 
 	var metricHandler http.Handler
 
+	//nolint:nestif
 	if config.EnableTelemetry {
 		// handling of deprecated trace-endpoint parameter
 		if err := setupTraceEnvVars(config.TraceEndpoint); err != nil {
