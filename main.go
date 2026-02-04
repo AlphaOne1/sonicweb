@@ -128,7 +128,7 @@ func setupFlags() ServerConfig {
 	return config
 }
 
-func setupTraceEnvVars(traceEndpoint string) {
+func setupTraceEnvVars(traceEndpoint string) error {
 	if len(traceEndpoint) > 0 {
 		if value, isSet := os.LookupEnv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); isSet {
 			if value != traceEndpoint {
@@ -140,14 +140,14 @@ func setupTraceEnvVars(traceEndpoint string) {
 		}
 
 		if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", traceEndpoint); err != nil {
-			slog.Error("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
-				slog.String("error", err.Error()))
-			Exit(1)
+			return fmt.Errorf("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: %w", err)
 		}
 
 		slog.Warn("trace-endpoint parameter is deprecated, " +
 			"please use environment variable OTEL_EXPORTER_OTLP_TRACES_ENDPOINT instead")
 	}
+
+	return nil
 }
 
 var ErrConversion = errors.New("conversion error")
@@ -269,7 +269,11 @@ func main() {
 
 	if config.EnableTelemetry {
 		// handling of deprecated trace-endpoint parameter
-		setupTraceEnvVars(config.TraceEndpoint)
+		if err := setupTraceEnvVars(config.TraceEndpoint); err != nil {
+			slog.Error("could not setup trace environment variables",
+				slog.String("error", err.Error()))
+			Exit(1)
+		}
 
 		otelShutdown, tmpHandler, logger, err := instrumentation.SetupOTelSDK(
 			context.Background(),
