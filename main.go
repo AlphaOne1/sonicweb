@@ -142,7 +142,7 @@ func setupTraceEnvVars(traceEndpoint string) {
 		if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", traceEndpoint); err != nil {
 			slog.Error("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
 				slog.String("error", err.Error()))
-			exitFunc(1)
+			Exit(1)
 		}
 
 		slog.Warn("trace-endpoint parameter is deprecated, " +
@@ -208,9 +208,35 @@ func generateFileHandler(
 	), nil
 }
 
+type exitCode int
+
+func Exit(code int) {
+	panic(exitCode(code))
+}
+
 // main initializes all necessary parts and starts the server.
 func main() {
 	startInit := time.Now()
+
+	defer func() {
+		if r := recover(); r != nil {
+			if code, ok := r.(exitCode); ok {
+				fmt.Println("cleanup running ...")
+				exitFunc(int(code))
+			}
+
+			panic(r)
+		}
+	}()
+
+	signalShutdown, signalShutdownFunc := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer signalShutdownFunc()
+
+	go func() {
+		<-signalShutdown.Done()
+		slog.Info("received shutdown signal, shutting down")
+	}()
+
 	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
 	// Parse command line flags
@@ -218,12 +244,12 @@ func main() {
 
 	if config.PrintVersion {
 		// we already printed the logo that contains all the necessary information
-		exitFunc(0)
+		Exit(0)
 	}
 
 	if err := setupLogging(config.LogLevel, config.LogStyle); err != nil {
 		slog.Error("error setting up logging", slog.String("error", err.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	slog.Info("logging", slog.String("level", config.LogLevel))
@@ -234,7 +260,7 @@ func main() {
 		slog.Error("could not get info of root path",
 			slog.String("path", config.RootPath),
 			slog.String("error", statErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	slog.Info("using base path", slog.String("path", config.BasePath))
@@ -253,7 +279,7 @@ func main() {
 
 		if err != nil {
 			slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
-			exitFunc(1)
+			Exit(1)
 		}
 
 		metricHandler = tmpHandler
@@ -290,7 +316,7 @@ func main() {
 
 	if tlsConfigErr != nil {
 		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	server := http.Server{
@@ -308,7 +334,7 @@ func main() {
 		slog.Error("could not process headers file",
 			slog.Any("files", *config.HeadersFiles),
 			slog.String("error", headersErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	handler, handlerErr := generateFileHandler(
@@ -322,7 +348,7 @@ func main() {
 
 	if handlerErr != nil {
 		slog.Error("could not generate file handlers", slog.String("error", handlerErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	// remove all implicitly registered handlers
@@ -338,7 +364,7 @@ func main() {
 
 	if monitoringServerErr != nil {
 		slog.Error("failed to initialize monitoring server", slog.String("error", monitoringServerErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	serviceOptions := []service.Option{
@@ -355,28 +381,15 @@ func main() {
 
 	if servicesErr != nil {
 		slog.Error("failed to initialize service group", slog.String("error", servicesErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	} else if services == nil {
 		slog.Error("failed to initialize service group, is nil")
-		exitFunc(1)
+		Exit(1)
 	}
-
-	signalShutdown, signalShutdownFunc := context.WithCancel(context.Background())
-
-	go func() {
-		shutdownChan := make(chan os.Signal, 1)
-		signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM)
-
-		<-shutdownChan
-
-		slog.Info("received shutdown signal, shutting down")
-
-		signalShutdownFunc()
-	}()
 
 	if serveErr := services.StartAll(signalShutdown); serveErr != nil {
 		slog.Error("failed to start server", slog.String("error", serveErr.Error()))
-		exitFunc(1)
+		Exit(1)
 	}
 
 	slog.Info("started server",
@@ -385,5 +398,5 @@ func main() {
 
 	services.WaitAllServersShutdown()
 
-	exitFunc(0)
+	Exit(0)
 }

@@ -113,6 +113,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 	helper.Helper()
 	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
+		slog.Info("main called exit", slog.Int("code", code))
 		panic(code)
 	}
 
@@ -147,6 +148,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 
 	slog.Info("setting exit timeout")
 	afterTimer := time.AfterFunc(2*time.Second, func() {
+		slog.Info("exit timer timeout")
 		sendMe(helper, syscall.SIGTERM)
 	})
 
@@ -155,9 +157,9 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 
 func finalizeMain(h testHelper, afterTimer *time.Timer, result chan int) int {
 	h.Helper()
-	slog.Info("stoping exit timer")
 
 	if afterTimer.Stop() {
+		slog.Info("stopped exit timer")
 		sendMe(h, syscall.SIGTERM)
 	}
 
