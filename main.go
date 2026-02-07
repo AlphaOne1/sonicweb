@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -55,8 +54,10 @@ var ErrInvalidBasePath = errors.New("base path must start with /")
 // ErrInconsistentTraceParameters indicates that the trace-endpoint parameter is set while telemetry is disabled.
 var ErrInconsistentTraceParameters = errors.New("trace-endpoint parameter is set, but telemetry is disabled")
 
-var buildInfoTag = ""  // buildInfoTag holds the tag information of the version control system
-var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is overridden for testing
+var buildInfoTag = "" // buildInfoTag holds the tag information of the version control system
+
+// exitFunc holds os.Exit for normal operations and is overridden for testing. The function it holds _must_ not return!
+var exitFunc = os.Exit
 
 //go:embed logo.tmpl
 var logoTmpl string
@@ -148,7 +149,7 @@ func checkConfigConsistency(config ServerConfig) error {
 		errs = append(errs, ErrEmptyRootPath)
 	}
 
-	if !strings.HasPrefix(config.BasePath, path.Clean("/")) {
+	if !strings.HasPrefix(config.BasePath, "/") {
 		errs = append(errs, ErrInvalidBasePath)
 	}
 
@@ -217,7 +218,7 @@ func generateFileHandler(
 	root, rootErr := os.OpenRoot(rootPath)
 
 	if rootErr != nil {
-		return nil, fmt.Errorf("could not open root: %w", rootErr) // silencing the static checker, unreachable
+		return nil, fmt.Errorf("could not open root: %w", rootErr)
 	}
 
 	if len(wafCfg) > 0 {
@@ -417,6 +418,11 @@ func main() {
 	if handlerErr != nil {
 		slog.Error("could not generate file handlers", slog.String("error", handlerErr.Error()))
 		Exit(1)
+	}
+
+	if !strings.HasSuffix(config.BasePath, "/") {
+		slog.Warn("base path does not end with a slash, just serving the exact file",
+			slog.String("path", config.BasePath))
 	}
 
 	// remove all implicitly registered handlers
