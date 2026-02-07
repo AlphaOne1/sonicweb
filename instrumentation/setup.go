@@ -107,9 +107,6 @@ func SetupOTelSDK(
 		err = errors.Join(inErr, shutdown(shutdownCtx))
 	}
 
-	// Set some environment variables to reasonable values
-	setupEnvDefaults(log)
-
 	// Set up a propagator.
 	prop := newPropagator(log)
 	otel.SetTextMapPropagator(prop)
@@ -162,25 +159,6 @@ func SetupOTelSDK(
 	}
 
 	return shutdown, metricHandler, resultLogger, err
-}
-
-// setupEnvDefaults sets some OpenTelemetry related configuration environment variables to reasonable values.
-func setupEnvDefaults(log *slog.Logger) {
-	defaults := map[string]string{
-		"OTEL_EXPORTER_OTLP_COMPRESSION": "gzip",
-		"OTEL_EXPORTER_OTLP_PROTOCOL":    OTLPProtocolGRPC,
-	}
-
-	for k, v := range defaults {
-		if _, isSet := os.LookupEnv(k); !isSet {
-			if err := os.Setenv(k, v); err != nil {
-				log.Error("failed to set default environment variable",
-					slog.String("name", k),
-					slog.String("value", v),
-					slog.String("error", err.Error()))
-			}
-		}
-	}
 }
 
 // newPropagator creates a composite propagator based on the environment variable OTEL_PROPAGATORS. Supported

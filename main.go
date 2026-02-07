@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -128,7 +129,30 @@ func setupFlags() ServerConfig {
 	return config
 }
 
-func setupTraceEnvVars(traceEndpoint string) error {
+func checkConfigConsistency(config ServerConfig) error {
+	var errs []error
+
+	if config.RootPath == "" {
+		errs = append(errs, errors.New("root path must not be empty"))
+	}
+
+	if strings.HasPrefix(config.BasePath, path.Clean("/")) {
+		errs = append(errs, errors.New("base path must not be empty"))
+	}
+
+	if !config.EnableTelemetry && config.TraceEndpoint != "" {
+		errs = append(errs, errors.New("trace-endpoint parameter is set, but telemetry is disabled"))
+	}
+
+	return errors.Join(errs...)
+}
+
+func setupTelemetryEnvVars(traceEndpoint string) error {
+	defaults := map[string]string{
+		"OTEL_EXPORTER_OTLP_COMPRESSION": "gzip",
+		"OTEL_EXPORTER_OTLP_PROTOCOL":    instrumentation.OTLPProtocolHTTP,
+	}
+
 	if len(traceEndpoint) > 0 {
 		if value, isSet := os.LookupEnv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); isSet {
 			if value != traceEndpoint {
@@ -145,6 +169,19 @@ func setupTraceEnvVars(traceEndpoint string) error {
 
 		slog.Warn("trace-endpoint parameter is deprecated, " +
 			"please use environment variable OTEL_EXPORTER_OTLP_TRACES_ENDPOINT instead")
+
+		defaults["OTEL_TRACES_EXPORTER"] = instrumentation.OTLPExporterOTLP
+	}
+
+	for k, v := range defaults {
+		if val, isSet := os.LookupEnv(k); !isSet || strings.TrimSpace(val) == "" {
+			if err := os.Setenv(k, v); err != nil {
+				slog.Error("failed to set default environment variable",
+					slog.String("name", k),
+					slog.String("value", v),
+					slog.String("error", err.Error()))
+			}
+		}
 	}
 
 	return nil
@@ -155,7 +192,6 @@ var ErrConversion = errors.New("conversion error")
 // generateFileHandler generates the handlers to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
 	enableTelemetry bool,
-	enableTracing bool,
 	basePath string,
 	rootPath string,
 	additionalHeaders [][2]string,
@@ -164,8 +200,8 @@ func generateFileHandler(
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
-	if enableTelemetry || enableTracing {
-		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+basePath))
+	if enableTelemetry {
+		mwStack = append(mwStack, otelhttp.NewMiddleware("fileserver"))
 	}
 
 	root, rootErr := os.OpenRoot(rootPath)
@@ -208,6 +244,46 @@ func generateFileHandler(
 	), nil
 }
 
+func setupInstrumentation(
+	ctx context.Context,
+	config ServerConfig) (http.Handler, func()) {
+
+	// handling of deprecated trace-endpoint parameter
+	if err := setupTelemetryEnvVars(config.TraceEndpoint); err != nil {
+		slog.Error("could not setup telemetry environment variables",
+			slog.String("error", err.Error()))
+		Exit(1)
+	}
+
+	otelShutdown, metricHandler, logger, err := instrumentation.SetupOTelSDK(
+		ctx,
+		ServerName,
+		buildInfoTag,
+		slog.Default())
+
+	if err != nil {
+		slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
+		Exit(1)
+	}
+
+	if logger != nil {
+		slog.SetDefault(
+			slog.New(instrumentation.NewMultiHandler(
+				slog.Default().Handler(),
+				logger.Handler())))
+	}
+
+	cleanup := func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), ServerShutdownTimeout)
+		defer shutdownCancel()
+		if err := otelShutdown(shutdownCtx); err != nil {
+			slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
+		}
+	}
+
+	return metricHandler, cleanup
+}
+
 type exitCode int
 
 func Exit(code int) {
@@ -247,6 +323,11 @@ func main() {
 		Exit(0)
 	}
 
+	if err := checkConfigConsistency(config); err != nil {
+		slog.Error("invalid configuration", slog.String("error", err.Error()))
+		Exit(1)
+	}
+
 	if err := setupLogging(config.LogLevel, config.LogStyle); err != nil {
 		slog.Error("error setting up logging", slog.String("error", err.Error()))
 		Exit(1)
@@ -267,42 +348,11 @@ func main() {
 
 	var metricHandler http.Handler
 
-	//nolint:nestif
 	if config.EnableTelemetry {
-		// handling of deprecated trace-endpoint parameter
-		if err := setupTraceEnvVars(config.TraceEndpoint); err != nil {
-			slog.Error("could not setup trace environment variables",
-				slog.String("error", err.Error()))
-			Exit(1)
-		}
+		var cleanup func()
+		metricHandler, cleanup = setupInstrumentation(context.Background(), config)
 
-		otelShutdown, tmpHandler, logger, err := instrumentation.SetupOTelSDK(
-			context.Background(),
-			"monitoring",
-			buildInfoTag,
-			slog.Default())
-
-		if err != nil {
-			slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
-			Exit(1)
-		}
-
-		metricHandler = tmpHandler
-
-		if logger != nil {
-			slog.SetDefault(
-				slog.New(instrumentation.NewMultiHandler(
-					slog.Default().Handler(),
-					logger.Handler())))
-		}
-
-		defer func() {
-			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), ServerShutdownTimeout)
-			defer shutdownCancel()
-			if err := otelShutdown(shutdownCtx); err != nil {
-				slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
-			}
-		}()
+		defer cleanup()
 
 		slog.Info("telemetry initialized")
 	} else {
@@ -344,7 +394,6 @@ func main() {
 
 	handler, handlerErr := generateFileHandler(
 		config.EnableTelemetry,
-		len(config.TraceEndpoint) > 0,
 		config.BasePath,
 		config.RootPath,
 		append(headerParamToHeaders(*config.Headers), headers...),
