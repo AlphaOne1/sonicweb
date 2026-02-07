@@ -359,7 +359,7 @@ func main() {
 	if config.EnableTelemetry {
 		var cleanup func(context.Context)
 		var err error
-		metricHandler, cleanup, err = setupInstrumentation(context.Background(), config)
+		metricHandler, cleanup, err = setupInstrumentation(signalShutdown, config)
 
 		if err != nil {
 			slog.Error("failed to initialize telemetry", slog.String("error", err.Error()))
