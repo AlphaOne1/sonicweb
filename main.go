@@ -293,34 +293,10 @@ func setupInstrumentation(
 	return metricHandler, cleanup, nil
 }
 
-type exitCode int
-
-func Exit(code int) {
-	panic(exitCode(code))
-}
-
-// main initializes all necessary parts and starts the server.
-func main() {
+// run initializes all necessary parts and starts the server.
+// It returns the desired process exit code.
+func run(signalShutdown context.Context) int {
 	startInit := time.Now()
-
-	defer func() {
-		if r := recover(); r != nil {
-			if code, ok := r.(exitCode); ok {
-				fmt.Println("cleanup running ...")
-				exitFunc(int(code))
-			}
-
-			panic(r)
-		}
-	}()
-
-	signalShutdown, signalShutdownFunc := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer signalShutdownFunc()
-
-	go func() {
-		<-signalShutdown.Done()
-		slog.Info("received shutdown signal, shutting down")
-	}()
 
 	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
@@ -329,17 +305,17 @@ func main() {
 
 	if config.PrintVersion {
 		// we already printed the logo that contains all the necessary information
-		Exit(0)
+		return 0
 	}
 
 	if err := checkConfigConsistency(config); err != nil {
 		slog.Error("invalid configuration", slog.String("error", err.Error()))
-		Exit(1)
+		return 1
 	}
 
 	if err := setupLogging(config.LogLevel, config.LogStyle); err != nil {
 		slog.Error("error setting up logging", slog.String("error", err.Error()))
-		Exit(1)
+		return 1
 	}
 
 	slog.Info("logging", slog.String("level", config.LogLevel))
@@ -350,7 +326,8 @@ func main() {
 		slog.Error("could not get info of root path",
 			slog.String("path", config.RootPath),
 			slog.String("error", statErr.Error()))
-		Exit(1)
+
+		return 1
 	}
 
 	slog.Info("using base path", slog.String("path", config.BasePath))
@@ -358,16 +335,15 @@ func main() {
 	var metricHandler http.Handler
 
 	if config.EnableTelemetry {
-		var cleanup func(context.Context)
-		var err error
-		metricHandler, cleanup, err = setupInstrumentation(signalShutdown, config)
+		metricHandlerLocal, cleanup, err := setupInstrumentation(signalShutdown, config)
 
 		if err != nil {
 			slog.Error("failed to initialize telemetry", slog.String("error", err.Error()))
-			Exit(1)
+			return 1
 		}
 
-		defer cleanup(context.Background())
+		metricHandler = metricHandlerLocal
+		defer cleanup(context.WithoutCancel(signalShutdown))
 
 		slog.Info("telemetry initialized")
 	} else {
@@ -386,7 +362,7 @@ func main() {
 
 	if tlsConfigErr != nil {
 		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))
-		Exit(1)
+		return 1
 	}
 
 	server := http.Server{
@@ -404,7 +380,8 @@ func main() {
 		slog.Error("could not process headers file",
 			slog.Any("files", *config.HeadersFiles),
 			slog.String("error", headersErr.Error()))
-		Exit(1)
+
+		return 1
 	}
 
 	handler, handlerErr := generateFileHandler(
@@ -417,7 +394,7 @@ func main() {
 
 	if handlerErr != nil {
 		slog.Error("could not generate file handlers", slog.String("error", handlerErr.Error()))
-		Exit(1)
+		return 1
 	}
 
 	if !strings.HasSuffix(config.BasePath, "/") {
@@ -438,7 +415,7 @@ func main() {
 
 	if monitoringServerErr != nil {
 		slog.Error("failed to initialize monitoring server", slog.String("error", monitoringServerErr.Error()))
-		Exit(1)
+		return 1
 	}
 
 	serviceOptions := []service.Option{
@@ -455,15 +432,15 @@ func main() {
 
 	if servicesErr != nil {
 		slog.Error("failed to initialize service group", slog.String("error", servicesErr.Error()))
-		Exit(1)
+		return 1
 	} else if services == nil {
 		slog.Error("failed to initialize service group, is nil")
-		Exit(1)
+		return 1
 	}
 
 	if serveErr := services.StartAll(signalShutdown); serveErr != nil {
 		slog.Error("failed to start server", slog.String("error", serveErr.Error()))
-		Exit(1)
+		return 1
 	}
 
 	slog.Info("started server",
@@ -472,5 +449,18 @@ func main() {
 
 	services.WaitAllServersShutdown()
 
-	Exit(0)
+	return 0
+}
+
+// main only wires signals and exits with the run() result.
+func main() {
+	signalShutdown, signalShutdownFunc := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer signalShutdownFunc()
+
+	go func() {
+		<-signalShutdown.Done()
+		slog.Info("received shutdown signal, shutting down")
+	}()
+
+	exitFunc(run(signalShutdown))
 }
