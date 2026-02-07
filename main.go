@@ -136,8 +136,8 @@ func checkConfigConsistency(config ServerConfig) error {
 		errs = append(errs, errors.New("root path must not be empty"))
 	}
 
-	if strings.HasPrefix(config.BasePath, path.Clean("/")) {
-		errs = append(errs, errors.New("base path must not be empty"))
+	if !strings.HasPrefix(config.BasePath, path.Clean("/")) {
+		errs = append(errs, errors.New("base path must start with /"))
 	}
 
 	if !config.EnableTelemetry && config.TraceEndpoint != "" {

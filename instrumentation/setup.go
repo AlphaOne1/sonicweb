@@ -175,7 +175,9 @@ func newPropagator(log *slog.Logger) propagation.TextMapPropagator {
 
 	if envPropagators := os.Getenv("OTEL_PROPAGATORS"); envPropagators != "" {
 		for p := range strings.SplitSeq(envPropagators, ",") {
-			switch strings.TrimSpace(p) {
+			p = strings.TrimSpace(p)
+
+			switch p {
 			case "baggage":
 				propagators = append(propagators, propagation.Baggage{})
 			case "tracecontext":
@@ -399,13 +401,13 @@ func newMeterProvider(
 	for exporter := range strings.SplitSeq(envExporters, ",") {
 		exp, reader, tmpHandler, err := newMeterReader(ctx, strings.TrimSpace(exporter), protocol, log)
 
-		if tmpHandler != nil {
-			metricHandler = tmpHandler
-		}
-
 		if err != nil {
 			return nil, nil, fmt.Errorf("could not instantiate metrics exporter %v with protocol %v: %w",
 				exporter, protocol, err)
+		}
+
+		if tmpHandler != nil {
+			metricHandler = tmpHandler
 		}
 
 		if exp != nil {

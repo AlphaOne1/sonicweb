@@ -373,7 +373,6 @@ func TestSonicMainInvalidWAFFile(t *testing.T) {
 func BenchmarkHandler(b *testing.B) {
 	fileHandler, fileHandlerErr := generateFileHandler(
 		false,
-		false,
 		"/",
 		"testroot/",
 		nil,
@@ -416,7 +415,6 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 	t.Helper()
 
 	fileHandler, fileHandlerErr := generateFileHandler(
-		false,
 		false,
 		"/",
 		"testroot/",
