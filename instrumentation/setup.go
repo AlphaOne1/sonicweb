@@ -104,7 +104,9 @@ func SetupOTelSDK(
 
 		defer cancel()
 
-		err = errors.Join(inErr, shutdown(shutdownCtx))
+		// Joining with a potentially existing previous err, just to make sure to not miss anything.
+		// Normal handling requires that return is called immediately after calling this handling function.
+		err = errors.Join(err, inErr, shutdown(shutdownCtx))
 	}
 
 	// Set up a propagator.

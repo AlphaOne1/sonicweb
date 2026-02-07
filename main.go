@@ -185,18 +185,18 @@ func setupTelemetryEnvVars(traceEndpoint string) error {
 		defaults["OTEL_TRACES_EXPORTER"] = instrumentation.OTLPExporterOTLP
 	}
 
+	var errs []error
+
 	for k, v := range defaults {
 		if val, isSet := os.LookupEnv(k); !isSet || strings.TrimSpace(val) == "" {
 			if err := os.Setenv(k, v); err != nil {
-				slog.Error("failed to set default environment variable",
-					slog.String("name", k),
-					slog.String("value", v),
-					slog.String("error", err.Error()))
+				errs = append(errs, fmt.Errorf("failed to set default environment variable %s=%s: %w",
+					k, v, err))
 			}
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // generateFileHandler generates the handlers to serve the files, initializing all necessary middlewares.
@@ -256,13 +256,11 @@ func generateFileHandler(
 
 func setupInstrumentation(
 	ctx context.Context,
-	config ServerConfig) (http.Handler, func(context.Context)) {
+	config ServerConfig) (http.Handler, func(context.Context), error) {
 
 	// handling of deprecated trace-endpoint parameter
 	if err := setupTelemetryEnvVars(config.TraceEndpoint); err != nil {
-		slog.Error("could not setup telemetry environment variables",
-			slog.String("error", err.Error()))
-		Exit(1)
+		return nil, nil, fmt.Errorf("could not setup telemetry environment variables: %w", err)
 	}
 
 	otelShutdown, metricHandler, logger, err := instrumentation.SetupOTelSDK(
@@ -272,8 +270,7 @@ func setupInstrumentation(
 		slog.Default())
 
 	if err != nil {
-		slog.Error("failed to initialize OTEL SDK", slog.String("error", err.Error()))
-		Exit(1)
+		return nil, nil, fmt.Errorf("failed to initialize OTEL SDK: %w", err)
 	}
 
 	if logger != nil {
@@ -286,12 +283,13 @@ func setupInstrumentation(
 	cleanup := func(ctx context.Context) {
 		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, ServerShutdownTimeout)
 		defer shutdownCancel()
+
 		if err := otelShutdown(shutdownCtx); err != nil {
 			slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
 		}
 	}
 
-	return metricHandler, cleanup
+	return metricHandler, cleanup, nil
 }
 
 type exitCode int
@@ -360,7 +358,13 @@ func main() {
 
 	if config.EnableTelemetry {
 		var cleanup func(context.Context)
-		metricHandler, cleanup = setupInstrumentation(context.Background(), config)
+		var err error
+		metricHandler, cleanup, err = setupInstrumentation(context.Background(), config)
+
+		if err != nil {
+			slog.Error("failed to initialize telemetry", slog.String("error", err.Error()))
+			Exit(1)
+		}
 
 		defer cleanup(context.Background())
 
