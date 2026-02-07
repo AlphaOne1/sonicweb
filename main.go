@@ -43,6 +43,18 @@ const ReadTimeout = 2 * time.Second
 // ServerShutdownTimeout is the timeout given to the server to do a controlled shutdown.
 const ServerShutdownTimeout = 5 * time.Second
 
+// ErrConversion is returned when a conversion fails.
+var ErrConversion = errors.New("conversion error")
+
+// ErrEmptyRootPath indicates that the root path configuration must not be empty.
+var ErrEmptyRootPath = errors.New("root path must not be empty")
+
+// ErrInvalidBasePath indicates that the base path configuration must start with a forward slash (/).
+var ErrInvalidBasePath = errors.New("base path must start with /")
+
+// ErrInconsistentTraceParameters indicates that the trace-endpoint parameter is set while telemetry is disabled.
+var ErrInconsistentTraceParameters = errors.New("trace-endpoint parameter is set, but telemetry is disabled")
+
 var buildInfoTag = ""  // buildInfoTag holds the tag information of the version control system
 var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is overridden for testing
 
@@ -133,15 +145,15 @@ func checkConfigConsistency(config ServerConfig) error {
 	var errs []error
 
 	if config.RootPath == "" {
-		errs = append(errs, errors.New("root path must not be empty"))
+		errs = append(errs, ErrEmptyRootPath)
 	}
 
 	if !strings.HasPrefix(config.BasePath, path.Clean("/")) {
-		errs = append(errs, errors.New("base path must start with /"))
+		errs = append(errs, ErrInvalidBasePath)
 	}
 
 	if !config.EnableTelemetry && config.TraceEndpoint != "" {
-		errs = append(errs, errors.New("trace-endpoint parameter is set, but telemetry is disabled"))
+		errs = append(errs, ErrInconsistentTraceParameters)
 	}
 
 	return errors.Join(errs...)
@@ -186,8 +198,6 @@ func setupTelemetryEnvVars(traceEndpoint string) error {
 
 	return nil
 }
-
-var ErrConversion = errors.New("conversion error")
 
 // generateFileHandler generates the handlers to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
@@ -246,7 +256,7 @@ func generateFileHandler(
 
 func setupInstrumentation(
 	ctx context.Context,
-	config ServerConfig) (http.Handler, func()) {
+	config ServerConfig) (http.Handler, func(context.Context)) {
 
 	// handling of deprecated trace-endpoint parameter
 	if err := setupTelemetryEnvVars(config.TraceEndpoint); err != nil {
@@ -273,8 +283,8 @@ func setupInstrumentation(
 				logger.Handler())))
 	}
 
-	cleanup := func() {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), ServerShutdownTimeout)
+	cleanup := func(ctx context.Context) {
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, ServerShutdownTimeout)
 		defer shutdownCancel()
 		if err := otelShutdown(shutdownCtx); err != nil {
 			slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
@@ -349,10 +359,10 @@ func main() {
 	var metricHandler http.Handler
 
 	if config.EnableTelemetry {
-		var cleanup func()
+		var cleanup func(context.Context)
 		metricHandler, cleanup = setupInstrumentation(context.Background(), config)
 
-		defer cleanup()
+		defer cleanup(context.Background())
 
 		slog.Info("telemetry initialized")
 	} else {
