@@ -56,7 +56,7 @@ var ErrInconsistentTraceParameters = errors.New("trace-endpoint parameter is set
 
 var buildInfoTag = "" // buildInfoTag holds the tag information of the version control system
 
-// exitFunc holds os.Exit for normal operations and is overridden for testing. The function it holds _must_ not return!
+// exitFunc holds os.Exit for normal operations and is overridden for testing.
 var exitFunc = os.Exit
 
 //go:embed logo.tmpl
@@ -207,7 +207,7 @@ func generateFileHandler(
 	rootPath string,
 	additionalHeaders [][2]string,
 	tryFiles []string,
-	wafCfg []string) (http.Handler, error) {
+	wafCfg []string) (http.Handler, func(), error) {
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
@@ -218,14 +218,19 @@ func generateFileHandler(
 	root, rootErr := os.OpenRoot(rootPath)
 
 	if rootErr != nil {
-		return nil, fmt.Errorf("could not open root: %w", rootErr)
+		return nil, func() {}, fmt.Errorf("could not open root: %w", rootErr)
 	}
 
 	if len(wafCfg) > 0 {
 		wafMW, wafMWErr := wafMiddleware(wafCfg)
 
 		if wafMWErr != nil {
-			return nil, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
+			if err := root.Close(); err != nil {
+				slog.Error("failed to close root filesystem",
+					slog.String("error", err.Error()))
+			}
+
+			return nil, func() {}, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
 		}
 
 		mwStack = append(mwStack, wafMW)
@@ -234,7 +239,12 @@ func generateFileHandler(
 	statFS, statFSOK := root.FS().(fs.StatFS)
 
 	if !statFSOK {
-		return nil, fmt.Errorf("could not get StatFS from RootFS: %w", ErrConversion)
+		if err := root.Close(); err != nil {
+			slog.Error("failed to close root filesystem",
+				slog.String("error", err.Error()))
+		}
+
+		return nil, func() {}, fmt.Errorf("could not get StatFS from RootFS: %w", ErrConversion)
 	}
 
 	mwStack = append(mwStack,
@@ -248,11 +258,18 @@ func generateFileHandler(
 		})
 
 	return midgard.StackMiddlewareHandler(
-		mwStack,
-		http.FileServerFS(
-			root.FS(),
+			mwStack,
+			http.FileServerFS(
+				root.FS(),
+			),
 		),
-	), nil
+		func() {
+			if err := root.Close(); err != nil {
+				slog.Error("failed to close root filesystem",
+					slog.String("error", err.Error()))
+			}
+		},
+		nil
 }
 
 func setupInstrumentation(
@@ -384,7 +401,7 @@ func run(signalShutdown context.Context) int {
 		return 1
 	}
 
-	handler, handlerErr := generateFileHandler(
+	handler, handlerCleanup, handlerErr := generateFileHandler(
 		config.EnableTelemetry,
 		config.BasePath,
 		config.RootPath,
@@ -397,14 +414,17 @@ func run(signalShutdown context.Context) int {
 		return 1
 	}
 
+	defer handlerCleanup()
+
 	if !strings.HasSuffix(config.BasePath, "/") {
 		slog.Warn("base path does not end with a slash, just serving the exact file",
 			slog.String("path", config.BasePath))
 	}
 
 	// remove all implicitly registered handlers
-	http.DefaultServeMux = http.NewServeMux()
-	http.Handle("GET "+config.BasePath, handler)
+	serverMux := http.NewServeMux()
+	serverMux.Handle("GET "+config.BasePath, handler)
+	server.Handler = serverMux
 
 	monitoringServer, monitoringServerErr := instrumentation.Server(
 		config.InstrumentAddress,

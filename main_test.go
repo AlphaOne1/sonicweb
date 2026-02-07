@@ -371,7 +371,7 @@ func TestSonicMainInvalidWAFFile(t *testing.T) {
 }
 
 func BenchmarkHandler(b *testing.B) {
-	fileHandler, fileHandlerErr := generateFileHandler(
+	fileHandler, fileCleanup, fileHandlerErr := generateFileHandler(
 		false,
 		"/",
 		"testroot/",
@@ -382,6 +382,8 @@ func BenchmarkHandler(b *testing.B) {
 	if fileHandlerErr != nil {
 		b.Fatalf("could not generate file handlers: %v", fileHandlerErr)
 	}
+
+	defer fileCleanup()
 
 	server := httptest.NewServer(fileHandler)
 
@@ -414,7 +416,7 @@ func BenchmarkHandler(b *testing.B) {
 func sonicMainHandlerTest(t *testing.T, uri string, method string, header string, headerValue string) {
 	t.Helper()
 
-	fileHandler, fileHandlerErr := generateFileHandler(
+	fileHandler, fileCleanup, fileHandlerErr := generateFileHandler(
 		false,
 		"/",
 		"testroot/",
@@ -425,6 +427,8 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 	if fileHandlerErr != nil {
 		t.Fatalf("could not generate file handlers: %v", fileHandlerErr)
 	}
+
+	defer fileCleanup()
 
 	// Basic input constraints to keep fuzzing focused and avoid trivial rejections
 	if len(uri) == 0 || len(uri) > 1024 {
