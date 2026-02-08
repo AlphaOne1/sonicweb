@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
+apiVersion:  v2
+name:        monitoring
+type:        application
+description: Subchart to combine all monitoring functionality in one place
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version:     0.1.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion:  "0.1.0"
+
+dependencies:
+    -   name:       grafana
+        version:    11.0.1
+        repository: https://grafana-community.github.io/helm-charts
+
+    -   name:       alloy
+        version:    1.5.3
+        repository: https://grafana.github.io/helm-charts
+
+    -   name:       victoria-metrics-single
+        version:    0.29.0
+        repository: https://victoriametrics.github.io/helm-charts/
+        alias:      metrics
+
+    -   name:       victoria-logs-single
+        version:    0.11.25
+        repository: https://victoriametrics.github.io/helm-charts/
+        alias:      logs
+
+    -   name:       victoria-traces-single
+        version:    0.0.6
+        repository: https://victoriametrics.github.io/helm-charts/
+        alias:      traces
+
+maintainers:
+    -   name:  Alexander Adam
+        email: alphaone23@gmail.com

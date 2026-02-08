@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 /.idea
@@ -8,3 +8,5 @@ sonic
 sonic-*-*
 SonicWeb-*.*
 /testcert
+helm/**/*.tgz
+helm/**/Chart.lock

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package main
@@ -113,6 +113,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 	helper.Helper()
 	// exitFunc replaces os.Exit with this function that will end main, and we can catch the error here
 	exitFunc = func(code int) {
+		slog.Info("main called exit", slog.Int("code", code))
 		panic(code)
 	}
 
@@ -147,6 +148,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 
 	slog.Info("setting exit timeout")
 	afterTimer := time.AfterFunc(2*time.Second, func() {
+		slog.Info("exit timer timeout")
 		sendMe(helper, syscall.SIGTERM)
 	})
 
@@ -155,9 +157,9 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 
 func finalizeMain(h testHelper, afterTimer *time.Timer, result chan int) int {
 	h.Helper()
-	slog.Info("stoping exit timer")
 
 	if afterTimer.Stop() {
+		slog.Info("stopped exit timer")
 		sendMe(h, syscall.SIGTERM)
 	}
 
@@ -189,7 +191,7 @@ func TestSonicMain(t *testing.T) {
 
 		if err != nil {
 			runtime.Gosched()
-			fmt.Printf("received error: %v\n", err)
+			slog.Info("received error", slog.String("error", err.Error()))
 			time.Sleep(500 * time.Millisecond)
 
 			continue
@@ -369,8 +371,7 @@ func TestSonicMainInvalidWAFFile(t *testing.T) {
 }
 
 func BenchmarkHandler(b *testing.B) {
-	fileHandler, fileHandlerErr := generateFileHandler(
-		false,
+	fileHandler, fileCleanup, fileHandlerErr := generateFileHandler(
 		false,
 		"/",
 		"testroot/",
@@ -379,8 +380,10 @@ func BenchmarkHandler(b *testing.B) {
 		nil)
 
 	if fileHandlerErr != nil {
-		b.Fatalf("could not generate file handler: %v", fileHandlerErr)
+		b.Fatalf("could not generate file handlers: %v", fileHandlerErr)
 	}
+
+	defer fileCleanup()
 
 	server := httptest.NewServer(fileHandler)
 
@@ -413,8 +416,7 @@ func BenchmarkHandler(b *testing.B) {
 func sonicMainHandlerTest(t *testing.T, uri string, method string, header string, headerValue string) {
 	t.Helper()
 
-	fileHandler, fileHandlerErr := generateFileHandler(
-		false,
+	fileHandler, fileCleanup, fileHandlerErr := generateFileHandler(
 		false,
 		"/",
 		"testroot/",
@@ -423,8 +425,10 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 		nil)
 
 	if fileHandlerErr != nil {
-		t.Fatalf("could not generate file handler: %v", fileHandlerErr)
+		t.Fatalf("could not generate file handlers: %v", fileHandlerErr)
 	}
+
+	defer fileCleanup()
 
 	// Basic input constraints to keep fuzzing focused and avoid trivial rejections
 	if len(uri) == 0 || len(uri) > 1024 {

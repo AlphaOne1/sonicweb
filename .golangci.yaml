@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 # Configuration file for golangci-lint
@@ -59,28 +59,29 @@ linters:
                         - $gostd
                         - "github.com/AlphaOne1/geany"
                         - "github.com/AlphaOne1/midgard"
-                        - "github.com/AlphaOne1/midgard/defs"
-                        - "github.com/AlphaOne1/midgard/handler/accesslog"
-                        - "github.com/AlphaOne1/midgard/handler/addheader"
-                        - "github.com/AlphaOne1/midgard/handler/correlation"
-                        - "github.com/AlphaOne1/midgard/helper"
+                        - "github.com/AlphaOne1/sonicweb/instrumentation"
+                        - "github.com/AlphaOne1/sonicweb/service"
                         - "github.com/AlphaOne1/templig"
                         - "github.com/corazawaf/coraza/v3"
-                        - "github.com/corazawaf/coraza/v3/http"
-                        - "github.com/prometheus/client_golang/prometheus/promhttp"
+                        - "github.com/prometheus/client_golang/prometheus"
+                        - "go.opentelemetry.io/contrib/bridges/otelslog"
                         - "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
                         - "go.opentelemetry.io/otel"
                         - "go.opentelemetry.io/otel/attribute"
+                        - "go.opentelemetry.io/otel/exporters/otlp/otlplog"
+                        - "go.opentelemetry.io/otel/exporters/otlp/otlpmetric"
+                        - "go.opentelemetry.io/otel/exporters/otlp/otlptrace"
                         - "go.opentelemetry.io/otel/exporters/prometheus"
-                        - "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+                        - "go.opentelemetry.io/otel/exporters/stdout"
+                        - "go.opentelemetry.io/otel/log/global"
                         - "go.opentelemetry.io/otel/propagation"
+                        - "go.opentelemetry.io/otel/sdk/log"
                         - "go.opentelemetry.io/otel/sdk/metric"
                         - "go.opentelemetry.io/otel/sdk/resource"
                         - "go.opentelemetry.io/otel/sdk/trace"
-                        - "go.opentelemetry.io/otel/semconv/v1.27.0"
+                        - "go.opentelemetry.io/otel/semconv/v1.39.0"
                         - "go.uber.org/automaxprocs/maxprocs"
                         - "golang.org/x/crypto/acme"
-                        - "golang.org/x/crypto/acme/autocert"
                 test:
                     files:
                         - "**/*_test.go"

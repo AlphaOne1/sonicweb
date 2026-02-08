@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD033 MD041 -->
-<!-- SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
 <p align="center">
@@ -113,7 +113,7 @@ Getting Started
 | -iport          \<port\>     | port to listen on for telemetry requests           | `8081`            |          |
 | -iaddress       \<address\>  | address to listen on for telemetry requests        | all               |          |
 | -telemetry      {true,false} | enable/disable telemetry support                   | `true`            |          |
-| -trace-endpoint {address}    | endpoint to send trace data to                     | `""`              |          |
+| -trace-endpoint {address}    | deprecated, use OTEL_EXPORTER_OTLP_TRACES_ENDPOINT environment instead | `""`|    |
 | -pprof          {true,false} | enable/disable pprof support                       | `false`           |          |
 | -log            \<level\>    | log level (debug, info, warn, error)               | `info`            |          |
 | -logstyle       \<style\>    | log style (auto, text, json)                       | `auto`            |          |

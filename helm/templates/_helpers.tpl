@@ -1,11 +1,13 @@
-{{/*
-SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+{{- /*
+SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 SPDX-License-Identifier: MPL-2.0
+*/ -}}
 
+{{- /*
 Expand the name of the chart.
-*/}}
+*/ -}}
 {{- define "SonicWeb.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" | lower }}
 {{- end }}
 
 {{/*
@@ -15,14 +17,15 @@ If release name contains chart name it will be used as a full name.
 */}}
 {{- define "SonicWeb.fullname" -}}
 {{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{-     .Values.fullnameOverride | trunc 63 | trimSuffix "-" | lower }}
 {{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{{-     $name := default .Chart.Name .Values.nameOverride }}
+{{-     $relName := .Release.Name }}
+{{-     if contains $name $relName }}
+{{-         $relName | trunc 63 | trimSuffix "-" | lower }}
+{{-     else }}
+{{-         printf "%s-%s" $relName $name | trunc 63 | trimSuffix "-" | lower }}
+{{-     end }}
 {{- end }}
 {{- end }}
 
