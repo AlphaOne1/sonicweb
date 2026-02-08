@@ -3,13 +3,15 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
-# SonicWeb Service
+SonicWeb Service
+================
 
 The service library of *SonicWeb* facilitates the management of multiple HTTP server instances. Its intent is to lift
 the responsibility of managing the lifetimes of these servers to the user.
 
 
-## Installation
+Installation
+------------
 
 To install the *SonicWeb* service library, you can use the following command:
 
@@ -22,7 +24,8 @@ be aware that breaking changes may occur between minor versions. No breaking cha
 versions.
 
 
-## Getting Started
+Getting Started
+---------------
 
 The following snippet illustrates the basic usage of the *SonicWeb* service library:
 
@@ -48,7 +51,8 @@ As one can see, the details of managing a clean server startup and waiting for i
 the `Group` type.
 
 
-## Managing Multiple Servers
+Managing Multiple Servers
+-------------------------
 
 Multiple servers can be managed by a single `Group` instance specifying multiple `service.WithServer`
 or using the `service.WithServers` options.
@@ -99,7 +103,8 @@ _ = g.StartAll(ctx)
 g.WaitAllServersShutdown()
 ```
 
-## Further Options
+Further Options
+---------------
 
 As *SonicWeb* service library is an integral part of program flow, it is useful to give it the possibility to output its
 own log messages. The option `service.WithLogger` allows to specify a `slog.Logger`.

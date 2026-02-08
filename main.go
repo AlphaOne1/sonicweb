@@ -452,9 +452,6 @@ func run(signalShutdown context.Context) int {
 	if servicesErr != nil {
 		slog.Error("failed to initialize service group", slog.String("error", servicesErr.Error()))
 		return 1
-	} else if services == nil {
-		slog.Error("failed to initialize service group, is nil")
-		return 1
 	}
 
 	if serveErr := services.StartAll(signalShutdown); serveErr != nil {

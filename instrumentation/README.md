@@ -3,19 +3,21 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
-# SonicWeb Instrumentation
+SonicWeb Instrumentation
+========================
 
 This library is derived from the official documentation example for the OpenTelemetry Go SDK. It aims to provide a thin
 layer of automatic environment variable-based configuration for OpenTelemetry instrumentation. The OpenTelemetry Go SDK
 offers many more customization options but requires a lot of boilerplate code. Use this library if you just want to have
 a functioning OpenTelemetry setup without having to dive into the details.
 
-A typical usecase is a service in Kubernetes, where the OpenTelemetry configuration is managed by the Kubernetes
+A typical use case is a service in Kubernetes, where the OpenTelemetry configuration is managed by the Kubernetes
 operator. The operator can set environment variables to configure the OpenTelemetry SDK. The owner of the service just
 provides the means for the operator and does not have further to care about the details of OpenTelemetry.
 
 
-## Installation
+Installation
+------------
 
 To install the *SonicWeb* instrumentation library, you can use the following command:
 
@@ -28,7 +30,8 @@ be aware that breaking changes may occur between minor versions. No breaking cha
 versions.
 
 
-## Getting Started
+Getting Started
+---------------
 
 An example that shows how to use this library:
 
@@ -63,7 +66,8 @@ if metricHandler != nil {
 ```
 
 
-## Environment Variables (OpenTelemetry)
+Environment Variables (OpenTelemetry)
+-------------------------------------
 
 This package evaluates a set of OpenTelemetry environment variables directly (manual processing).
 In addition, the OpenTelemetry Go SDK and its exporters evaluate further variables automatically.
@@ -93,6 +97,7 @@ enabled.
 
 
 #### Traces (OTLP)
+
 | Variable                                                                                 | Purpose (high-level)                           |
 |------------------------------------------------------------------------------------------|------------------------------------------------|
 | `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`                     | OTLP endpoint (generic or trace-specific).     |
@@ -107,6 +112,7 @@ enabled.
 
 
 #### Metrics (OTLP / Prometheus)
+
 | Variable                                                                                  | Purpose (high-level)                        |
 |-------------------------------------------------------------------------------------------|---------------------------------------------|
 | `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`                     | OTLP endpoint (generic or metric-specific). |
@@ -123,6 +129,7 @@ enabled.
 
 
 #### Logs (OTLP)
+
 | Variable                                                                               | Purpose (high-level)                         |
 |----------------------------------------------------------------------------------------|----------------------------------------------|
 | `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`                     | OTLP endpoint (generic or log-specific).     |
