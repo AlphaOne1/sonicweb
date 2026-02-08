@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
-module sonic
+module github.com/AlphaOne1/sonicweb
 
 go 1.25
 

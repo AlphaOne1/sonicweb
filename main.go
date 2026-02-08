@@ -21,15 +21,14 @@ import (
 	"time"
 	_ "time/tzdata"
 
-	"sonic/instrumentation"
-	"sonic/service"
-
 	"github.com/AlphaOne1/geany"
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/defs"
 	"github.com/AlphaOne1/midgard/handler/accesslog"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/helper"
+	"github.com/AlphaOne1/sonicweb/instrumentation"
+	"github.com/AlphaOne1/sonicweb/service"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
