@@ -13,7 +13,7 @@ a functioning OpenTelemetry setup without having to dive into the details.
 
 A typical use case is a service in Kubernetes, where the OpenTelemetry configuration is managed by the Kubernetes
 operator. The operator can set environment variables to configure the OpenTelemetry SDK. The owner of the service just
-provides the means for the operator and does not have further to care about the details of OpenTelemetry.
+provides the means for the operator and does not need to care further about the details of OpenTelemetry.
 
 
 Installation

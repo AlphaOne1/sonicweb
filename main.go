@@ -271,6 +271,9 @@ func generateFileHandler(
 		nil
 }
 
+// setupInstrumentation configures the OpenTelemetry SDK and returns the metric handler and a cleanup function.
+// Note: If the OTEL SDK provides a logger, this function will replace the global slog default logger with a
+// multi-handler that fans out to both the existing default and the OTEL logger.
 func setupInstrumentation(
 	ctx context.Context,
 	config ServerConfig) (http.Handler, func(context.Context), error) {
