@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const OSWindows = "windows"
+
 func generateCertAndKey() (string, string) {
 	// generate private key
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -98,14 +100,19 @@ func sendMe(helper testHelper, sig os.Signal) {
 	}
 
 	switch runtime.GOOS {
-	case "windows":
+	case OSWindows:
 		helper.Errorf("Go does not yet support anything else than KILL on Windows")
+		// "golang.org/x/sys/windows"
+		// if err := windows.GenerateConsoleCtrlEvent(windows.CTRL_C_EVENT, 0); err != nil {
+		// 	helper.Errorf("could not send signal %s: %v", sig.String(), err)
+		// }
 		sig = os.Kill
-	default:
-	}
 
-	if signalErr := currentProcess.Signal(sig); signalErr != nil {
-		helper.Errorf("could not send signal %s: %v", sig.String(), signalErr)
+		fallthrough
+	default:
+		if signalErr := currentProcess.Signal(sig); signalErr != nil {
+			helper.Errorf("could not send signal %s: %v", sig.String(), signalErr)
+		}
 	}
 }
 
@@ -147,26 +154,37 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 	<-mainStart
 
 	slog.Info("setting exit timeout")
-	afterTimer := time.AfterFunc(2*time.Second, func() {
-		slog.Info("exit timer timeout")
-		sendMe(helper, syscall.SIGTERM)
-	})
+	afterTimer := time.NewTimer(2 * time.Second)
 
 	return afterTimer, mainReturn
 }
 
-func finalizeMain(h testHelper, afterTimer *time.Timer, result chan int) int {
-	h.Helper()
+func finalizeMain(helper testHelper, afterTimer *time.Timer, result chan int) int {
+	helper.Helper()
 
-	if afterTimer.Stop() {
-		slog.Info("stopped exit timer")
-		sendMe(h, syscall.SIGTERM)
+	select {
+	case r := <-result:
+		if !afterTimer.Stop() {
+			select {
+			case <-afterTimer.C:
+			default:
+			}
+		}
+
+		return r
+	case <-afterTimer.C:
+		slog.Info("exit timer timeout")
+		sendMe(helper, syscall.SIGTERM)
 	}
 
 	return <-result
 }
 
 func TestSonicMain(t *testing.T) {
+	if runtime.GOOS == OSWindows {
+		t.Skip("windows not supported yet")
+	}
+
 	afterTimer, mainReturn := startMain(t,
 		"sonicweb",
 		"-root", "./testroot",
@@ -232,6 +250,10 @@ func TestSonicMain(t *testing.T) {
 }
 
 func TestSonicMainTLS(t *testing.T) {
+	if runtime.GOOS == OSWindows {
+		t.Skip("windows not supported yet")
+	}
+
 	certFile, keyFile := generateCertAndKey()
 
 	afterTimer, mainReturn := startMain(t,
