@@ -100,8 +100,9 @@ jobs:
 
           - name: Upload test results to Codecov
             if: ${{ !cancelled() }}
-            uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+            uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
             with:
+                report_type: test_results
                 token: ${{ secrets.CODECOV_TOKEN }}
 
           - name: Coverage
@@ -110,6 +111,7 @@ jobs:
           - name: Upload coverage to Codecov
             uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
             with:
+                report_type: coverage
                 token: ${{ secrets.CODECOV_TOKEN }}
 
     # This action is mainly composed of snippets of github.com/jidicula/go-fuzz-action
