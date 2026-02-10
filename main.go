@@ -295,7 +295,7 @@ func setupInstrumentation(
 
 	if logger != nil {
 		slog.SetDefault(
-			slog.New(instrumentation.NewMultiHandler(
+			slog.New(slog.NewMultiHandler(
 				slog.Default().Handler(),
 				logger.Handler())))
 	}

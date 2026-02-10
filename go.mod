@@ -3,7 +3,7 @@
 
 module github.com/AlphaOne1/sonicweb
 
-go 1.25
+go 1.26
 
 require (
 	github.com/AlphaOne1/geany v0.1.3
