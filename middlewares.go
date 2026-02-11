@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package main
@@ -153,7 +153,7 @@ func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.H
 	for _, v := range tries {
 		slog.Info("registering try files", slog.String("pattern", v))
 
-		// preventing endless loops due to file handler redirecting /index.html to /
+		// preventing endless loops due to file handlers redirecting /index.html to /
 		if strings.HasSuffix(v, "/index.html") {
 			v = v[:len(v)-len("index.html")]
 		}

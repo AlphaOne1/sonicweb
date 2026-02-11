@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 // Package main contains the server logic of SonicWeb.
 package main
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"flag"
@@ -14,7 +15,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 	_ "time/tzdata"
 
@@ -24,6 +27,8 @@ import (
 	"github.com/AlphaOne1/midgard/handler/accesslog"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/helper"
+	"github.com/AlphaOne1/sonicweb/instrumentation"
+	"github.com/AlphaOne1/sonicweb/service"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -33,8 +38,25 @@ const ServerName = "SonicWeb"
 // ReadTimeout is the timeout used to read header and body content.
 const ReadTimeout = 2 * time.Second
 
-var buildInfoTag = ""  // buildInfoTag holds the tag information of the version control system
-var exitFunc = os.Exit // exitFunc holds os.Exit for normal operations and is overridden for testing
+// ServerShutdownTimeout is the timeout given to the server to do a controlled shutdown.
+const ServerShutdownTimeout = 5 * time.Second
+
+// ErrConversion is returned when a conversion fails.
+var ErrConversion = errors.New("conversion error")
+
+// ErrEmptyRootPath indicates that the root path configuration must not be empty.
+var ErrEmptyRootPath = errors.New("root path must not be empty")
+
+// ErrInvalidBasePath indicates that the base path configuration must start with a forward slash (/).
+var ErrInvalidBasePath = errors.New("base path must start with /")
+
+// ErrInconsistentTraceParameters indicates that the trace-endpoint parameter is set while telemetry is disabled.
+var ErrInconsistentTraceParameters = errors.New("trace-endpoint parameter is set, but telemetry is disabled")
+
+var buildInfoTag = "" // buildInfoTag holds the tag information of the version control system
+
+// exitFunc holds os.Exit for normal operations and is overridden for testing.
+var exitFunc = os.Exit
 
 //go:embed logo.tmpl
 var logoTmpl string
@@ -108,7 +130,7 @@ func setupFlags() ServerConfig {
 	flag.StringVar(&config.InstrumentPort, "iport", "8081", "port to listen on for instrumentation")
 	flag.StringVar(&config.InstrumentAddress, "iaddress", "", "address to listen on for instrumentation")
 	flag.BoolVar(&config.EnableTelemetry, "telemetry", true, "enable telemetry support")
-	flag.StringVar(&config.TraceEndpoint, "trace-endpoint", "", "endpoint for tracing data")
+	flag.StringVar(&config.TraceEndpoint, "trace-endpoint", "", "deprecated, endpoint for tracing data")
 	flag.BoolVar(&config.EnablePprof, "pprof", false, "enable pprof support")
 	flag.StringVar(&config.LogLevel, "log", "info", "log level, valid options are debug, info, warn and error")
 	flag.StringVar(&config.LogStyle, "logstyle", "auto", "log style, valid options are auto, text and json")
@@ -119,35 +141,95 @@ func setupFlags() ServerConfig {
 	return config
 }
 
-var errConversion = errors.New("conversion error")
+func checkConfigConsistency(config ServerConfig) error {
+	var errs []error
 
-// generateFileHandler generates the handler to serve the files, initializing all necessary middlewares.
+	if config.RootPath == "" {
+		errs = append(errs, ErrEmptyRootPath)
+	}
+
+	if !strings.HasPrefix(config.BasePath, "/") {
+		errs = append(errs, ErrInvalidBasePath)
+	}
+
+	if !config.EnableTelemetry && config.TraceEndpoint != "" {
+		errs = append(errs, ErrInconsistentTraceParameters)
+	}
+
+	return errors.Join(errs...)
+}
+
+func setupTelemetryEnvVars(traceEndpoint string) error {
+	defaults := map[string]string{
+		"OTEL_EXPORTER_OTLP_COMPRESSION": "gzip",
+		"OTEL_EXPORTER_OTLP_PROTOCOL":    instrumentation.OTLPProtocolHTTP,
+	}
+
+	if len(traceEndpoint) > 0 {
+		if value, isSet := os.LookupEnv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"); isSet {
+			if value != traceEndpoint {
+				slog.Warn("deprecated trace-endpoint parameter is set, "+
+					"differs from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, and takes precedence",
+					slog.String("trace-endpoint", traceEndpoint),
+					slog.String("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", value))
+			}
+		}
+
+		if err := os.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", traceEndpoint); err != nil {
+			return fmt.Errorf("could not set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: %w", err)
+		}
+
+		slog.Warn("trace-endpoint parameter is deprecated, " +
+			"please use environment variable OTEL_EXPORTER_OTLP_TRACES_ENDPOINT instead")
+
+		defaults["OTEL_TRACES_EXPORTER"] = instrumentation.OTLPExporterOTLP
+	}
+
+	var errs []error
+
+	for k, v := range defaults {
+		if val, isSet := os.LookupEnv(k); !isSet || strings.TrimSpace(val) == "" {
+			if err := os.Setenv(k, v); err != nil {
+				errs = append(errs, fmt.Errorf("failed to set default environment variable %s=%s: %w",
+					k, v, err))
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// generateFileHandler generates the handlers to serve the files, initializing all necessary middlewares.
 func generateFileHandler(
 	enableTelemetry bool,
-	enableTracing bool,
 	basePath string,
 	rootPath string,
 	additionalHeaders [][2]string,
 	tryFiles []string,
-	wafCfg []string) (http.Handler, error) {
+	wafCfg []string) (http.Handler, func(), error) {
 
 	mwStack := make([]defs.Middleware, 0, 4)
 
-	if enableTelemetry || enableTracing {
-		mwStack = append(mwStack, otelhttp.NewMiddleware("get_"+basePath))
+	if enableTelemetry {
+		mwStack = append(mwStack, otelhttp.NewMiddleware("fileserver"))
 	}
 
 	root, rootErr := os.OpenRoot(rootPath)
 
 	if rootErr != nil {
-		return nil, fmt.Errorf("could not open root: %w", rootErr) // silencing the static checker, unreachable
+		return nil, func() {}, fmt.Errorf("could not open root: %w", rootErr)
 	}
 
 	if len(wafCfg) > 0 {
 		wafMW, wafMWErr := wafMiddleware(wafCfg)
 
 		if wafMWErr != nil {
-			return nil, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
+			if err := root.Close(); err != nil {
+				slog.Error("failed to close root filesystem",
+					slog.String("error", err.Error()))
+			}
+
+			return nil, func() {}, fmt.Errorf("could not initialize waf middleware: %w", wafMWErr)
 		}
 
 		mwStack = append(mwStack, wafMW)
@@ -156,7 +238,12 @@ func generateFileHandler(
 	statFS, statFSOK := root.FS().(fs.StatFS)
 
 	if !statFSOK {
-		return nil, fmt.Errorf("could not get StatFS from RootFS: %w", errConversion)
+		if err := root.Close(); err != nil {
+			slog.Error("failed to close root filesystem",
+				slog.String("error", err.Error()))
+		}
+
+		return nil, func() {}, fmt.Errorf("could not get StatFS from RootFS: %w", ErrConversion)
 	}
 
 	mwStack = append(mwStack,
@@ -170,16 +257,66 @@ func generateFileHandler(
 		})
 
 	return midgard.StackMiddlewareHandler(
-		mwStack,
-		http.FileServerFS(
-			root.FS(),
+			mwStack,
+			http.FileServerFS(
+				root.FS(),
+			),
 		),
-	), nil
+		func() {
+			if err := root.Close(); err != nil {
+				slog.Error("failed to close root filesystem",
+					slog.String("error", err.Error()))
+			}
+		},
+		nil
 }
 
-// main initializes all necessary parts and starts the server.
-func main() {
+// setupInstrumentation configures the OpenTelemetry SDK and returns the metric handler and a cleanup function.
+// Note: If the OTEL SDK provides a logger, this function will replace the global slog default logger with a
+// multi-handler that fans out to both the existing default and the OTEL logger.
+func setupInstrumentation(
+	ctx context.Context,
+	config ServerConfig) (http.Handler, func(context.Context), error) {
+
+	// handling of deprecated trace-endpoint parameter
+	if err := setupTelemetryEnvVars(config.TraceEndpoint); err != nil {
+		return nil, nil, fmt.Errorf("could not setup telemetry environment variables: %w", err)
+	}
+
+	otelShutdown, metricHandler, logger, err := instrumentation.SetupOTelSDK(
+		ctx,
+		ServerName,
+		buildInfoTag,
+		slog.Default())
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to initialize OTEL SDK: %w", err)
+	}
+
+	if logger != nil {
+		slog.SetDefault(
+			slog.New(slog.NewMultiHandler(
+				slog.Default().Handler(),
+				logger.Handler())))
+	}
+
+	cleanup := func(ctx context.Context) {
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, ServerShutdownTimeout)
+		defer shutdownCancel()
+
+		if err := otelShutdown(shutdownCtx); err != nil {
+			slog.Warn("failed to shutdown OTEL SDK", slog.String("error", err.Error()))
+		}
+	}
+
+	return metricHandler, cleanup, nil
+}
+
+// run initializes all necessary parts and starts the server.
+// It returns the desired process exit code.
+func run(signalShutdown context.Context) int {
 	startInit := time.Now()
+
 	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
 
 	// Parse command line flags
@@ -187,12 +324,17 @@ func main() {
 
 	if config.PrintVersion {
 		// we already printed the logo that contains all the necessary information
-		exitFunc(0)
+		return 0
+	}
+
+	if err := checkConfigConsistency(config); err != nil {
+		slog.Error("invalid configuration", slog.String("error", err.Error()))
+		return 1
 	}
 
 	if err := setupLogging(config.LogLevel, config.LogStyle); err != nil {
 		slog.Error("error setting up logging", slog.String("error", err.Error()))
-		exitFunc(1)
+		return 1
 	}
 
 	slog.Info("logging", slog.String("level", config.LogLevel))
@@ -203,23 +345,31 @@ func main() {
 		slog.Error("could not get info of root path",
 			slog.String("path", config.RootPath),
 			slog.String("error", statErr.Error()))
-		exitFunc(1)
+
+		return 1
 	}
 
 	slog.Info("using base path", slog.String("path", config.BasePath))
 
-	if len(config.TraceEndpoint) > 0 {
-		if _, err := initTracer(config.TraceEndpoint); err != nil {
-			slog.Error("could not initialize tracing", slog.String("error", err.Error()))
-			exitFunc(1)
+	var metricHandler http.Handler
+
+	if config.EnableTelemetry {
+		metricHandlerLocal, cleanup, err := setupInstrumentation(signalShutdown, config)
+
+		if err != nil {
+			slog.Error("failed to initialize telemetry", slog.String("error", err.Error()))
+			return 1
 		}
 
-		slog.Info("tracing initialized")
+		metricHandler = metricHandlerLocal
+		defer cleanup(context.WithoutCancel(signalShutdown))
+
+		slog.Info("telemetry initialized")
 	} else {
-		slog.Info("tracing disabled")
+		slog.Info("telemetry disabled")
 	}
 
-	slog.Info("registering handler for FileServer")
+	slog.Info("registering handlers for FileServer")
 
 	tlsConfig, tlsConfigErr := generateTLSConfig(
 		config.TLSCert,
@@ -231,7 +381,7 @@ func main() {
 
 	if tlsConfigErr != nil {
 		slog.Error("invalid TLS configuration", slog.String("error", tlsConfigErr.Error()))
-		exitFunc(1)
+		return 1
 	}
 
 	server := http.Server{
@@ -249,12 +399,12 @@ func main() {
 		slog.Error("could not process headers file",
 			slog.Any("files", *config.HeadersFiles),
 			slog.String("error", headersErr.Error()))
-		exitFunc(1)
+
+		return 1
 	}
 
-	handler, handlerErr := generateFileHandler(
+	handler, handlerCleanup, handlerErr := generateFileHandler(
 		config.EnableTelemetry,
-		len(config.TraceEndpoint) > 0,
 		config.BasePath,
 		config.RootPath,
 		append(headerParamToHeaders(*config.Headers), headers...),
@@ -262,55 +412,74 @@ func main() {
 		*config.WafCfg)
 
 	if handlerErr != nil {
-		slog.Error("could not generate file handler", slog.String("error", handlerErr.Error()))
-		exitFunc(1)
+		slog.Error("could not generate file handlers", slog.String("error", handlerErr.Error()))
+		return 1
+	}
+
+	defer handlerCleanup()
+
+	if !strings.HasSuffix(config.BasePath, "/") {
+		slog.Warn("base path does not end with a slash, just serving the exact file",
+			slog.String("path", config.BasePath))
 	}
 
 	// remove all implicitly registered handlers
-	http.DefaultServeMux = http.NewServeMux()
-	http.Handle("GET "+config.BasePath, handler)
+	serverMux := http.NewServeMux()
+	serverMux.Handle("GET "+config.BasePath, handler)
+	server.Handler = serverMux
 
-	go func() {
-		var listenErr error
+	monitoringServer, monitoringServerErr := instrumentation.Server(
+		config.InstrumentAddress,
+		config.InstrumentPort,
+		metricHandler,
+		config.EnablePprof,
+		slog.Default())
 
-		if tlsConfig != nil {
-			slog.Info("starting tls server",
-				slog.String("address", server.Addr),
-				slog.Duration("t_init", time.Since(startInit)),
-				slog.String("cert", config.TLSCert),
-				slog.String("key", config.TLSKey),
-				slog.Any("acmeDomains", *config.AcmeDomains),
-			)
-
-			listenErr = server.ListenAndServeTLS("", "")
-		} else {
-			slog.Info("starting server",
-				slog.String("address", server.Addr),
-				slog.Duration("t_init", time.Since(startInit)))
-
-			listenErr = server.ListenAndServe()
-		}
-
-		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-			slog.Error("error listening", slog.String("error", listenErr.Error()))
-			exitFunc(1)
-		}
-	}()
-
-	// set up opentelemetry with prometheus metricsExporter
-	setupMetricsInstrumentation(
-		&config.InstrumentAddress,
-		&config.InstrumentPort,
-		config.EnableTelemetry,
-		config.EnablePprof)
-
-	fileServerShutdownErr := waitServerShutdown(&server, "file")
-
-	if fileServerShutdownErr != nil {
-		slog.Error("error shutting down server", slog.String("error", fileServerShutdownErr.Error()))
+	if monitoringServerErr != nil {
+		slog.Error("failed to initialize monitoring server", slog.String("error", monitoringServerErr.Error()))
+		return 1
 	}
 
-	waitServersShutdown()
+	serviceOptions := []service.Option{
+		service.WithLogger(slog.Default()),
+		service.WithShutdownTimeout(ServerShutdownTimeout),
+		service.WithServer(&server, ServerName),
+	}
 
-	exitFunc(0)
+	if monitoringServer != nil {
+		serviceOptions = append(serviceOptions, service.WithServer(monitoringServer, "instrumentation"))
+	}
+
+	services, servicesErr := service.NewGroup(serviceOptions...)
+
+	if servicesErr != nil {
+		slog.Error("failed to initialize service group", slog.String("error", servicesErr.Error()))
+		return 1
+	}
+
+	if serveErr := services.StartAll(signalShutdown); serveErr != nil {
+		slog.Error("failed to start server", slog.String("error", serveErr.Error()))
+		return 1
+	}
+
+	slog.Info("started server",
+		slog.String("address", server.Addr),
+		slog.Duration("t_init", time.Since(startInit)))
+
+	services.WaitAllServersShutdown()
+
+	return 0
+}
+
+// main only wires signals and exits with the run() result.
+func main() {
+	signalShutdown, signalShutdownFunc := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer signalShutdownFunc()
+
+	go func() {
+		<-signalShutdown.Done()
+		slog.Info("received shutdown signal, shutting down")
+	}()
+
+	exitFunc(run(signalShutdown))
 }

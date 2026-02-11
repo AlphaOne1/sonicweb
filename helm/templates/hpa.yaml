@@ -1,5 +1,7 @@
-# SPDX-FileCopyrightText: 2025 The SonicWeb contributors.
-# SPDX-License-Identifier: MPL-2.0
+{{- /*
+SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+SPDX-License-Identifier: MPL-2.0
+*/ -}}
 
 {{- if .Values.autoscaling.enabled }}
 apiVersion: autoscaling/v2
@@ -17,19 +19,19 @@ spec:
     maxReplicas: {{ .Values.autoscaling.maxReplicas }}
     metrics:
         {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
-      - type: Resource
-        resource:
-            name: cpu
-            target:
-                type: Utilization
-                averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+        -   type: Resource
+            resource:
+                name: cpu
+                target:
+                    type: Utilization
+                    averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
         {{- end }}
         {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
-      - type: Resource
-        resource:
-            name: memory
-            target:
-                type: Utilization
-                averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+        -   type: Resource
+            resource:
+                name: memory
+                target:
+                    type: Utilization
+                    averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
         {{- end }}
 {{- end }}
