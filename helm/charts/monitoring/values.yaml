@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-License-Identifier: MPL-2.0
+
+grafana:
+#    fullnameOverride: "monitoring-grafana"
+    sidecar:
+        datasources:
+            enabled: true
+            # This label is important! The sidecar looks for it.
+            label: grafana_datasource
+    plugins:
+        - victoriametrics-metrics-datasource
+        - victoriametrics-logs-datasource
+    dashboardProviders:
+        dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+                -   name:            'default'
+                    orgId:           1
+                    folder:          ''
+                    type:            file
+                    disableDeletion: false
+                    editable:        true
+                    options:
+                        path: /var/lib/grafana/dashboards/default
+    dashboards:
+        default:
+            golang:
+                gnetId: 6671
+                revision: 2
+                datasource:
+                    -   name: DS_PROMETHEUS
+                        value: victoriametrics
+
+alloy:
+#    fullnameOverride: "monitoring-alloy"
+    alloy:
+        # opens the OTLP ports on the kubernetes service
+        extraPorts:
+            -   name:       otlp-grpc
+                port:       4317
+                targetPort: 4317
+                protocol:   TCP
+            -   name:       otlp-http
+                port:       4318
+                targetPort: 4318
+                protocol:   TCP
+        configMap:
+            create:  false
+            name:    alloy-collector-config
+            key:     config
+
+metrics:
+#    fullnameOverride: "monitoring-metrics"
+    server:
+        persistentVolume:
+            enabled: false
+        extraArgs:
+            retentionPeriod: 24h
+
+logs:
+#    fullnameOverride: "monitoring-logs"
+    server:
+        persistentVolume:
+            enabled: false
+        retentionPeriod: 1h
+
+traces:
+#    fullnameOverride: "monitoring-vt-single" # must fit to the service name in the subchart
+    server:
+        persistentVolume:
+            enabled: false
+        retentionPeriod: 1h
