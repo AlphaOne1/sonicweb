@@ -8,6 +8,7 @@ Release 1.7.0
 - reworked Open Telemetry integration
 - moved instrumentation and server lifecycle into submodules
 - update dependencies
+- the minimum Go version is now 1.26
 
 Release 1.6.1
 =============
