@@ -70,6 +70,12 @@
         <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb.svg?type=shield&issueType=security"
              alt="FOSSA Security Status">
     </a>
+    <a href="https://pkg.go.dev/github.com/AlphaOne1/sonicweb"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://pkg.go.dev/badge/github.com/AlphaOne1/sonicweb.svg"
+             alt="Go Reference">
+    </a>
 </p>
 <!-- markdownlint-enable MD013 MD033 MD041 -->
 
@@ -135,18 +141,18 @@ $ ./sonic-linux-amd64 -root testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.6.1
-         \  |              of: 2025-10-16T04:07:42Z
-          \ |           using: go1.25.2
+   |/   \    _______\ Version: v1.7.0
+         \  |              of: 2026-02-11T08:37:46Z
+          \ |           using: go1.26.0
            \|
-time=2025-10-16T06:24:07.368345+02:00 level=INFO msg=logging level=info
-time=2025-10-16T06:24:07.369476+02:00 level=INFO msg="using root directory" root=testroot
-time=2025-10-16T06:24:07.369539+02:00 level=INFO msg="using base path" path=/
-time=2025-10-16T06:24:07.369566+02:00 level=INFO msg="tracing disabled"
-time=2025-10-16T06:24:07.369576+02:00 level=INFO msg="registering handler for FileServer"
-time=2025-10-16T06:24:07.371377+02:00 level=INFO msg="starting server" address=:8080 t_init=3.391712ms
-time=2025-10-16T06:24:07.372635+02:00 level=INFO msg="serving pprof disabled"
-time=2025-10-16T06:24:07.372784+02:00 level=INFO msg="serving telemetry" address=:8081/metrics
+time=2026-02-18T20:37:04.360166+01:00 level=INFO msg=logging level=info
+time=2026-02-18T20:37:04.360166+01:00 level=INFO msg="using root directory" root=testroot/
+time=2026-02-18T20:37:04.360166+01:00 level=INFO msg="using base path" path=/
+time=2026-02-18T20:37:04.363235+01:00 level=INFO msg="telemetry initialized"
+time=2026-02-18T20:37:04.363235+01:00 level=INFO msg="registering handlers for FileServer"
+time=2026-02-18T20:37:04.365053+01:00 level=INFO msg="started server" address=:8080 t_init=14.5153ms
+time=2026-02-18T20:37:04.365053+01:00 level=INFO msg="waiting for servers to shutdown"
+time=2026-02-18T20:37:04.365053+01:00 level=INFO msg="server started" name=SonicWeb addr=[::]:8080
 ```
 
 HTTPS
