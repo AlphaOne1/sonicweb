@@ -217,7 +217,7 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const MaxPathPartLength = 255
-			const MaxLogStringLength = 64
+			const MaxLogStringLength = 64 // must be smaller than the MaxPathPartLength!!!
 
 			path := strings.TrimPrefix(r.URL.Path, "/")
 
@@ -246,7 +246,7 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 			if path != "" && !fs.ValidPath(path) {
 				http.Error(w, "invalid path", http.StatusBadRequest)
 				// we do not trim the path here, as it is already reasonably short and we want to see the error
-				slog.Warn("invalid path", slog.String("path", path))
+				slog.Warn("invalid path", slog.String("path", path)) //nolint:gosec // slog cares for safety
 
 				return
 			}
