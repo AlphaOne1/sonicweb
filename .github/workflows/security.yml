@@ -56,14 +56,14 @@ jobs:
           - name: Checkout code
             uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-          - name: Run Trivy vulnerability scanner in repo mode
+          - name: Run Trivy vulnerability scanner in fs mode
             uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
             with:
                 scan-type: 'fs'
                 ignore-unfixed: true
                 format: 'sarif'
                 output: 'trivy-results.sarif'
-                severity: 'CRITICAL'
+                severity: 'CRITICAL,HIGH'
 
           - name: Upload Trivy scan results to GitHub Security tab
             uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
@@ -85,15 +85,9 @@ jobs:
             with:
                 egress-policy: audit
 
-          - name: Checkout
-            uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-            with:
-                fetch-depth: 1
-
           - name: Vulnerability Check
             uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
             with:
-                repo-checkout: false
                 go-version-input: ${{matrix.go-version}}
                 output-format: sarif
                 output-file: govulncheck-results.sarif
