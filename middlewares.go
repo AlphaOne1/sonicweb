@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/AlphaOne1/midgard/handler/addheader"
@@ -145,21 +147,37 @@ func addHeaders(headers [][2]string) func(http.Handler) http.Handler {
 	))
 }
 
+// preprocessTryFiles sanitizes and pre-processes a list of try-file patterns,
+// ensuring paths are adjusted for specific environments.
+func preprocessTryFiles(tries []string) []string {
+	result := make([]string, 0, len(tries))
+	windowsDriveRe := regexp.MustCompile(`(?i)^(?:[A-Z]:[\\/]|\\\\|//)`)
+
+	for _, tryFile := range tries {
+		slog.Info("registering try-files", slog.String("pattern", tryFile))
+
+		// preventing endless loops due to file handlers redirecting /index.html to /
+		if strings.HasSuffix(tryFile, "/index.html") {
+			tryFile = tryFile[:len(tryFile)-len("index.html")]
+		}
+
+		if runtime.GOOS == "windows" {
+			if windowsDriveRe.MatchString(tryFile) {
+				slog.Warn("found try-file that looks like an absolute windows path",
+					slog.String("path", tryFile))
+			}
+		}
+
+		result = append(result, tryFile)
+	}
+
+	return result
+}
+
 // addTryFiles looks if the given URI matches an existing file.
 // If there is no file, a series of other files is tried instead.
 func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.Handler {
-	tryFiles := make([]string, 0, len(tries))
-
-	for _, v := range tries {
-		slog.Info("registering try files", slog.String("pattern", v))
-
-		// preventing endless loops due to file handlers redirecting /index.html to /
-		if strings.HasSuffix(v, "/index.html") {
-			v = v[:len(v)-len("index.html")]
-		}
-
-		tryFiles = append(tryFiles, v)
-	}
+	tryFiles := preprocessTryFiles(tries)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -284,7 +284,7 @@ Docker Usage
 *SonicWeb* is also distributed as a docker image. To start it, one can simply write:
 
 ```sh
-docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.6.0
+docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.7.1
 ```
 
 and it will show this documentation. The entrypoint of the Dockerfile just starts *SonicWeb* without any parameters.
@@ -292,7 +292,7 @@ Therefore, `/www` is the default web root directory. Every parameter passed afte
 parameter to *SonicWeb*. For example, running
 
 ```sh
-docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.6.0 --log=debug
+docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.7.1 --log=debug
 ```
 
 is equivalent to running:
@@ -305,7 +305,7 @@ The docker image is prepared to have new web content mounted on `/www` replacing
 web root directory, e.g., `myapp/`, can be mounted like this:
 
 ```sh
-docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.6.0
+docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.7.1
 ```
 
 Note that without specifying the `:ro` flag, the content will be mounted as read-write. *SonicWeb* does not write into
@@ -315,7 +315,7 @@ non-root user that *SonicWeb* uses (UID 65532).
 If telemetry is needed, port 8081 needs to be exposed additionally:
 
 ```sh
-docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicweb:v1.6.0
+docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicweb:v1.7.1
 ```
 
 
