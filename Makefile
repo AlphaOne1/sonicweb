@@ -22,7 +22,7 @@ MANPAGES=    man/sonicweb.1.gz		\
              man/sonicweb_de.1.gz	\
              man/sonicweb_es.1.gz
 SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
-SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) logo.tmpl
+SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod logo.tmpl
 
 
 .PHONY: all clean docker fuzz helm package test tls
