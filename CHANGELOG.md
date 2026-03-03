@@ -1,6 +1,13 @@
 <!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
+Release 1.7.1
+=============
+
+- add warning if try-file patterns resemble absolute Windows/UNC paths
+  (helps detect MSYS/MinGW auto path conversion)
+- dependency updates
+
 Release 1.7.0
 =============
 
