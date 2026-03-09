@@ -251,7 +251,7 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 						http.Error(w, "name too long", http.StatusBadRequest)
 
 						// we trim the path and parts to avoid logging overflows
-						slog.Warn("filename too long, truncated",
+						slog.Warn("filename too long, truncated", //nolint:gosec // slog cares for safety
 							slog.Int("length", len(part)),
 							slog.String("part", part[:MaxLogStringLength]+"..."),
 							slog.String("path", path[:MaxLogStringLength]+"..."))
