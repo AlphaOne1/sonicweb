@@ -21,7 +21,7 @@ Release 1.6.1
 =============
 
 - added asset and container provenance
-- added SRI hashes for the documentation demo page
+- added SRI hashes to the documentation demo page
 - leaner script loading for the documentation demo page
 - dependency updates
 
@@ -30,7 +30,7 @@ Release 1.6.0
 
 - provide prebuild (multi-arch) docker images
 - update documentation for docker usage
-- check that build target for crosscompilation is set correctly
+- check that the build target for cross-compilation is set correctly
 
 Release 1.5.3
 =============
@@ -65,14 +65,14 @@ Release 1.4.1
 =============
 
 - update dependencies
-- build using Go 1.24.3, that also fixes a vulnerability in os.Root
+- build using Go 1.24.3 that also fixes a vulnerability in os.Root
 
 Release 1.4.0
 =============
 
 - added `-tryfile` option, to replace original URI with a given list of
   files to try first
-- added single-page application example to illustrate the try-file usage
+- added a single-page application example to illustrate the try-file usage
 - added `-tlscert` and `-tlskey` parameter, enabling serving via TLS
 - fixed manpage headers
 - add support for automatic certificates via Let's Encrypt
@@ -107,7 +107,7 @@ Release 1.1.0
 - added packaging for deb and rpm
 - add helm chart
 - add opentelemetry tracing support
-- added english, german and spanish manpages
+- added English, German and Spanish man-pages
 
 Release 1.0.0
 =============
@@ -117,4 +117,4 @@ Initial release
 - command line configurable webserver
 - access logging
 - correlation id
-- coraza waf middleware
+- Coraza WAF middleware
