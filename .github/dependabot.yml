@@ -27,3 +27,8 @@ updates:
       directory: /helm
       schedule:
           interval: weekly
+
+    - package-ecosystem: helm
+      directory: /helm/charts/monitoring
+      schedule:
+          interval: weekly
