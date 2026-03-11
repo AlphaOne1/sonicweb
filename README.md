@@ -87,12 +87,12 @@ Features
 
 * statically linked, suitable for use in scratch containers (~13MB)
 * focused purpose, thus little attack surface
-* usage of OWASP [Coraza](https://github.com/corazawaf/coraza) middleware
-  to follow best security practices
+* integrates OWASP [Coraza](https://github.com/corazawaf/coraza) middleware
+  to follow security best practices
 * HTTPS using [Let's Encrypt](https://letsencrypt.org) certificates
-* easy integration in monitoring using [Prometheus](https://prometheus.io) and/or
-  [Jaeger Tracing](https://jaegertracing.io)
-* no complications with configuration files
+* easy integration with monitoring and observability tools via OpenTelemetry,
+  for example, [Prometheus](https://prometheus.io) and [Jaeger Tracing](https://jaegertracing.io)
+* no need for complicated configuration files
 
 
 Getting Started
@@ -141,18 +141,18 @@ $ ./sonic-linux-amd64 -root testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.7.0
-         \  |              of: 2026-02-11T08:37:46Z
-          \ |           using: go1.26.0
+   |/   \    _______\ Version: v1.7.1
+         \  |              of: 2026-03-04T03:19:16Z
+          \ |           using: go1.26.1
            \|
-time=2026-02-18T20:37:04.360166+01:00 level=INFO msg=logging level=info
-time=2026-02-18T20:37:04.360166+01:00 level=INFO msg="using root directory" root=testroot/
-time=2026-02-18T20:37:04.360166+01:00 level=INFO msg="using base path" path=/
-time=2026-02-18T20:37:04.363235+01:00 level=INFO msg="telemetry initialized"
-time=2026-02-18T20:37:04.363235+01:00 level=INFO msg="registering handlers for FileServer"
-time=2026-02-18T20:37:04.365053+01:00 level=INFO msg="started server" address=:8080 t_init=14.5153ms
-time=2026-02-18T20:37:04.365053+01:00 level=INFO msg="waiting for servers to shutdown"
-time=2026-02-18T20:37:04.365053+01:00 level=INFO msg="server started" name=SonicWeb addr=[::]:8080
+time=2026-03-11T17:05:11.922525+01:00 level=INFO msg=logging level=info
+time=2026-03-11T17:05:11.922815+01:00 level=INFO msg="using root directory" root=testroot/
+time=2026-03-11T17:05:11.922849+01:00 level=INFO msg="using base path" path=/
+time=2026-03-11T17:05:11.928455+01:00 level=INFO msg="telemetry initialized"
+time=2026-03-11T17:05:11.928499+01:00 level=INFO msg="registering handlers for FileServer"
+time=2026-03-11T17:05:11.929362+01:00 level=INFO msg="started server" address=:8080 t_init=7.092731ms
+time=2026-03-11T17:05:11.929408+01:00 level=INFO msg="waiting for servers to shutdown"
+time=2026-03-11T17:05:11.929468+01:00 level=INFO msg="server started" name=SonicWeb addr=[::]:8080
 ```
 
 HTTPS
@@ -233,8 +233,8 @@ The file should be formatted as follows:
 ```
 
 Headers can be specified multiple times, with the last entry taking precedence.
-*SonicWeb* sets the `Server` header to its name and version. By providing an own version of the `Server` header,
-it can be replaced, e.g., to misguide potential attackers.
+*SonicWeb* sets the `Server` header to its name and version.
+By providing a custom `Server` header, it can be replaced, e.g., to mislead potential attackers.
 
 
 Try Files
@@ -281,7 +281,7 @@ There is also extensive documentation on how to write new rules.
 Docker Usage
 ------------
 
-*SonicWeb* is also distributed as a docker image. To start it, one can simply write:
+*SonicWeb* is also distributed as a Docker image. To start it, one can simply write:
 
 ```sh
 docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.7.1
@@ -301,7 +301,7 @@ is equivalent to running:
 ./sonic-linux-amd64 --log=debug
 ```
 
-The docker image is prepared to have new web content mounted on `/www` replacing the default content entirely. A new
+The Docker image allows new web content to be mounted on `/www`, replacing the default content entirely. A new
 web root directory, e.g., `myapp/`, can be mounted like this:
 
 ```sh
