@@ -129,7 +129,7 @@ Getting Started
 Example call, to serve the content of `testroot/` on the standard base path `/`:
 
 ```text
-$ ./sonic-linux-amd64 -root testroot/
+$ ./sonicweb-linux-amd64 -root testroot/
            |\
            ||\
   _________||\\
@@ -169,7 +169,7 @@ HTTPS
 To use a certificate and key pair, you simply start *SonicWeb* as follows:
 
 ```sh
-./sonic-linux-amd64 -root testroot/ -tlscert cert.pem -tlskey key.pem
+./sonicweb-linux-amd64 -root testroot/ -tlscert cert.pem -tlskey key.pem
 ```
 
 The Makefile provides a straightforward way to generate certificates for testing purposes.
@@ -180,7 +180,7 @@ For serious use, an official certificate signed by a certificate authority shoul
 To use the client certificate authentication, you simply start *SonicWeb* as follows:
 
 ```sh
-./sonic-linux-amd64 -root testroot/ -tlscert cert.pem -tlskey key.pem -clientca clientca0.pem
+./sonicweb-linux-amd64 -root testroot/ -tlscert cert.pem -tlskey key.pem -clientca clientca0.pem
 ```
 
 ### Automatic Certificate Retrieval
@@ -196,14 +196,14 @@ operating system's default temporary directory. It can be changed using the `-ce
 To start *SonicWeb* using automatic certificate retrieval, use the following command:
 
 ```sh
-./sonic-linux-amd64 -root testroot/ -acmedomain example.com -acmedomain www.example.com
+./sonicweb-linux-amd64 -root testroot/ -acmedomain example.com -acmedomain www.example.com
 ```
 
 Other acme endpoints can be used, specifying the `-acmeendpoint` parameter. If nothing is specified, the production
 endpoint of Let's Encrypt is used. Use the following command for testing:
 
 ```sh
-./sonic-linux-amd64 -root testroot/             \
+./sonicweb-linux-amd64 -root testroot/             \
                     -acmedomain example.com     \
                     -acmedomain www.example.com \
                     -acmeendpoint "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -216,13 +216,13 @@ In some situations, it is necessary to add HTTP headers to the response.
 *SonicWeb* provides the `-header` parameter to facilitate this.
 
 ```sh
-./sonic-linux-amd64 -root testroot/ -header "Environment: production"
+./sonicweb-linux-amd64 -root testroot/ -header "Environment: production"
 ```
 
 To add a huge number of headers, the `-headerfile` parameter can be used:
 
 ```sh
-./sonic-linux-amd64 -root testroot/ -headerfile additional_headers.conf
+./sonicweb-linux-amd64 -root testroot/ -headerfile additional_headers.conf
 ```
 
 The file should be formatted as follows:
@@ -255,7 +255,7 @@ that suffix is truncated—replaced by the final `/`—to prevent redirection lo
 An invocation of *SonicWeb* could then be as follows:
 
 ```sh
-./sonic-linux-amd64 -root testroot/ -tryfile \$uri -tryfile /
+./sonicweb-linux-amd64 -root testroot/ -tryfile \$uri -tryfile /
 ```
 
 Web Application Firewall
@@ -270,7 +270,7 @@ There is also extensive documentation on how to write new rules.
 *SonicWeb* can be started as follows:
 
 ```sh
-./sonic-linux-amd64 -root testroot/                          \
+./sonicweb-linux-amd64 -root testroot/                          \
                     -wafcfg /etc/crs4/crs-setup.conf         \
                     -wafcfg /etc/crs4/plugins/\*-config.conf \
                     -wafcfg /etc/crs4/plugins/\*-before.conf \
@@ -298,7 +298,7 @@ docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.7.1 --log=debug
 is equivalent to running:
 
 ```sh
-./sonic-linux-amd64 --log=debug
+./sonicweb-linux-amd64 --log=debug
 ```
 
 The Docker image allows new web content to be mounted on `/www`, replacing the default content entirely. A new

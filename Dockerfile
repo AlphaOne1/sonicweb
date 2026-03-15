@@ -6,7 +6,7 @@
 #
 # This dockerfile relies on a previously build os and architecture fitting executable.
 # It can be generated as follows:
-#     $ make sonic-linux-amd64
+#     $ make sonicweb-linux-amd64
 # Copy or mount the web content to the /www directory.
 # After starting the image the content of this directory will be served.
 
@@ -44,7 +44,7 @@ RUN mkdir -p /tmp/root/bin        \
              /tmp/root/www/styles \
              /tmp/root/www/js
 
-COPY --chmod=0755 sonic-linux-${TARGETARCH} /tmp/root/bin/sonicweb
+COPY --chmod=0755 sonicweb-linux-${TARGETARCH} /tmp/root/bin/sonicweb
 COPY --chmod=0444 docker_root/              \
                   README.md                 \
                   sonicweb_logo.svg         /tmp/root/www/

@@ -3,7 +3,7 @@
 
 # yaml-language-server: $schema=https://nfpm.goreleaser.com/static/schema.json
 
-name:       "SonicWeb"
+name:       "${PACKAGE_PREFIX}"
 arch:       "${TARGET_ARCH}"
 platform:   "${TARGET_OS}"
 version:    "${TARGET_VERSION}"
@@ -11,7 +11,7 @@ section:    "default"
 priority:   "extra"
 replaces:   []
 provides:
-  - sonicweb
+  - ${EXEC_PREFIX}
 depends:    []
 recommends: []
 suggests:   []
@@ -24,14 +24,14 @@ vendor:     "AlphaOne1 <alphaone23@gmail.com>"
 homepage:   "https://github.com/AlphaOne1/sonicweb"
 license:    "MPL-2.0"
 contents:
-  - src: ./sonic-${TARGET_OS}-${TARGET_ARCH}
-    dst: /usr/bin/sonicweb
-  - src: ./man/sonicweb.1.gz
-    dst: /usr/share/man/man1/sonicweb.1.gz
-  - src: ./man/sonicweb_de.1.gz
-    dst: /usr/share/man/de/man1/sonicweb.1.gz
-  - src: ./man/sonicweb_es.1.gz
-    dst: /usr/share/man/es/man1/sonicweb.1.gz
+  - src: ./${EXEC_PREFIX}-${TARGET_OS}-${TARGET_ARCH}
+    dst: /usr/bin/${EXEC_PREFIX}
+  - src: ./man/${EXEC_PREFIX}.1.gz
+    dst: /usr/share/man/man1/${EXEC_PREFIX}.1.gz
+  - src: ./man/${EXEC_PREFIX}.1.gz
+    dst: /usr/share/man/de/man1/${EXEC_PREFIX}.1.gz
+  - src: ./man/${EXEC_PREFIX}.1.gz
+    dst: /usr/share/man/es/man1/${EXEC_PREFIX}.1.gz
 overrides:  {}
 deb:
     compression: xz

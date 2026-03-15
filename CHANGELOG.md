@@ -1,6 +1,14 @@
 <!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
+
+Release 1.7.2
+=============
+
+- Makefile cleanup and modularization
+- default executable prefix changed from `sonic` to `sonicweb`
+- dependency updates
+
 Release 1.7.1
 =============
 
