@@ -45,16 +45,28 @@ package:	$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb\
  			$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: $(PACKAGE_PREFIX)-$(IBUILDTAG).tgz
 
-define archName
-$(lastword $(subst -, ,$(basename $(1))))
+define osNamePrefix
+$(firstword $(subst -, ,$(basename $(patsubst $(2)-%,%,$(1)))))
 endef
 
 define osName
-$(lastword $(filter-out $(call archName,$(1)),$(subst -, ,$(basename $(1)))))
+$(call osNamePrefix,$(1),$(EXEC_PREFIX))
+endef
+
+define archNamePrefix
+$(firstword $(subst -, ,$(basename $(patsubst $(2)-$(call osNamePrefix,$(1),$(2))-%,%,$(1)))))
+endef
+
+define archName
+$(call archNamePrefix,$(1),$(EXEC_PREFIX))
+endef
+
+define validSuffix
+$(if $(filter-out 1,$(words $(subst -, ,$(1)))),,$(error Invalid executable name '$(strip $(1))'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>[-<variant>...]'))
 endef
 
 $(EXEC_PREFIX)-%: $(SOURCES)
-	$(if $(filter-out 1 2,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>'))
+	$(call validSuffix,$(patsubst $(EXEC_PREFIX)-%,%,$@))
 	go mod download
 	GOOS="$(call osName,$@)"									\
 	GOARCH="$(call archName,$@)"								\
@@ -81,11 +93,11 @@ $(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH)
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
-	TARGET_OS="$(call osName,$@)"		\
-	TARGET_ARCH="$(call archName,$@)"	\
-	TARGET_VERSION="$(IBUILDTAG)"		\
-	EXEC_PREFIX="$(EXEC_PREFIX)"		\
-	PACKAGE_PREFIX="$(PACKAGE_PREFIX)"	\
+	TARGET_OS="$(call osNamePrefix,$@,nfpm)"	\
+	TARGET_ARCH="$(call archNamePrefix,$@,nfpm)"\
+	TARGET_VERSION="$(IBUILDTAG)"				\
+	EXEC_PREFIX="$(EXEC_PREFIX)"				\
+	PACKAGE_PREFIX="$(PACKAGE_PREFIX)"			\
 	envsubst < $< > $@
 
 %.1: %.1.tmpl
