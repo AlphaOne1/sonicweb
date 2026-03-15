@@ -54,7 +54,7 @@ $(lastword $(filter-out $(call archName,$(1)),$(subst -, ,$(basename $(1)))))
 endef
 
 $(EXEC_PREFIX)-%: $(SOURCES)
-	$(if $(filter 3,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>'))
+	$(if $(filter-out 1 2,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>'))
 	go mod download
 	GOOS="$(call osName,$@)"									\
 	GOARCH="$(call archName,$@)"								\
