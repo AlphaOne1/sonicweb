@@ -2,13 +2,13 @@
 \" SPDX-License-Identifier: MPL-2.0
 .\" -*- mode: troff; coding: UTF-8 -*-
 .\"TOPICS "Temas:"
-.TH SONICWEB 1 "${GIT_REF_DATE}" "Versión de SonicWeb ${GIT_TAG}" "SonicWeb"
+.TH SONICWEB 1 "${GIT_REF_DATE}" "Versión de ${PACKAGE_PREFIX} ${GIT_TAG}" "${PACKAGE_PREFIX}"
 .\"SKIP_SECTION"
 .SH "NOMBRE"
-sonicweb \- Pequeño servidor seguro de archivos estáticos.
+${EXEC_PREFIX} \- Pequeño servidor seguro de archivos estáticos.
 .\"SKIP_SECTION"
 .SH "SINOPSIS"
-.B sonicweb
+.B ${EXEC_PREFIX}
 [\-root ruta]
 [\-base ruta]
 [\-port número]
@@ -32,7 +32,7 @@ sonicweb \- Pequeño servidor seguro de archivos estáticos.
 [\-logstyle {auto,text,json}]
 .\"NODE "DESCRIPCIÓN"
 .SH "DESCRIPCIÓN"
-SonicWeb es un pequeño servidor de archivos estáticos que integra el firewall de aplicaciones web de Coraza.
+${PACKAGE_PREFIX} es un pequeño servidor de archivos estáticos que integra el firewall de aplicaciones web de Coraza.
 .\"NODE "OPCIONES"
 .\"DONT_SPLIT"
 .SH "OPCIONES"
@@ -124,7 +124,7 @@ Versión 2.0 según lo publicado por la Fundación Mozilla.
 .\"NODE "DISPONIBILIDAD"
 .SH "DISPONIBILIDAD"
 La última versión de este programa se puede encontrar en
-https://github.com/AlphaOne1/sonicweb.git.
+https://github.com/AlphaOne1/${EXEC_PREFIX}.git.
 .\"NODE "AUTORES"
 .SH "AUTORES"
 Los autores y colaboradores están listados en el archivo AUTHORS en la distribución
@@ -132,10 +132,10 @@ de código fuente.
 .\"NODE "PROBLEMAS"
 .SH "PROBLEMAS"
 Si deseas reportar un problema con el programa, por favor crea un informe de errores
-en https://github.com/AlphaOne1/sonicweb/issues.
+en https://github.com/AlphaOne1/${EXEC_PREFIX}/issues.
 .PP
 Proporciona una descripción detallada del error, la versión del programa
 que estás utilizando
-.RI ( "sonicweb \-version"
+.RI ( "${EXEC_PREFIX} \-version"
 muestra esta información) y el sistema operativo en el que estás ejecutando el
 programa. Si el programa falla, se agradecerá un volcado de pila.

@@ -3,10 +3,12 @@
 # SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-IGOOS:=      $(shell go env GOOS)
-IGOARCH:=    $(shell go env GOARCH)
-EXEC_SUFFIX= $(if $(filter windows,$(IGOOS)),.exe,)
-ICGO_ENABLED=$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
+EXEC_PREFIX=   sonicweb
+PACKAGE_PREFIX=SonicWeb
+IGOOS:=        $(shell go env GOOS)
+IGOARCH:=      $(shell go env GOARCH)
+EXEC_SUFFIX=   $(if $(filter windows,$(IGOOS)),.exe,)
+ICGO_ENABLED=  $(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell command -v git >/dev/null 2>&1 && echo yes),yes,no)
@@ -17,10 +19,19 @@ endif
 IBUILDTAG?=		unknown
 GIT_REF_DATE?=	$(strip $(shell date +"%B %Y"))
 
+$(info EXEC_PREFIX:   $(EXEC_PREFIX))
+$(info EXEC_SUFFIX:   $(EXEC_SUFFIX))
+$(info IGOOS:         $(IGOOS))
+$(info IGOARCH:       $(IGOARCH))
+$(info ICGO_ENABLED:  $(ICGO_ENABLED))
+$(info GIT_AVAILABLE: $(GIT_AVAILABLE))
+$(info IBUILDTAG:     $(IBUILDTAG))
+$(info GIT_REF_DATE:  $(GIT_REF_DATE))
+
 PATH:=       $(PATH):$(shell go env GOPATH)/bin
-MANPAGES=    man/sonicweb.1.gz		\
-             man/sonicweb_de.1.gz	\
-             man/sonicweb_es.1.gz
+MANPAGES=    man/$(EXEC_PREFIX).1.gz		\
+             man/$(EXEC_PREFIX)_de.1.gz	\
+             man/$(EXEC_PREFIX)_es.1.gz
 SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
 SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod logo.tmpl
 
@@ -28,47 +39,60 @@ SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod logo.tmpl
 .PHONY: all clean docker fuzz helm package test tls
 .DELETE_ON_ERROR:
 
-all: sonic-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
+all: $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
 docker: docker-linux-amd64
-package: SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
-helm: SonicWeb-$(IBUILDTAG).tgz
+package:	$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb\
+ 			$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
+helm: $(PACKAGE_PREFIX)-$(IBUILDTAG).tgz
 
-sonic-%: $(SOURCES)
-	$(if $(filter 3,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern 'sonic-<os>-<arch>'))
+define archName
+$(lastword $(subst -, ,$(basename $(1))))
+endef
+
+define osName
+$(lastword $(filter-out $(call archName,$(1)),$(subst -, ,$(basename $(1)))))
+endef
+
+$(EXEC_PREFIX)-%: $(SOURCES)
+	$(if $(filter 3,$(words $(subst -, ,$@))),,$(error Invalid executable name '$(strip $@)'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>'))
 	go mod download
-	GOOS="$(word   2, $(subst -, ,$(basename $@)))"				\
-	GOARCH="$(word 3, $(subst -, ,$(basename $@)))"				\
+	GOOS="$(call osName,$@)"									\
+	GOARCH="$(call archName,$@)"								\
 	CGO_ENABLED="$(ICGO_ENABLED)"								\
 	go build -trimpath											\
 			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
 			 -o $@
 
-docker-%: sonic-%
-	TARGET_OS="$(word   2, $(subst -, ,$(basename $<)))"	\
-	TARGET_ARCH="$(word 3, $(subst -, ,$(basename $<)))"	\
+docker-%: $(EXEC_PREFIX)-%
+	TARGET_OS="$(call osName,$<)"							\
+	TARGET_ARCH="$(call archName,$<)"						\
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}	\
-	             -t sonicweb:$(IBUILDTAG)					\
+	             -t $(EXEC_PREFIX):$(IBUILDTAG)					\
 	             --squash									\
 	             .
 
-SonicWeb-$(IBUILDTAG).tgz: $(shell find helm -type f)
+$(PACKAGE_PREFIX)-$(IBUILDTAG).tgz: $(shell find helm -type f)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
-SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml sonic-$(IGOOS)-$(IGOARCH) $(MANPAGES)
+$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
 	nfpm package --config $< --packager deb --target $@
 
-SonicWeb-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml sonic-$(IGOOS)-$(IGOARCH) $(MANPAGES)
+$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
-	TARGET_OS="$(word   2, $(subst -, ,$(basename $@)))"	\
-	TARGET_ARCH="$(word 3, $(subst -, ,$(basename $@)))"	\
-	TARGET_VERSION="$(IBUILDTAG)"							\
+	TARGET_OS="$(call osName,$@)"		\
+	TARGET_ARCH="$(call archName,$@)"	\
+	TARGET_VERSION="$(IBUILDTAG)"		\
+	EXEC_PREFIX="$(EXEC_PREFIX)"		\
+	PACKAGE_PREFIX="$(PACKAGE_PREFIX)"	\
 	envsubst < $< > $@
 
 %.1: %.1.tmpl
-	GIT_REF_DATE="$(GIT_REF_DATE)"	\
-	GIT_TAG="$(IBUILDTAG)"			\
+	GIT_REF_DATE="$(GIT_REF_DATE)"		\
+	GIT_TAG="$(IBUILDTAG)"				\
+	EXEC_PREFIX="$(EXEC_PREFIX)"		\
+	PACKAGE_PREFIX="$(PACKAGE_PREFIX)"	\
 	envsubst < $< > $@
 
 %.gz: %
@@ -108,9 +132,9 @@ fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
 
 clean:
-	@-rm -vrf	sonic-*-*			\
-				nfpm-*.yaml			\
-				testcert            \
-				man/sonicweb*.1.gz	\
-				man/sonicweb*.1		\
-				SonicWeb-*.* | sed -E s/"(.*)"/"cleaning \\1"/
+	@-rm -vrf	$(EXEC_PREFIX)-*-*		\
+				nfpm-*.yaml				\
+				testcert				\
+				man/$(EXEC_PREFIX)*.1.gz\
+				man/$(EXEC_PREFIX)*.1	\
+				$(PACKAGE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/
