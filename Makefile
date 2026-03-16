@@ -105,12 +105,12 @@ $(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGO
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
-	TARGET_OS="$(call osNamePrefix,$@,nfpm)"	\
-	TARGET_ARCH="$(call archNamePrefix,$@,nfpm)"\
-	TARGET_VERSION="$(IBUILDTAG)"				\
-	EXEC_PREFIX="$(EXEC_PREFIX)"				\
-	PACKAGE_NAME="$(PACKAGE_NAME)"				\
-	PROJECT_NAME="$(PROJECT_NAME)"				\
+	TARGET_OS="$(call osNamePrefix,$@,nfpm)"		\
+	TARGET_ARCH="$(call archNamePrefix,$@,nfpm)"	\
+	TARGET_VERSION="$(IBUILDTAG)"					\
+	EXEC_PREFIX="$(EXEC_PREFIX)"					\
+	PACKAGE_NAME="$(PACKAGE_NAME)"					\
+	PROJECT_NAME="$(PROJECT_NAME)"					\
 	envsubst < $< > $@
 
 %.1: %.1.tmpl
