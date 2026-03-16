@@ -18,7 +18,7 @@ ${EXEC_PREFIX} \- Pequeño servidor seguro de archivos estáticos.
 [\-clientca archivo]
 [\-acmedomain dominio]
 [\-certcache ruta]
-[\-acmeendpoint lru]
+[\-acmeendpoint url]
 [\-header encabezado]
 [\-headerfile archivo]
 [\-tryfile archivoexpr]
@@ -71,7 +71,7 @@ Establece el dominio permitido para la obtención automática de certificados; s
 Establece el directorio para la caché de certificados. Por defecto se configura en el
 .BR directorio\ predeterminado\ para\ archivos\ temporales\ del\ sistema\ operativo.
 .TP
-.I \-acmeendpoint lru
+.I \-acmeendpoint url
 Establece otro punto final para la obtención automática de certificados.
 .TP
 .I \-header <encabezado>
