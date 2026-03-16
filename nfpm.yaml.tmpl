@@ -3,7 +3,7 @@
 
 # yaml-language-server: $schema=https://nfpm.goreleaser.com/static/schema.json
 
-name:       "${PACKAGE_PREFIX}"
+name:       "${PACKAGE_NAME}"
 arch:       "${TARGET_ARCH}"
 platform:   "${TARGET_OS}"
 version:    "${TARGET_VERSION}"
@@ -18,7 +18,7 @@ suggests:   []
 conflicts:  []
 maintainer: "AlphaOne1 <alphaone23@gmail.com>"
 description: |
-    SonicWeb is a no-configuration webserver. It is meant to serve
+    ${PROJECT_NAME} is a no-configuration webserver. It is meant to serve
     static content fast without fuzz.
 vendor:     "AlphaOne1 <alphaone23@gmail.com>"
 homepage:   "https://github.com/AlphaOne1/sonicweb"

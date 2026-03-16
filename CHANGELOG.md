@@ -7,6 +7,7 @@ Release 1.7.2
 
 - Makefile cleanup and modularization
 - default executable prefix changed from `sonic` to `sonicweb`
+- TLS test-keys and -certificates now use ECDSA instead of RSA
 - dependency updates
 
 Release 1.7.1
