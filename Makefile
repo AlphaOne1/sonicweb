@@ -3,12 +3,14 @@
 # SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-EXEC_PREFIX=   sonicweb
-PACKAGE_PREFIX=SonicWeb
-IGOOS:=        $(shell go env GOOS)
-IGOARCH:=      $(shell go env GOARCH)
-EXEC_SUFFIX=   $(if $(filter windows,$(IGOOS)),.exe,)
-ICGO_ENABLED=  $(if $(CGO_ENABLED),$(CGO_ENABLED),0)
+PROJECT_NAME=       SonicWeb
+EXEC_PREFIX=		sonicweb
+PACKAGE_FILE_PREFIX=$(PROJECT_NAME)
+PACKAGE_NAME=		$(EXEC_PREFIX)
+IGOOS:=				$(shell go env GOOS)
+IGOARCH:=			$(shell go env GOARCH)
+EXEC_SUFFIX=		$(if $(filter windows,$(IGOOS)),.exe,)
+ICGO_ENABLED=		$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell command -v git >/dev/null 2>&1 && echo yes),yes,no)
@@ -19,14 +21,18 @@ endif
 IBUILDTAG?=		unknown
 GIT_REF_DATE?=	$(strip $(shell date +"%B %Y"))
 
-$(info EXEC_PREFIX:   $(EXEC_PREFIX))
-$(info EXEC_SUFFIX:   $(EXEC_SUFFIX))
-$(info IGOOS:         $(IGOOS))
-$(info IGOARCH:       $(IGOARCH))
-$(info ICGO_ENABLED:  $(ICGO_ENABLED))
-$(info GIT_AVAILABLE: $(GIT_AVAILABLE))
-$(info IBUILDTAG:     $(IBUILDTAG))
-$(info GIT_REF_DATE:  $(GIT_REF_DATE))
+ifdef DEBUG
+$(info PROJECT_NAME:        $(PROJECT_NAME))
+$(info EXEC_PREFIX:         $(EXEC_PREFIX))
+$(info EXEC_SUFFIX:         $(EXEC_SUFFIX))
+$(info PACKAGE_FILE_PREFIX: $(PACKAGE_FILE_PREFIX))
+$(info IGOOS:               $(IGOOS))
+$(info IGOARCH:             $(IGOARCH))
+$(info ICGO_ENABLED:        $(ICGO_ENABLED))
+$(info GIT_AVAILABLE:       $(GIT_AVAILABLE))
+$(info IBUILDTAG:           $(IBUILDTAG))
+$(info GIT_REF_DATE:        $(GIT_REF_DATE))
+endif
 
 PATH:=       $(PATH):$(shell go env GOPATH)/bin
 MANPAGES=    man/$(EXEC_PREFIX).1.gz		\
@@ -40,10 +46,11 @@ SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod logo.tmpl
 .DELETE_ON_ERROR:
 
 all: $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
+# Build the default Linux/amd64 image; use docker-<os>-<arch> for other targets.
 docker: docker-linux-amd64
-package:	$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb\
- 			$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
-helm: $(PACKAGE_PREFIX)-$(IBUILDTAG).tgz
+package: $(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb \
+		$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
+helm: $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz
 
 define osNamePrefix
 $(firstword $(subst -, ,$(basename $(patsubst $(2)-%,%,$(1)))))
@@ -62,7 +69,12 @@ $(call archNamePrefix,$(1),$(EXEC_PREFIX))
 endef
 
 define validSuffix
-$(if $(filter-out 1,$(words $(subst -, ,$(1)))),,$(error Invalid executable name '$(strip $(1))'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>[-<variant>...]'))
+$(if $(or \
+	$(findstring --,$(basename $(1))),\
+	$(filter -%,$(basename $(1))),\
+	$(filter %-,$(basename $(1))),\
+	$(filter 0 1,$(words $(subst -, ,$(basename $(1)))))\
+),$(error Invalid executable name '$(strip $(1))'; expected pattern '$(EXEC_PREFIX)-<os>-<arch>[-<variant>...]'))
 endef
 
 $(EXEC_PREFIX)-%: $(SOURCES)
@@ -83,13 +95,13 @@ docker-%: $(EXEC_PREFIX)-%
 	             --squash									\
 	             .
 
-$(PACKAGE_PREFIX)-$(IBUILDTAG).tgz: $(shell find helm -type f)
+$(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(shell find helm -type f)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
-$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
 	nfpm package --config $< --packager deb --target $@
 
-$(PACKAGE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
@@ -97,14 +109,15 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	TARGET_ARCH="$(call archNamePrefix,$@,nfpm)"\
 	TARGET_VERSION="$(IBUILDTAG)"				\
 	EXEC_PREFIX="$(EXEC_PREFIX)"				\
-	PACKAGE_PREFIX="$(PACKAGE_PREFIX)"			\
+	PACKAGE_NAME="$(PACKAGE_NAME)"				\
+	PROJECT_NAME="$(PROJECT_NAME)"				\
 	envsubst < $< > $@
 
 %.1: %.1.tmpl
-	GIT_REF_DATE="$(GIT_REF_DATE)"		\
-	GIT_TAG="$(IBUILDTAG)"				\
-	EXEC_PREFIX="$(EXEC_PREFIX)"		\
-	PACKAGE_PREFIX="$(PACKAGE_PREFIX)"	\
+	GIT_REF_DATE="$(GIT_REF_DATE)"	\
+	GIT_TAG="$(IBUILDTAG)"			\
+	EXEC_PREFIX="$(EXEC_PREFIX)"	\
+	PROJECT_NAME="$(PROJECT_NAME)"	\
 	envsubst < $< > $@
 
 %.gz: %
@@ -112,20 +125,22 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 
 tls:
 	mkdir -p testcert
-	openssl genrsa -out testcert/ca-key.pem 4096
+	openssl ecparam -name prime256v1 -genkey -noout -out testcert/ca-key.pem
 	openssl req -new -x509 -nodes -days 7 -subj "/CN=localhost" \
 				-key testcert/ca-key.pem			\
 				-out testcert/ca-cert.pem
-	openssl req -newkey rsa:4096 -nodes -days 7 -subj "/CN=localhost" \
-				-keyout testcert/server-key.pem		\
+	openssl ecparam -name prime256v1 -genkey -noout -out testcert/server-key.pem
+	openssl req -new -subj "/CN=localhost" 			\
+				-key    testcert/server-key.pem		\
 				-out    testcert/server-req.pem
 	openssl x509 -req -days 7 -set_serial 01		\
 				-in    testcert/server-req.pem		\
 				-out   testcert/server-cert.pem		\
 				-CA    testcert/ca-cert.pem			\
 				-CAkey testcert/ca-key.pem
-	openssl req -newkey rsa:4096 -nodes -days 7 -subj "/CN=localhost" \
-  				-keyout testcert/client-key.pem		\
+	openssl ecparam -name prime256v1 -genkey -noout -out testcert/client-key.pem
+	openssl req -new -subj "/CN=localhost" 			\
+  				-key    testcert/client-key.pem		\
    				-out    testcert/client-req.pem
 	openssl x509 -req -days 7 -set_serial 01		\
 				-in    testcert/client-req.pem		\
@@ -134,7 +149,7 @@ tls:
 				-CAkey testcert/ca-key.pem
 	rm testcert/*-req.pem
 
-	#openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 7 -nodes -subj "/CN=sw-example.ex"
+	#openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -keyout server.key -out server.crt -days 7 -nodes -subj "/CN=sw-example.ex"
 
 test:
 	go test ./...
@@ -144,9 +159,9 @@ fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
 
 clean:
-	@-rm -vrf	$(EXEC_PREFIX)-*-*		\
-				nfpm-*.yaml				\
-				testcert				\
-				man/$(EXEC_PREFIX)*.1.gz\
-				man/$(EXEC_PREFIX)*.1	\
-				$(PACKAGE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/
+	@-rm -vrf	$(EXEC_PREFIX)-*-*			\
+				nfpm-*.yaml					\
+				testcert					\
+				man/$(EXEC_PREFIX)*.1.gz	\
+				man/$(EXEC_PREFIX)*.1		\
+				$(PACKAGE_FILE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/
