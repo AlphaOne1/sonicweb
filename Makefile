@@ -13,7 +13,7 @@ EXEC_SUFFIX=		$(if $(filter windows,$(IGOOS)),.exe,)
 ICGO_ENABLED=		$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 
 # recognize if git is available and set IBUILDTAG accordingly
-GIT_AVAILABLE := $(if $(shell command -v git >/dev/null 2>&1 && echo yes),yes,no)
+GIT_AVAILABLE := $(if $(shell git status 2>/dev/null),yes,no)
 ifeq ($(GIT_AVAILABLE),yes)
     IBUILDTAG :=  $(strip $(shell git describe --tags 2>/dev/null))
 	GIT_REF_DATE:=$(strip $(shell git log -1 --date=format:"%B %Y" --format="%ad" 2>/dev/null))
@@ -95,7 +95,7 @@ docker-%: $(EXEC_PREFIX)-%
 	             --squash									\
 	             .
 
-$(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(shell find helm -type f)
+$(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(wildcard helm/* helm/**/*)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
 $(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
