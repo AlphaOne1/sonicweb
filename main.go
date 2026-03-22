@@ -251,15 +251,17 @@ func generateFileHandler(
 	}
 
 	mwStack = append(mwStack,
+		// handlers that see the basePath prefix
 		addHeaders(additionalHeaders),
 		helper.Must(correlation.New()),
 		helper.Must(accesslog.New()),
-		addTryFiles(tryFiles, statFS),
-		checkValidFilePath(),
-		helper.Must(directoryListing(statFS, indexEnabled)),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(basePath, next)
-		})
+		},
+		// handlers that operate on the filesystem, no basePath prefix
+		addTryFiles(tryFiles, statFS),
+		checkValidFilePath(),
+		helper.Must(directoryListing(statFS, indexEnabled, basePath)))
 
 	return midgard.StackMiddlewareHandler(
 			mwStack,

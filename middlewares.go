@@ -286,7 +286,7 @@ var directoryListingTemplate string
 // The middleware skips directory listing when serving files or paths with index.html present.
 //
 //nolint:funlen,gocognit
-func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Handler, error) {
+func directoryListing(fsys fs.StatFS, enabled bool, basePath string) (func(http.Handler) http.Handler, error) {
 	tmpl, err := template.New("directoryListing").Parse(directoryListingTemplate)
 
 	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
@@ -314,7 +314,8 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 
 			// check if index.html is already existing
 			if infoErr == nil && info.IsDir() {
-				if index, indexErr := fsys.Stat(path + "/index.html"); indexErr == nil && !index.IsDir() {
+				if index, indexErr := fsys.Stat(
+					strings.TrimPrefix(path+"/index.html", ".")); indexErr == nil && !index.IsDir() {
 					hasIndex = true
 				}
 			}
@@ -373,22 +374,27 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 			}
 
 			params := map[string]any{
-				"DirectoryName":   "/" + path,
-				"DirectoryPrefix": "/" + path,
+				"DirectoryName":   basePath + path,
+				"DirectoryPrefix": basePath + path,
 				"Entries":         entries,
 			}
 
 			if path != "." {
-				parentDir := "/"
+				parentDir := basePath
 
 				if idx := strings.LastIndex(path, "/"); idx >= 0 {
-					parentDir = "/" + path[:idx+1]
+					parentDir = basePath + path[:idx+1]
 				}
 
 				params["ParentDirectory"] = parentDir
 			} else {
-				params["DirectoryName"] = "/"
-				params["DirectoryPrefix"] = ""
+				params["DirectoryName"] = basePath
+
+				if basePath == "/" {
+					params["DirectoryPrefix"] = ""
+				} else {
+					params["DirectoryPrefix"] = strings.TrimSuffix(basePath, "/")
+				}
 			}
 
 			params["Languages"] = parseLanguageHeader(r.Header.Get("Accept-Language"))

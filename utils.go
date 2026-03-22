@@ -49,7 +49,7 @@ func parseLanguageHeader(langHeader string) []LangPref {
 		}
 	}
 
-	slices.SortFunc(langs, func(a, b LangPref) int {
+	slices.SortStableFunc(langs, func(a, b LangPref) int {
 		if a.Pref > b.Pref {
 			return -1
 		} else if a.Pref < b.Pref {
