@@ -31,13 +31,13 @@ SPDX-License-Identifier: MPL-2.0
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<meta name="robots" content="noindex">
 
-    <style>
-        {{/* align second column (size) to the right, let heading untouched */ -}}
-        table.directoryListing td:nth-child(2) {
-            text-align: right;
-            padding-right: 1em;
-        }
-    </style>
+	<style>
+		{{/* align second column (size) to the right, let heading untouched */ -}}
+		table.directoryListing td:nth-child(2) {
+			text-align: right;
+			padding-right: 1em;
+		}
+	</style>
 
 	<title> {{.DirectoryName}} </title>
 </head>
@@ -54,10 +54,10 @@ SPDX-License-Identifier: MPL-2.0
 			{{- $dirPrefix := .DirectoryPrefix -}}
 			{{- range .Entries -}}
 			{{- $fi := .Info }}
-			<tr>{{ if $fi.IsDir }} <td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }}/ </a></em></td>
-			    {{- else if gt (len .LinkTarget) 0 -}}
-			                       <td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
-				{{- else -}}       <td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} </a></td>
+			<tr>{{ if $fi.IsDir -}}	<td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }}/ </a></em></td>
+				{{- else if gt (len .LinkTarget) 0 -}}
+									<td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
+				{{- else -}}		<td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} </a></td>
 				{{- end }}
 				<td> {{ $fi.Size    }} </td>
 				<td> {{ $fi.ModTime.Format "2006-01-02 15:04:05 -07" }} </td>
