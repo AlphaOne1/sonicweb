@@ -296,6 +296,11 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			type FileEntry struct {
+				Name string
+				Info os.FileInfo
+			}
+
 			// check the desired file is either a directory or an index.html
 			path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/")
 
@@ -325,7 +330,7 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 				return
 			}
 
-			entries, dirErr := fs.ReadDir(fsys, path)
+			rawEntries, dirErr := fs.ReadDir(fsys, path)
 
 			if dirErr != nil {
 				slog.Error("could not read directory", //nolint:gosec // slog cares for safety
@@ -334,6 +339,19 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 				return
+			}
+
+			entries := make([]FileEntry, 0, len(rawEntries))
+
+			for _, rawEntry := range rawEntries {
+				finfo, fInfoErr := rawEntry.Info()
+
+				if fInfoErr != nil {
+					// something went wrong with the file, just letting it out
+					continue
+				}
+
+				entries = append(entries, FileEntry{Name: rawEntry.Name(), Info: finfo})
 			}
 
 			params := map[string]any{
