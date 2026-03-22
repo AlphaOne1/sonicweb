@@ -15,7 +15,7 @@ ICGO_ENABLED=		$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell git status 2>/dev/null),yes,no)
 ifeq ($(GIT_AVAILABLE),yes)
-    IBUILDTAG :=  $(strip $(shell git describe --tags 2>/dev/null))
+    IBUILDTAG :=  $(or $(strip $(shell git describe --tags 2>/dev/null)),v0.0)
 	GIT_REF_DATE:=$(strip $(shell git log -1 --date=format:"%B %Y" --format="%ad" 2>/dev/null))
 endif
 IBUILDTAG?=		unknown
@@ -39,7 +39,7 @@ MANPAGES=    man/$(EXEC_PREFIX).1.gz		\
              man/$(EXEC_PREFIX)_de.1.gz	\
              man/$(EXEC_PREFIX)_es.1.gz
 SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
-SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod logo.tmpl
+SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod dir_index.html.tmpl logo.tmpl
 
 
 .PHONY: all clean docker fuzz helm package test tls
@@ -121,7 +121,7 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	envsubst < $< > $@
 
 %.gz: %
-	gzip -k -9 $<
+	gzip -k -f -9 $<
 
 tls:
 	mkdir -p testcert

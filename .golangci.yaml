@@ -15,10 +15,8 @@ linters:
 
     disable:
         - exhaustruct
-        - forbidigo
         - noinlineerr
         - wsl
-        - wsl_v5
 
     exclusions:
         warn-unused: true
@@ -116,6 +114,12 @@ linters:
 
         whitespace:
             multi-func: true
+
+        wsl_v5:
+            disable:
+                - decl
+                - err
+                - leading-whitespace
 
 issues:
     max-issues-per-linter: 0

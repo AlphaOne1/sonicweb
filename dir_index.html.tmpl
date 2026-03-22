@@ -1,0 +1,58 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+SPDX-License-Identifier: MPL-2.0
+*/ -}}
+
+{{- $lang             := "en"                         -}}
+{{- $headName         := "Name"                       -}}
+{{- $headSize         := "Size"                       -}}
+{{- $headLastModified := "Last Modified"              -}}
+
+{{- range .Languages                                  -}}
+{{-     if eq .Lang "de"                              -}}
+{{-         $lang             = "de"                  -}}
+{{-         $headName         = "Name"                -}}
+{{-         $headSize         = "Größe"               -}}
+{{-         $headLastModified = "Letzte Änderung"     -}}
+{{-         break                                     -}}
+{{-     else if eq .Lang "es"                         -}}
+{{-         $lang             = "es"                  -}}
+{{-         $headName         = "Nombre"              -}}
+{{-         $headSize         = "Tamaño"              -}}
+{{-         $headLastModified = "Última modificación" -}}
+{{-         break                                     -}}
+{{-     end                                           -}}
+{{- end                                               -}}
+
+<!DOCTYPE html>
+<html lang="{{ $lang }}">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="robots" content="noindex">
+	<title> {{.DirectoryName}} </title>
+</head>
+<body>
+	<h1> {{.DirectoryName}} </h1>
+	<table style="font-family: monospace;">
+		<thead>
+			<tr><th> {{ $headName }} </th><th> {{ $headSize }} </th><th> {{ $headLastModified }} </th></tr>
+		</thead>
+		<tbody>
+			{{- if .ParentDirectory }}
+			<tr><td><a href="{{ .ParentDirectory }}"> .. </a></td><td></td><td></td></tr>
+			{{- end -}}
+			{{- $dirPrefix := .DirectoryPrefix -}}
+			{{- range .Entries -}}
+			{{- $fi := .Info }}
+			<tr>{{ if $fi.IsDir }} <td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }}/ </a></em></td>
+				{{- else -}}       <td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} </a></td>
+				{{- end }}
+				<td> {{ $fi.Size    }} </td>
+				<td> {{ $fi.ModTime }} </td>
+			</tr>
+			{{- end }}
+		</tbody>
+	</table>
+</body>
+</html>
