@@ -315,7 +315,7 @@ func directoryListing(fsys fs.StatFS, enabled bool, basePath string) (func(http.
 			// check if index.html is already existing
 			if infoErr == nil && info.IsDir() {
 				if index, indexErr := fsys.Stat(
-					strings.TrimPrefix(path+"/index.html", ".")); indexErr == nil && !index.IsDir() {
+					strings.TrimPrefix(path+"/index.html", "./")); indexErr == nil && !index.IsDir() {
 					hasIndex = true
 				}
 			}
