@@ -24,10 +24,7 @@ var acceptLanguageHeaderRegex = regexp.MustCompile(
 // parseLanguageHeader parses the Accept-Language header and returns a sorted slice of LangPref by preference value.
 func parseLanguageHeader(langHeader string) []LangPref {
 	const AverageLangLength = 5
-	const (
-		LangMatch     = 3
-		LangPrefMatch = 4
-	)
+	const LangPrefMatch = 4
 
 	langHeader = strings.ReplaceAll(langHeader, " ", "")
 
@@ -36,16 +33,10 @@ func parseLanguageHeader(langHeader string) []LangPref {
 	for part := range strings.SplitSeq(langHeader, ",") {
 		matches := acceptLanguageHeaderRegex.FindStringSubmatch(part)
 
-		switch len(matches) {
-		case LangMatch:
-			langs = append(langs, LangPref{
-				Lang:    matches[2],
-				Variant: matches[1],
-				Pref:    1.0,
-			})
-		case LangPrefMatch:
+		if len(matches) == LangPrefMatch {
 			pref, prefErr := strconv.ParseFloat(matches[3], 32)
 
+			// this occurs in the case of an empty match
 			if prefErr != nil {
 				pref = 1
 			}
@@ -76,8 +67,8 @@ func cutLog(s string) string {
 	const MaxLogStringLength = 64 // must be smaller than the MaxPathPartLength!!!
 	const EndFill = "..."
 
-	if len(s) > MaxLogStringLength {
-		return s[:max(1, MaxLogStringLength-len(EndFill))] + EndFill
+	if len([]rune(s)) > MaxLogStringLength {
+		return string(append([]rune(s)[:max(1, MaxLogStringLength-len(EndFill))], []rune(EndFill)...))
 	}
 
 	return s

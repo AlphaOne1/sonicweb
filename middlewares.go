@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -285,12 +286,12 @@ var directoryListingTemplate string
 // The middleware skips directory listing when serving files or paths with index.html present.
 //
 //nolint:funlen,gocognit
-func directoryListing(fsys fs.StatFS, enabled bool) func(http.Handler) http.Handler {
+func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Handler, error) {
 	tmpl, err := template.New("directoryListing").Parse(directoryListingTemplate)
 
+	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
 	if err != nil {
-		slog.Error("could not parse directory listing template", slog.String("error", err.Error()))
-		return nil
+		return nil, fmt.Errorf("could not parse directory listing template: %w", err)
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -305,7 +306,7 @@ func directoryListing(fsys fs.StatFS, enabled bool) func(http.Handler) http.Hand
 			info, infoErr := fsys.Stat(path)
 			hasIndex := false
 
-			// check if index.html is alreaady existing
+			// check if index.html is already existing
 			if infoErr == nil && info.IsDir() {
 				if index, indexErr := fsys.Stat(path + "/index.html"); indexErr == nil && !index.IsDir() {
 					hasIndex = true
@@ -313,9 +314,7 @@ func directoryListing(fsys fs.StatFS, enabled bool) func(http.Handler) http.Hand
 			}
 
 			// jump to the next handler, if we are not to generate the index.html here
-			if infoErr != nil ||
-				infoErr == nil && !info.IsDir() ||
-				infoErr == nil && hasIndex {
+			if infoErr != nil || !info.IsDir() || hasIndex {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -358,12 +357,24 @@ func directoryListing(fsys fs.StatFS, enabled bool) func(http.Handler) http.Hand
 
 			params["Languages"] = parseLanguageHeader(r.Header.Get("Accept-Language"))
 
-			if err := tmpl.Execute(w, params); err != nil {
+			outBuf := bytes.Buffer{}
+
+			if err := tmpl.Execute(&outBuf, params); err != nil {
 				slog.Error("could not execute directory listing template", //nolint:gosec // slog cares for safety
 					slog.String("path", cutLog(path)),
 					slog.String("error", err.Error()))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+			if written, err := io.Copy(w, &outBuf); err != nil {
+				slog.Error("could not fully send directory listing",
+					slog.Int64("written", written),
+					slog.String("error", err.Error()))
 			}
 		})
-	}
+	}, nil
 }
