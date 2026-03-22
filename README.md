@@ -112,7 +112,7 @@ Getting Started
 | -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               | &check;  |
 | -certcache      \<path\>     | directory for certificate cache                    | os temp directory |          |
 | -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |          |
-| -index                       | enable directory listing                           | true              |          |
+| -index          {true,false} | enable directory listing                           | true              |          |
 | -header         \<header\>   | additional header                                  | n/a               | &check;  |
 | -headerfile     \<file\>     | file containing additional headers                 | n/a               | &check;  |
 | -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | &check;  |

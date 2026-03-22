@@ -256,7 +256,7 @@ func generateFileHandler(
 		helper.Must(accesslog.New()),
 		addTryFiles(tryFiles, statFS),
 		checkValidFilePath(),
-		directoryListing(statFS, indexEnabled),
+		helper.Must(directoryListing(statFS, indexEnabled)),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(basePath, next)
 		})
