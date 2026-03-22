@@ -46,10 +46,12 @@ SPDX-License-Identifier: MPL-2.0
 			{{- range .Entries -}}
 			{{- $fi := .Info }}
 			<tr>{{ if $fi.IsDir }} <td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }}/ </a></em></td>
+			    {{- else if gt (len .LinkTarget) 0 -}}
+			                       <td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
 				{{- else -}}       <td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} </a></td>
 				{{- end }}
 				<td> {{ $fi.Size    }} </td>
-				<td> {{ $fi.ModTime }} </td>
+				<td> {{ $fi.ModTime.Format "2006-01-02 15:04:05Z" }} </td>
 			</tr>
 			{{- end }}
 		</tbody>
