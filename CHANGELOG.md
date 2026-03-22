@@ -2,6 +2,13 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
+Release 1.8.0
+=============
+
+- introduced new `-index` option to control directory listing
+- update Makefile to give Version v0.0 in case of no version tag
+- dependency updates
+
 Release 1.7.2
 =============
 

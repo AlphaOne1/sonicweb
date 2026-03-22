@@ -19,6 +19,7 @@ ${EXEC_PREFIX} \- Pequeño servidor seguro de archivos estáticos.
 [\-acmedomain dominio]
 [\-certcache ruta]
 [\-acmeendpoint url]
+[\-index {true,false}]
 [\-header encabezado]
 [\-headerfile archivo]
 [\-tryfile archivoexpr]
@@ -73,6 +74,10 @@ Establece el directorio para la caché de certificados. Por defecto se configura
 .TP
 .I \-acmeendpoint url
 Establece otro punto final para la obtención automática de certificados.
+.TP
+.I \-index {true,false}
+Habilita o deshabilita el directório de carpetas. Por defecto en
+.BR true
 .TP
 .I \-header <encabezado>
 Añade el encabezado HTTP especificado a las respuestas; se puede indicar varias veces.

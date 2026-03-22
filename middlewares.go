@@ -5,7 +5,9 @@ package main
 
 import (
 	"bufio"
+	_ "embed"
 	"fmt"
+	"html/template"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -231,13 +233,13 @@ func addTryFiles(tries []string, fileSystem fs.StatFS) func(http.Handler) http.H
 	}
 }
 
+// checkValidFilePath validates incoming request file paths for length and format, ensuring they are safe and compliant.
 func checkValidFilePath() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const MaxPathPartLength = 255
-			const MaxLogStringLength = 64 // must be smaller than the MaxPathPartLength!!!
 
-			path := strings.TrimPrefix(r.URL.Path, "/")
+			path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/")
 
 			// Enforce a conservative limit for each path segment (common FS limit: 255 bytes)
 			// This guards against overly long filenames like a single 256-char component.
@@ -253,8 +255,8 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 						// we trim the path and parts to avoid logging overflows
 						slog.Warn("filename too long, truncated", //nolint:gosec // slog cares for safety
 							slog.Int("length", len(part)),
-							slog.String("part", part[:MaxLogStringLength]+"..."),
-							slog.String("path", path[:MaxLogStringLength]+"..."))
+							slog.String("part", cutLog(part)),
+							slog.String("path", cutLog(path)))
 
 						return
 					}
@@ -270,6 +272,98 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 			}
 
 			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+//go:embed dir_index.html.tmpl
+var directoryListingTemplate string
+
+// directoryListing creates middleware for handling directory listing in an HTTP file server.
+// If enabled, it generates an HTML page showing the directory's contents using a predefined template.
+// If it is not enabled, a 403-Forbidden is produced instead of the directory listing.
+// The middleware skips directory listing when serving files or paths with index.html present.
+//
+//nolint:funlen,gocognit
+func directoryListing(fsys fs.StatFS, enabled bool) func(http.Handler) http.Handler {
+	tmpl, err := template.New("directoryListing").Parse(directoryListingTemplate)
+
+	if err != nil {
+		slog.Error("could not parse directory listing template", slog.String("error", err.Error()))
+		return nil
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// check the desired file is either a directory or an index.html
+			path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/")
+
+			if path == "" {
+				path = "."
+			}
+
+			info, infoErr := fsys.Stat(path)
+			hasIndex := false
+
+			// check if index.html is alreaady existing
+			if infoErr == nil && info.IsDir() {
+				if index, indexErr := fsys.Stat(path + "/index.html"); indexErr == nil && !index.IsDir() {
+					hasIndex = true
+				}
+			}
+
+			// jump to the next handler, if we are not to generate the index.html here
+			if infoErr != nil ||
+				infoErr == nil && !info.IsDir() ||
+				infoErr == nil && hasIndex {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// if we should not generate the index.html, we deny the listing at this point
+			if !enabled {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			entries, dirErr := fs.ReadDir(fsys, path)
+
+			if dirErr != nil {
+				slog.Error("could not read directory", //nolint:gosec // slog cares for safety
+					slog.String("path", cutLog(path)),
+					slog.String("error", dirErr.Error()))
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+				return
+			}
+
+			params := map[string]any{
+				"DirectoryName":   "/" + path,
+				"DirectoryPrefix": "/" + path,
+				"Entries":         entries,
+			}
+
+			if path != "." {
+				parentDir := "/"
+
+				if idx := strings.LastIndex(path, "/"); idx >= 0 {
+					parentDir = "/" + path[:idx+1]
+				}
+
+				params["ParentDirectory"] = parentDir
+			} else {
+				params["DirectoryName"] = "/"
+				params["DirectoryPrefix"] = ""
+			}
+
+			params["Languages"] = parseLanguageHeader(r.Header.Get("Accept-Language"))
+
+			if err := tmpl.Execute(w, params); err != nil {
+				slog.Error("could not execute directory listing template", //nolint:gosec // slog cares for safety
+					slog.String("path", cutLog(path)),
+					slog.String("error", err.Error()))
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
 		})
 	}
 }

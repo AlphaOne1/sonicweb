@@ -19,6 +19,7 @@ ${EXEC_PREFIX} \- Kleiner, sicherer statischer Dateiserver.
 [\-acmedomain domain]
 [\-certcache pfad]
 [\-acmeendpoint url]
+[\-index {true,false}]
 [\-header header]
 [\-headerfile datei]
 [\-tryfile dateiausdruck]
@@ -73,6 +74,10 @@ Setzt Verzeichnis für Zertifikatscache. Standardmäßig auf
 .TP
 .I \-acmeendpoint url
 Setzt einen anderen Endpunkt für die automatische Zertifikatsbeschaffung.
+.TP
+.I \-index {true,false}
+Aktiviert oder deaktiviert die Verzeichnisanzeige. Standardmäßig auf
+.BR true
 .TP
 .I \-header header
 Fügt den angegebenen HTTP-Header zu Antworten hinzu. Diese Option darf mehrfach angegeben werden.

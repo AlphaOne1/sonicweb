@@ -62,6 +62,7 @@ func generateCertAndKey() (string, string) {
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() { _ = certFile.Close() }()
 
 	_ = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
@@ -71,6 +72,7 @@ func generateCertAndKey() (string, string) {
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() { _ = keyFile.Close() }()
 
 	privBytes, err := x509.MarshalECPrivateKey(priv)
@@ -131,6 +133,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 	mainStart := make(chan struct{}, 1)
 
 	slog.Info("starting main")
+
 	go func() {
 		os.Args = args
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
@@ -144,6 +147,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 		}()
 
 		mainStart <- struct{}{}
+
 		main()
 
 		// we can just come here if main did not call anyhow the exit function
@@ -154,6 +158,7 @@ func startMain(helper testHelper, args ...string) (*time.Timer, chan int) {
 	<-mainStart
 
 	slog.Info("setting exit timeout")
+
 	afterTimer := time.NewTimer(2 * time.Second)
 
 	return afterTimer, mainReturn
@@ -290,7 +295,7 @@ func TestSonicMainTLS(t *testing.T) {
 
 		if err != nil {
 			runtime.Gosched()
-			fmt.Printf("received error: %v\n", err)
+			t.Logf("received error: %v\n", err)
 			time.Sleep(500 * time.Millisecond)
 
 			continue
@@ -397,6 +402,7 @@ func BenchmarkHandler(b *testing.B) {
 		false,
 		"/",
 		"testroot/",
+		true,
 		nil,
 		nil,
 		nil)
@@ -442,6 +448,7 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 		false,
 		"/",
 		"testroot/",
+		true,
 		nil,
 		nil,
 		nil)
@@ -508,6 +515,7 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 
 		return true
 	}
+
 	if len(headerValue) > 1024 {
 		// Avoid huge header values that only stress http parsing without adding coverage
 		t.Skip()

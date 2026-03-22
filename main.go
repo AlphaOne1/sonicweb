@@ -27,9 +27,10 @@ import (
 	"github.com/AlphaOne1/midgard/handler/accesslog"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/helper"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
 	"github.com/AlphaOne1/sonicweb/instrumentation"
 	"github.com/AlphaOne1/sonicweb/service"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // ServerName is the reported server name in the header.
@@ -88,6 +89,7 @@ type ServerConfig struct {
 	AcmeDomains       *MultiStringValue
 	CertCache         string
 	AcmeEndpoint      string
+	IndexEnabled      bool
 	Headers           *MultiStringValue
 	HeadersFiles      *MultiStringValue
 	TryFiles          *MultiStringValue
@@ -123,6 +125,7 @@ func setupFlags() ServerConfig {
 	flag.Var(config.AcmeDomains, "acmedomain", "domain for automatic certificate retrieval")
 	flag.StringVar(&config.CertCache, "certcache", os.TempDir(), "directory for certificate cache")
 	flag.StringVar(&config.AcmeEndpoint, "acmeendpoint", "", " acme endpoint to use")
+	flag.BoolVar(&config.IndexEnabled, "index", true, "enable directory listing")
 	flag.Var(config.Headers, "header", "additional HTTP header")
 	flag.Var(config.HeadersFiles, "headerfile", "file containing additional HTTP headers")
 	flag.Var(config.TryFiles, "tryfile", "always try to load file expression first")
@@ -204,6 +207,7 @@ func generateFileHandler(
 	enableTelemetry bool,
 	basePath string,
 	rootPath string,
+	indexEnabled bool,
 	additionalHeaders [][2]string,
 	tryFiles []string,
 	wafCfg []string) (http.Handler, func(), error) {
@@ -252,6 +256,7 @@ func generateFileHandler(
 		helper.Must(accesslog.New()),
 		addTryFiles(tryFiles, statFS),
 		checkValidFilePath(),
+		directoryListing(statFS, indexEnabled),
 		func(next http.Handler) http.Handler {
 			return http.StripPrefix(basePath, next)
 		})
@@ -362,6 +367,7 @@ func run(signalShutdown context.Context) int {
 		}
 
 		metricHandler = metricHandlerLocal
+
 		defer cleanup(context.WithoutCancel(signalShutdown))
 
 		slog.Info("telemetry initialized")
@@ -407,6 +413,7 @@ func run(signalShutdown context.Context) int {
 		config.EnableTelemetry,
 		config.BasePath,
 		config.RootPath,
+		config.IndexEnabled,
 		append(headerParamToHeaders(*config.Headers), headers...),
 		*config.TryFiles,
 		*config.WafCfg)

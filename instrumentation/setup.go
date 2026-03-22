@@ -87,6 +87,7 @@ func SetupOTelSDK(
 		for _, fn := range slices.Backward(shutdownFuncs) {
 			err = errors.Join(err, fn(ctx))
 		}
+
 		shutdownFuncs = nil
 
 		return err

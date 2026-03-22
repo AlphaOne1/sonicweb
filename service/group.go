@@ -280,5 +280,6 @@ func startServer(server *http.Server, listener net.Listener, serveErrCh chan<- e
 			return
 		}
 	}
+
 	serveErrCh <- nil
 }

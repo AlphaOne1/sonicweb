@@ -112,6 +112,7 @@ Getting Started
 | -acmedomain     \<domain\>   | allowed domain for automatic certificate retrieval | n/a               | &check;  |
 | -certcache      \<path\>     | directory for certificate cache                    | os temp directory |          |
 | -acmeendpoint   \<url\>      | endpoint for automatic certificate retrieval       | n/a               |          |
+| -index                       | enable directory listing                           | true              |          |
 | -header         \<header\>   | additional header                                  | n/a               | &check;  |
 | -headerfile     \<file\>     | file containing additional headers                 | n/a               | &check;  |
 | -tryfile        \<fileexp\>  | always try to load file expression first           | n/a               | &check;  |
@@ -209,6 +210,20 @@ endpoint of Let's Encrypt is used. Use the following command for testing:
                     -acmeendpoint "https://acme-staging-v02.api.letsencrypt.org/directory"
 ```
 
+Directory Listing
+-----------------
+
+When serving files from a directory, it might be useful to enable directory listing.
+*SonicWeb* supports this via the `-index` parameter. It is enabled by default. When enabled, *SonicWeb* will
+respond to directory requests with a generated page that contains the entries of the requested directory,
+including:
+
+  - file or directory name
+  - size (in bytes)
+  - last modified time
+
+When disabled, attempting to list a directory's contents will result in a 403 Forbidden response.
+
 Additional Headers
 ------------------
 
@@ -284,7 +299,7 @@ Docker Usage
 *SonicWeb* is also distributed as a Docker image. To start it, one can simply write:
 
 ```sh
-docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.7.1
+docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.8.0
 ```
 
 and it will show this documentation. The entrypoint of the Dockerfile just starts *SonicWeb* without any parameters.
@@ -292,7 +307,7 @@ Therefore, `/www` is the default web root directory. Every parameter passed afte
 parameter to *SonicWeb*. For example, running
 
 ```sh
-docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.7.1 --log=debug
+docker run -p 8080:8080 ghcr.io/alphaone1/sonicweb:v1.8.0 --log=debug
 ```
 
 is equivalent to running:
@@ -305,7 +320,7 @@ The Docker image allows new web content to be mounted on `/www`, replacing the d
 web root directory, e.g., `myapp/`, can be mounted like this:
 
 ```sh
-docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.7.1
+docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicweb:v1.8.0
 ```
 
 Note that without specifying the `:ro` flag, the content will be mounted as read-write. *SonicWeb* does not write into
@@ -315,7 +330,7 @@ non-root user that *SonicWeb* uses (UID 65532).
 If telemetry is needed, port 8081 needs to be exposed additionally:
 
 ```sh
-docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicweb:v1.7.1
+docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicweb:v1.8.0
 ```
 
 
