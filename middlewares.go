@@ -297,8 +297,9 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			type FileEntry struct {
-				Name string
-				Info os.FileInfo
+				Name       string
+				Info       fs.FileInfo
+				LinkTarget string
 			}
 
 			// check the desired file is either a directory or an index.html
@@ -351,7 +352,24 @@ func directoryListing(fsys fs.StatFS, enabled bool) (func(http.Handler) http.Han
 					continue
 				}
 
-				entries = append(entries, FileEntry{Name: rawEntry.Name(), Info: finfo})
+				linkTarget := ""
+
+				if rawEntry.Type()&fs.ModeSymlink == fs.ModeSymlink {
+					lt, linkErr := fs.ReadLink(fsys, rawEntry.Name())
+
+					if linkErr != nil {
+						// something wen wrong reading the link, just letting it out
+						continue
+					}
+
+					linkTarget = lt
+				}
+
+				entries = append(entries, FileEntry{
+					Name:       rawEntry.Name(),
+					Info:       finfo,
+					LinkTarget: linkTarget,
+				})
 			}
 
 			params := map[string]any{
