@@ -8,7 +8,7 @@ go 1.26.0
 require (
 	github.com/AlphaOne1/geany v0.1.3
 	github.com/AlphaOne1/midgard v0.2.1
-	github.com/corazawaf/coraza/v3 v3.4.0
+	github.com/corazawaf/coraza/v3 v3.5.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.17.0
