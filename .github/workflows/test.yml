@@ -96,7 +96,7 @@ jobs:
                 go-version-file: go.mod
 
           - name: Test
-            run: go tool gotestsum --junitfile junit.xml -- -v `go list ./... | grep -v example` --covermode=count --coverpkg=./... --coverprofile=coverage.txt
+            run: go tool gotestsum --junitfile junit.xml -- -race -v `go list ./... | grep -v example` --covermode=atomic --coverpkg=./... --coverprofile=coverage.txt
 
           - name: Upload test results to Codecov
             if: ${{ !cancelled() }}
@@ -119,7 +119,7 @@ jobs:
         strategy:
             matrix:
                 go-version:
-                   - "stable"
+                  - "stable"
                 platform:
                   #- macos-latest
                   - ubuntu-latest

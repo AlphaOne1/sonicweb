@@ -57,12 +57,12 @@ jobs:
 
           - name: Determine pushed commits
             id: range
+            env:
+                # Use GitHub-provided SHAs to build the range for this push
+                BEFORE: ${{ github.event.before }}
+                AFTER: ${{ github.sha }}
             run: |
                 set -euo pipefail
-
-                # Use GitHub-provided SHAs to build the range for this push
-                BEFORE="${{ github.event.before }}"
-                AFTER="${{ github.sha }}"
 
                 if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
                 then
@@ -73,6 +73,9 @@ jobs:
                 fi
 
           - name: Check for Signed-off-by
+            env:
+                GH_ACTOR: ${{ github.actor }}
+                GH_NAME: ${{ github.event.pusher.name }}
             run: |
                 set -euo pipefail
                 missing=""
@@ -101,8 +104,8 @@ jobs:
 
                         echo "Committer name:           $committer_name"
                         echo "Committer email:          $committer_email"
-                        echo "github.actor:             ${{ github.actor }}"
-                        echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
+                        echo "github.actor:             $GH_ACTOR"
+                        echo "github.event.pusher.name: $GH_NAME"
                     fi
                 done < shas.txt
 
@@ -145,6 +148,9 @@ jobs:
                   | jq -r '.[].sha' > shas.txt
 
           - name: Check for Signed-off-by
+            env:
+                GH_ACTOR: ${{ github.actor }}
+                GH_NAME: ${{ github.event.pull_request.user.login}}
             run: |
                 set -euo pipefail
                 missing=""
@@ -171,10 +177,10 @@ jobs:
                         echo "Commit $sha missing Signed-off-by"
                         missing="true"
 
-                        echo "Committer name:           $committer_name"
-                        echo "Committer email:          $committer_email"
-                        echo "github.actor:             ${{ github.actor }}"
-                        echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
+                        echo "Committer name:                       $committer_name"
+                        echo "Committer email:                      $committer_email"
+                        echo "github.actor:                         $GH_ACTOR"
+                        echo "github.event.pull_request.user.login: $GH_NAME"
                     fi
                 done < shas.txt
 

@@ -104,12 +104,13 @@ jobs:
             if: matrix.os != 'windows'
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                TAG_NAME: ${{ github.event.release.tag_name }}
             shell: bash
             run: |
                 shopt -s nullglob
                 for file in sonicweb-*-* SonicWeb*.rpm SonicWeb*.deb
                 do
-                    gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
+                    gh release upload "$TAG_NAME" "$file" --clobber
                 done
 
           - name: Upload Windows Release (via GitHub CLI)
@@ -117,10 +118,10 @@ jobs:
             shell: powershell
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                tag: ${{ github.event.release.tag_name }}
             run: |
                 Set-StrictMode -Version Latest
                 $ErrorActionPreference = 'Stop'
-                $tag = "${{ github.event.release.tag_name }}"
                 Get-ChildItem -File -Path . -Filter 'sonicweb-*-*.7z' | ForEach-Object {
                     gh release upload $tag $_.FullName --clobber
                 }
@@ -191,10 +192,12 @@ jobs:
                     ${{ env.IMAGE_NAME }}:latest
 
           - name: Inspect final manifests
+            env:
+                TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 set -euo pipefail
-                docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
-                docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
+                docker manifest inspect "${IMAGE_NAME}:${TAG_NAME}"
+                docker manifest inspect "${IMAGE_NAME}:${TAG_NAME}-${{ github.sha }}"
                 docker manifest inspect "${IMAGE_NAME}:latest"
 
     ChecksumReleaseAssets:
@@ -217,12 +220,13 @@ jobs:
           - name: Download all release assets via GitHub CLI
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 set -euo pipefail
                 mkdir -p release-assets
                 cd release-assets
                 # gets all assets of the release
-                gh release download "${{ github.event.release.tag_name }}" --clobber
+                gh release download "$TAG_NAME" --clobber
                 echo "Downloaded assets:"
                 ls -lah
 

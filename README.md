@@ -4,6 +4,18 @@
 -->
 <p align="center">
     <img src="sonicweb_logo.svg" width="60%" alt="Logo"><br>
+    <a href="https://github.com/AlphaOne1/sonicweb/blob/HEAD/go.mod"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://img.shields.io/github/go-mod/go-version/AlphaOne1/sonicweb"
+             alt="Go Version">
+    </a>
+    <a href="https://github.com/AlphaOne1/sonicweb/releases"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://img.shields.io/github/v/release/AlphaOne1/sonicweb"
+             alt="Latest Release">
+    </a>
     <a href="https://github.com/AlphaOne1/sonicweb/actions/workflows/test.yml"
        rel="external noopener noreferrer"
        target="_blank">
@@ -58,6 +70,12 @@
         <img src="https://api.reuse.software/badge/github.com/AlphaOne1/sonicweb"
             alt="REUSE compliance">
     </a>
+    <a href="https://slsa.dev"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://slsa.dev/images/gh-badge-level3.svg"
+             alt="SLSA Level 3">
+    </a>
     <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=license"
        rel="external noopener noreferrer"
        target="_blank">
@@ -94,6 +112,29 @@ Features
   for example, [Prometheus](https://prometheus.io) and [Jaeger Tracing](https://jaegertracing.io)
 * no need for complicated configuration files
 
+
+Installation
+------------
+
+*SonicWeb* provides prebuild binaries and installation packages for Debian and RPM-based distributions.
+
+Builds are secured with SLSA Level 3 provenance via slsa-framework/slsa-github-generator.
+The downloaded source archive together with the provenance file `multiple.intoto.jsonl`
+can be verified using the [slsa-verifier](https://github.com/slsa-framework/slsa-verifier/)
+(replace the `<VERSION>` with the one you actually downloaded, e.g., `v1.8.0`):
+
+```bash
+$ slsa-verifier verify-artifact SonicWeb-linux-amd64-<VERSION>.deb \
+    --provenance-path multiple.intoto.jsonl                        \
+    --source-uri github.com/AlphaOne1/sonicweb                     \
+    --source-tag <VERSION>
+```
+
+If a source build is necessary, one could use the following command:
+
+```bash
+go install -ldflags "-s -w -X main.buildInfoTag=latest" github.com/AlphaOne1/sonicweb@latest
+```
 
 Getting Started
 ---------------
@@ -142,18 +183,18 @@ $ ./sonicweb-linux-amd64 -root testroot/
    |   \(_)/  ___/ / /_/ / / / / / /__ | |/ |/ /  __/ /_/ /
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
-   |/   \    _______\ Version: v1.7.1
-         \  |              of: 2026-03-04T03:19:16Z
+   |/   \    _______\ Version: v1.8.0
+         \  |              of: 2026-03-22T18:15:59Z
           \ |           using: go1.26.1
            \|
-time=2026-03-11T17:05:11.922525+01:00 level=INFO msg=logging level=info
-time=2026-03-11T17:05:11.922815+01:00 level=INFO msg="using root directory" root=testroot/
-time=2026-03-11T17:05:11.922849+01:00 level=INFO msg="using base path" path=/
-time=2026-03-11T17:05:11.928455+01:00 level=INFO msg="telemetry initialized"
-time=2026-03-11T17:05:11.928499+01:00 level=INFO msg="registering handlers for FileServer"
-time=2026-03-11T17:05:11.929362+01:00 level=INFO msg="started server" address=:8080 t_init=7.092731ms
-time=2026-03-11T17:05:11.929408+01:00 level=INFO msg="waiting for servers to shutdown"
-time=2026-03-11T17:05:11.929468+01:00 level=INFO msg="server started" name=SonicWeb addr=[::]:8080
+time=2026-03-22T21:30:32.840865+01:00 level=INFO msg=logging level=info
+time=2026-03-22T21:30:32.841103+01:00 level=INFO msg="using root directory" root=testroot
+time=2026-03-22T21:30:32.841136+01:00 level=INFO msg="using base path" path=/
+time=2026-03-22T21:30:32.844667+01:00 level=INFO msg="telemetry initialized"
+time=2026-03-22T21:30:32.844699+01:00 level=INFO msg="registering handlers for FileServer"
+time=2026-03-22T21:30:32.845797+01:00 level=INFO msg="started server" address=:8080 t_init=5.187895ms
+time=2026-03-22T21:30:32.845844+01:00 level=INFO msg="waiting for servers to shutdown"
+time=2026-03-22T21:30:32.845884+01:00 level=INFO msg="server started" name=SonicWeb addr=[::]:8080
 ```
 
 HTTPS
@@ -331,21 +372,4 @@ If telemetry is needed, port 8081 needs to be exposed additionally:
 
 ```sh
 docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicweb:v1.8.0
-```
-
-
-Building
---------
-
-For easier management, a `Makefile` is included, using it, the build is as easy as:
-
-```sh
-make
-```
-
-If your operating system does not provide a usable form of `make`, you can also do:
-
-```sh
-go mod download
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w"
 ```

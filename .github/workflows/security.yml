@@ -94,7 +94,7 @@ jobs:
 
           - name: Print Sarif
             id: printSarif
-            run:  |
+            run: |
                 cat govulncheck-results.sarif
                 if grep results govulncheck-results.sarif
                 then
