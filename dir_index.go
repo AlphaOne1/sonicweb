@@ -41,8 +41,9 @@ func hasIndexFile(fsys fs.StatFS, path string) bool {
 // collectDirectoryEntries reads and processes directory entries, handling symlinks.
 func collectDirectoryEntries(fsys fs.StatFS, path, basePath string) ([]FileEntry, error) {
 	rawEntries, err := fs.ReadDir(fsys, path)
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read directory entries: %w", err)
 	}
 
 	entries := make([]FileEntry, 0, len(rawEntries))
@@ -166,11 +167,11 @@ func directoryListing(fsys fs.StatFS, enabled bool, basePath string) (func(http.
 					slog.String("path", cutLog(path)),
 					slog.String("error", dirErr.Error()))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
 				return
 			}
 
 			params := buildDirectoryListingParams(path, basePath, entries, r)
-
 			outBuf := bytes.Buffer{}
 
 			if err := tmpl.Execute(&outBuf, params); err != nil {
