@@ -78,6 +78,19 @@ func TestHasIndexFile(t *testing.T) {
 	}
 }
 
+// indexCreateFS creates a temporary filesystem structure for testing and returns its root.
+// It ensures directories and files with specific structures are created, including symlinks.
+//
+//	"/"
+//	|
+//	+--"noIndex"
+//	|  |
+//	|  +--"file.html"
+//	|  '--"link.html"
+//	|
+//	'--"withIndex"
+//	   |
+//	   '--"index.html"
 func indexCreateFS(t *testing.T) *os.Root {
 	t.Helper()
 
