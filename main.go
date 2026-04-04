@@ -59,6 +59,9 @@ var buildInfoTag = "" // buildInfoTag holds the tag information of the version c
 // exitFunc holds os.Exit for normal operations and is overridden for testing.
 var exitFunc = os.Exit
 
+// startTime contains the time of the start of the executable.
+var startTime = time.Now()
+
 //go:embed logo.tmpl
 var logoTmpl string
 
@@ -322,9 +325,7 @@ func setupInstrumentation(
 // run initializes all necessary parts and starts the server.
 // It returns the desired process exit code.
 func run(signalShutdown context.Context) int {
-	startInit := time.Now()
-
-	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag})
+	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag, "ExeTime": executableTime()})
 
 	// Parse command line flags
 	config := setupFlags()
@@ -473,7 +474,7 @@ func run(signalShutdown context.Context) int {
 
 	slog.Info("started server",
 		slog.String("address", server.Addr),
-		slog.Duration("t_init", time.Since(startInit)))
+		slog.Duration("t_init", time.Since(startTime)))
 
 	services.WaitAllServersShutdown()
 
