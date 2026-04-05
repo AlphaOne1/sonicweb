@@ -3,8 +3,15 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/AlphaOne1/midgard"
+	"github.com/AlphaOne1/midgard/defs"
+	"github.com/AlphaOne1/midgard/helper"
 )
 
 func TestCleanRequestPath(t *testing.T) {
@@ -91,7 +98,7 @@ func TestHasIndexFile(t *testing.T) {
 //	'--"withIndex"
 //	   |
 //	   '--"index.html"
-func indexCreateFS(t *testing.T) *os.Root {
+func indexCreateFS(t *testing.T) (*os.Root, string) {
 	t.Helper()
 
 	dirName := t.TempDir()
@@ -99,37 +106,107 @@ func indexCreateFS(t *testing.T) *os.Root {
 
 	if err != nil {
 		t.Errorf("could not open temporary root: %v", err)
-		return nil
+		return nil, ""
 	}
 
 	if err := tmpFS.Mkdir("withIndex", 0o755); err != nil {
 		t.Errorf("could not create directory: %v", err)
-		return nil
+		return nil, ""
 	}
 
 	if err := tmpFS.Mkdir("noIndex", 0o755); err != nil {
 		t.Errorf("could not create directory: %v", err)
-		return nil
+		return nil, ""
 	}
 
 	if err := tmpFS.WriteFile("withIndex/index.html", []byte("index-content"), 0644); err != nil {
 		t.Errorf("could not write to withIndex/index.html: %v", err)
-		return nil
+		return nil, ""
 	}
 
 	if err := tmpFS.WriteFile("noIndex/file.html", []byte("file-content"), 0644); err != nil {
 		t.Errorf("could not write to noIndex/file.html: %v", err)
-		return nil
+		return nil, ""
 	}
 
-	if err := tmpFS.Symlink("noIndex/file.html", "noIndex/link.html"); err != nil {
+	if err := tmpFS.Symlink("file.html", "noIndex/link.html"); err != nil {
 		t.Errorf("could not create symlink: %v", err)
-		return nil
+		return nil, ""
 	}
 
-	return tmpFS
+	if err := tmpFS.Symlink("/noIndex/file.html", "noIndex/abslink.html"); err != nil {
+		t.Errorf("could not create absolute symlink: %v", err)
+		return nil, ""
+	}
+
+	return tmpFS, dirName
 }
 
 func TestCollectDirectoryEntries(t *testing.T) {
+	t.Parallel()
 
+	tests := []struct {
+		path         string
+		indexEnabled bool
+		want         []string
+	}{
+		{
+			path:         "/",
+			indexEnabled: true,
+			want: []string{
+				"<title> / </title>",
+				"<h1> / </h1>",
+			},
+		},
+		{
+			path:         "/withIndex/",
+			indexEnabled: true,
+			want: []string{
+				"index-content",
+			},
+		},
+		{
+			path:         "/noIndex",
+			indexEnabled: true,
+			want: []string{
+				"<title> /noIndex </title>",
+				"<h1> /noIndex </h1>",
+				`<td><a href="/noIndex/file.html"> file.html </a></td>`,
+				`<td><a href="/noIndex/link.html"> link.html &rarr; file.html </a></td>`,
+				`<td><a href="/noIndex/link.html"> abslink.html &rarr; /noIndex/file.html </a></td>`,
+			},
+		},
+	}
+
+	indexFS, indexDirName := indexCreateFS(t)
+	directory, casted := indexFS.FS().(fs.StatFS)
+
+	if !casted {
+		t.Error("directory does not implement fs.StatFS")
+	}
+
+	for testNum, test := range tests {
+		t.Run(fmt.Sprintf("TestCollectDirectoryEntries-%d", testNum), func(t *testing.T) {
+			t.Parallel()
+
+			testHandler := midgard.StackMiddlewareHandler(
+				[]defs.Middleware{
+					helper.Must(directoryListing(directory, test.indexEnabled, "/", indexDirName)),
+				},
+				http.FileServerFS(
+					directory,
+				))
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, test.path, nil)
+
+			testHandler.ServeHTTP(rec, req)
+
+			for _, want := range test.want {
+				if !strings.Contains(rec.Body.String(), want) {
+					t.Errorf("expected %q in response body, got %q", want, rec.Body.String())
+				}
+			}
+		})
+	}
 }

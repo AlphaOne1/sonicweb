@@ -39,11 +39,17 @@ func hasIndexFile(fsys fs.StatFS, path string) bool {
 }
 
 // collectDirectoryEntries reads and processes directory entries, handling symlinks.
-func collectDirectoryEntries(fsys fs.StatFS, path, basePath string) ([]FileEntry, error) {
+func collectDirectoryEntries(fsys fs.StatFS, path, basePath, rootPath string) ([]FileEntry, error) {
 	rawEntries, err := fs.ReadDir(fsys, path)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory entries: %w", err)
+	}
+
+	absRoot, absRootErr := filepath.Abs(rootPath)
+
+	if absRootErr != nil {
+		absRoot = ""
 	}
 
 	entries := make([]FileEntry, 0, len(rawEntries))
@@ -58,25 +64,31 @@ func collectDirectoryEntries(fsys fs.StatFS, path, basePath string) ([]FileEntry
 		linkTarget := ""
 
 		if rawEntry.Type()&fs.ModeSymlink == fs.ModeSymlink {
-			lntgt, err := fs.ReadLink(fsys, rawEntry.Name())
+			lntgt, err := fs.ReadLink(fsys, filepath.Join(path, rawEntry.Name()))
 
 			if err != nil {
 				continue
 			}
 
-			if _, err := fsys.Stat(lntgt); err != nil {
-				continue
-			}
+			var resolvedTarget string
 
-			resolvedTarget := lntgt
-
-			if !filepath.IsAbs(lntgt) {
+			if filepath.IsAbs(lntgt) {
+				resolvedTarget = strings.TrimPrefix(strings.TrimPrefix(lntgt, absRoot), `/`)
+			} else {
 				resolvedTarget = filepath.Join(path, lntgt)
 				resolvedTarget = filepath.Clean(resolvedTarget)
 			}
 
-			linkTarget = filepath.Join(basePath, resolvedTarget)
-			linkTarget = "/" + strings.TrimPrefix(strings.ReplaceAll(linkTarget, "\\", "/"), "/")
+			if _, err := fsys.Stat(resolvedTarget); err != nil {
+				continue
+			}
+
+			if filepath.IsAbs(lntgt) {
+				linkTarget = filepath.Join(basePath, resolvedTarget)
+				linkTarget = "/" + strings.TrimPrefix(strings.ReplaceAll(linkTarget, `\`, `/`), "/")
+			} else {
+				linkTarget = lntgt
+			}
 		}
 
 		entries = append(entries, FileEntry{
@@ -124,7 +136,8 @@ func buildDirectoryListingParams(path, basePath string, entries []FileEntry, r *
 // If enabled, it generates an HTML page showing the directory's contents using a predefined template.
 // If it is not enabled, a 403-Forbidden is produced instead of the directory listing.
 // The middleware skips directory listing when serving files or paths with index.html present.
-func directoryListing(fsys fs.StatFS, enabled bool, basePath string) (func(http.Handler) http.Handler, error) {
+func directoryListing(fsys fs.StatFS, enabled bool, basePath, rootPath string) (func(http.Handler) http.Handler, error) {
+
 	tmpl, err := template.New("directoryListing").Parse(directoryListingTemplate)
 
 	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
@@ -161,7 +174,7 @@ func directoryListing(fsys fs.StatFS, enabled bool, basePath string) (func(http.
 				return
 			}
 
-			entries, dirErr := collectDirectoryEntries(fsys, path, basePath)
+			entries, dirErr := collectDirectoryEntries(fsys, path, basePath, rootPath)
 			if dirErr != nil {
 				slog.Error("could not read directory", //nolint:gosec // slog cares for safety
 					slog.String("path", cutLog(path)),

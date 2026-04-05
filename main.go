@@ -264,7 +264,7 @@ func generateFileHandler(
 		// handlers that operate on the filesystem, no basePath prefix
 		addTryFiles(tryFiles, statFS),
 		checkValidFilePath(),
-		helper.Must(directoryListing(statFS, indexEnabled, basePath)))
+		helper.Must(directoryListing(statFS, indexEnabled, basePath, rootPath)))
 
 	return midgard.StackMiddlewareHandler(
 			mwStack,
