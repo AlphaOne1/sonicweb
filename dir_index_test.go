@@ -155,7 +155,9 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			indexEnabled: true,
 			want: []string{
 				"<title> / </title>",
-				"<h1> / </h1>",
+				"<h1> &#128194; / </h1>",
+				`<td><a href="/noIndex"> &#128193; noIndex/ </a></td>`,
+				`<td><a href="/noIndex"> &#128193; withIndex/ </a></td>`,
 			},
 		},
 		{
@@ -170,10 +172,10 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			indexEnabled: true,
 			want: []string{
 				"<title> /noIndex </title>",
-				"<h1> /noIndex </h1>",
+				"<h1> &#128194; /noIndex </h1>",
 				`<td><a href="/noIndex/file.html"> file.html </a></td>`,
 				`<td><a href="/noIndex/link.html"> link.html &rarr; file.html </a></td>`,
-				`<td><a href="/noIndex/link.html"> abslink.html &rarr; /noIndex/file.html </a></td>`,
+				`<td><a href="/noIndex/file.html"> abslink.html &rarr; /noIndex/file.html </a></td>`,
 			},
 		},
 	}
