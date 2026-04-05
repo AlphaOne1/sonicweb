@@ -54,14 +54,14 @@ SPDX-License-Identifier: MPL-2.0
 			{{- $dirPrefix := .DirectoryPrefix -}}
 			{{- range .Entries -}}
 			{{- $fi := .Info }}
-			<tr>{{ if $fi.IsDir -}}	<td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }}/ </a></em></td>
+			<tr>{{ if $fi.IsDir -}}	<td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> &#128193; {{ .Name }}/ </a></em></td>
 				{{- else if gt (len .LinkTarget) 0 -}}
 				    {{- if eq (slice .LinkTarget 0 1) "/" -}}
-									<td><a href="{{ .LinkTarget }}"> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
+									<td><a href="{{ .LinkTarget }}"> &#128279; {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
 					{{- else -}}
-									<td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
+									<td><a href="{{ $dirPrefix }}/{{ .Name }}"> &#128279; {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
 					{{- end -}}
-				{{- else -}}		<td><a href="{{ $dirPrefix }}/{{ .Name }}"> {{ .Name }} </a></td>
+				{{- else -}}		<td><a href="{{ $dirPrefix }}/{{ .Name }}"> &#128196; {{ .Name }} </a></td>
 				{{- end }}
 				<td> {{ $fi.Size    }} </td>
 				<td> {{ $fi.ModTime.Format "2006-01-02 15:04:05 -07" }} </td>
