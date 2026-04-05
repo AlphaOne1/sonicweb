@@ -3,26 +3,68 @@ SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 SPDX-License-Identifier: MPL-2.0
 */ -}}
 
-{{- $lang             := "en"                         -}}
-{{- $headName         := "Name"                       -}}
-{{- $headSize         := "Size"                       -}}
-{{- $headLastModified := "Last Modified"              -}}
+{{- $lang             := "en"                           -}}
+{{- $headName         := "Name"                         -}}
+{{- $headSize         := "Size"                         -}}
+{{- $headLastModified := "Last Modified"                -}}
 
-{{- range .Languages                                  -}}
-{{-     if eq .Lang "de"                              -}}
-{{-         $lang             = "de"                  -}}
-{{-         $headName         = "Name"                -}}
-{{-         $headSize         = "Größe"               -}}
-{{-         $headLastModified = "Letzte Änderung"     -}}
-{{-         break                                     -}}
-{{-     else if eq .Lang "es"                         -}}
-{{-         $lang             = "es"                  -}}
-{{-         $headName         = "Nombre"              -}}
-{{-         $headSize         = "Tamaño"              -}}
-{{-         $headLastModified = "Última modificación" -}}
-{{-         break                                     -}}
-{{-     end                                           -}}
-{{- end                                               -}}
+{{- range .Languages                                    -}}
+{{-     if eq .Lang "ar"                                -}}
+{{-         $lang             = "ar"                    -}}
+{{-         $headName         = "الاسم"                 -}}
+{{-         $headSize         = "الحجم"                 -}}
+{{-         $headLastModified = "آخر تعديل"             -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "de"                           -}}
+{{-         $lang             = "de"                    -}}
+{{-         $headName         = "Name"                  -}}
+{{-         $headSize         = "Größe"                 -}}
+{{-         $headLastModified = "Letzte Änderung"       -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "es"                           -}}
+{{-         $lang             = "es"                    -}}
+{{-         $headName         = "Nombre"                -}}
+{{-         $headSize         = "Tamaño"                -}}
+{{-         $headLastModified = "Última modificación"   -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "fr"                           -}}
+{{-         $lang             = "fr"                    -}}
+{{-         $headName         = "Nom"                   -}}
+{{-         $headSize         = "Taille"                -}}
+{{-         $headLastModified = "Dernière modification" -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "hi"                           -}}
+{{-         $lang             = "hi"                    -}}
+{{-         $headName         = "नाम"                   -}}
+{{-         $headSize         = "आकार"                  -}}
+{{-         $headLastModified = "अंतिम परिवर्तन"        -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "ja"                           -}}
+{{-         $lang             = "ja"                    -}}
+{{-         $headName         = "名前"                    -}}
+{{-         $headSize         = "サイズ"                   -}}
+{{-         $headLastModified = "最終更新日時"                -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "pt"                           -}}
+{{-         $lang             = "pt"                    -}}
+{{-         $headName         = "Nome"                  -}}
+{{-         $headSize         = "Tamanho"               -}}
+{{-         $headLastModified = "Última modificação"    -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "ru"                           -}}
+{{-         $lang             = "ru"                    -}}
+{{-         $headName         = "Имя"                   -}}
+{{-         $headSize         = "Размер"                -}}
+{{-         $headLastModified = "Дата изменения"        -}}
+{{-         break                                       -}}
+{{-     else if eq .Lang "zh"                           -}}
+{{-         $lang             = "zh"                    -}}
+{{-         $headName         = "名称"                    -}}
+{{-         $headSize         = "大小"                    -}}
+{{-         $headLastModified = "最后修改"                  -}}
+{{-         break                                       -}}
+{{-     end                                             -}}
+{{- end                                                 -}}
 
 <!DOCTYPE html>
 <html lang="{{ $lang }}">
