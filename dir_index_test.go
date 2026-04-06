@@ -199,6 +199,16 @@ func indexCreateFS(t *testing.T) (*os.Root, string) {
 		return nil, ""
 	}
 
+	if err := tmpFS.Symlink("/non/existent.html", "noIndex/wrongAbsLink.html"); err != nil {
+		t.Errorf("could not create absolute wrong symlink: %v", err)
+		return nil, ""
+	}
+
+	if err := tmpFS.Symlink("/noIndex/nofile.html", "noIndex/wrongRelLink.html"); err != nil {
+		t.Errorf("could not create relative wrong symlink: %v", err)
+		return nil, ""
+	}
+
 	return tmpFS, dirName
 }
 
@@ -210,6 +220,7 @@ func TestCollectDirectoryEntries(t *testing.T) {
 		indexEnabled bool
 		want         []string
 		dontWant     []string
+		wantStatus   int
 	}{
 		{
 			path:         "/",
@@ -220,6 +231,7 @@ func TestCollectDirectoryEntries(t *testing.T) {
 				`<td><em><a href="/noIndex"> &#128193; noIndex/ </a></em></td>`,
 				`<td><em><a href="/withIndex"> &#128193; withIndex/ </a></em></td>`,
 			},
+			wantStatus: http.StatusOK,
 		},
 		{
 			path:         "/withIndex/",
@@ -227,6 +239,7 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			want: []string{
 				"index-content",
 			},
+			wantStatus: http.StatusOK,
 		},
 		{
 			path:         "/noIndex",
@@ -238,7 +251,31 @@ func TestCollectDirectoryEntries(t *testing.T) {
 				`<td><a href="/noIndex/link.html"> &#128279; link.html &rarr; file.html </a></td>`,
 				`<td><a href="/noIndex/file.html"> &#128279; abslink.html &rarr; /noIndex/file.html </a></td>`,
 			},
-			dontWant: []string{"wrongLink.txt"},
+			dontWant:   []string{"wrongAbsLink.html", "wrongRelLink.html"},
+			wantStatus: http.StatusOK,
+		},
+		{
+			path:         "/noIndex/file.html",
+			indexEnabled: true,
+			want: []string{
+				`file-content`,
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			path:         "/noIndex",
+			indexEnabled: false,
+			wantStatus:   http.StatusForbidden,
+		},
+		{
+			path:         "/withIndex/index.html",
+			indexEnabled: true,
+			wantStatus:   http.StatusMovedPermanently,
+		},
+		{
+			path:         "/non-existent",
+			indexEnabled: true,
+			wantStatus:   http.StatusNotFound,
 		},
 	}
 
@@ -266,15 +303,19 @@ func TestCollectDirectoryEntries(t *testing.T) {
 
 			testHandler.ServeHTTP(rec, req)
 
+			if rec.Code != test.wantStatus {
+				t.Errorf("got status %d but wanted %d", rec.Code, test.wantStatus)
+			}
+
 			for _, want := range test.want {
 				if !strings.Contains(rec.Body.String(), want) {
-					t.Errorf("expected %q in response body, got %q", want, rec.Body.String())
+					t.Errorf("expected %q in response body but got %q", want, rec.Body.String())
 				}
 			}
 
 			for _, dontWant := range test.dontWant {
 				if strings.Contains(rec.Body.String(), dontWant) {
-					t.Errorf("did not expect %q in response body, got %q", dontWant, rec.Body.String())
+					t.Errorf("did not expect %q in response body but got %q", dontWant, rec.Body.String())
 				}
 			}
 		})
