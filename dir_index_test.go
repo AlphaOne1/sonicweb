@@ -209,6 +209,7 @@ func TestCollectDirectoryEntries(t *testing.T) {
 		path         string
 		indexEnabled bool
 		want         []string
+		dontWant     []string
 	}{
 		{
 			path:         "/",
@@ -216,8 +217,8 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			want: []string{
 				"<title> / </title>",
 				"<h1> &#128194; / </h1>",
-				`<td><a href="/noIndex"> &#128193; noIndex/ </a></td>`,
-				`<td><a href="/noIndex"> &#128193; withIndex/ </a></td>`,
+				`<td><em><a href="/noIndex"> &#128193; noIndex/ </a></em></td>`,
+				`<td><em><a href="/withIndex"> &#128193; withIndex/ </a></em></td>`,
 			},
 		},
 		{
@@ -233,10 +234,11 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			want: []string{
 				"<title> /noIndex </title>",
 				"<h1> &#128194; /noIndex </h1>",
-				`<td><a href="/noIndex/file.html"> file.html </a></td>`,
-				`<td><a href="/noIndex/link.html"> link.html &rarr; file.html </a></td>`,
-				`<td><a href="/noIndex/file.html"> abslink.html &rarr; /noIndex/file.html </a></td>`,
+				`<td><a href="/noIndex/file.html"> &#128196; file.html </a></td>`,
+				`<td><a href="/noIndex/link.html"> &#128279; link.html &rarr; file.html </a></td>`,
+				`<td><a href="/noIndex/file.html"> &#128279; abslink.html &rarr; /noIndex/file.html </a></td>`,
 			},
+			dontWant: []string{"wrongLink.txt"},
 		},
 	}
 
@@ -267,6 +269,12 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			for _, want := range test.want {
 				if !strings.Contains(rec.Body.String(), want) {
 					t.Errorf("expected %q in response body, got %q", want, rec.Body.String())
+				}
+			}
+
+			for _, dontWant := range test.dontWant {
+				if strings.Contains(rec.Body.String(), dontWant) {
+					t.Errorf("did not expect %q in response body, got %q", dontWant, rec.Body.String())
 				}
 			}
 		})
