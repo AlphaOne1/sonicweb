@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -82,6 +83,65 @@ func TestHasIndexFile(t *testing.T) {
 
 	if !hasIndexFile(statFS, ".") {
 		t.Errorf("hasIndexFile should return true")
+	}
+}
+
+func TestDict(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		in   []any
+		want map[string]any
+		err  error
+	}{
+		{
+			in:   []any{"a", "1", "b", "2", "c", 3},
+			want: map[string]any{"a": "1", "b": "2", "c": 3},
+			err:  nil,
+		},
+		{
+			in:   []any{},
+			want: map[string]any{},
+			err:  nil,
+		},
+		{
+			in:   []any{1, 2},
+			want: nil,
+			err:  ErrNonStringKey,
+		},
+		{
+			in:   []any{"1", "2", "3"},
+			want: nil,
+			err:  ErrUnevenArgumentCount,
+		},
+	}
+
+	for testNum, test := range tests {
+		t.Run(fmt.Sprintf("TestDict-%d", testNum), func(t *testing.T) {
+			t.Parallel()
+
+			got, gotErr := dict(test.in...)
+
+			if !errors.Is(gotErr, test.err) {
+				t.Errorf("got error %v, want %v", gotErr, test.err)
+			}
+
+			if len(got) != len(test.want) {
+				t.Errorf("got %d entries, wanted %d", len(got), len(test.want))
+			}
+
+			for k, v := range test.want {
+				val, ok := got[k]
+
+				if !ok {
+					t.Errorf("key %s not found in dict", k)
+				}
+
+				if val != v {
+					t.Errorf("got %v for key %s, want %v", val, k, v)
+				}
+			}
+		})
 	}
 }
 

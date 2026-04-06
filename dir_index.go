@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -15,6 +16,12 @@ import (
 
 //go:embed dir_index.html.tmpl
 var directoryListingTemplate string
+
+// ErrUnevenArgumentCount indicates an error when the number of arguments provided is not even as expected.
+var ErrUnevenArgumentCount = errors.New("number of arguments uneven")
+
+// ErrNonStringKey represents an error indicating that a provided key is not a string as required.
+var ErrNonStringKey = errors.New("key must be a string")
 
 type FileEntry struct {
 	Name       string
@@ -36,6 +43,26 @@ func hasIndexFile(fsys fs.StatFS, path string) bool {
 	}
 
 	return false
+}
+
+func dict(values ...any) (map[string]any, error) {
+	if len(values)%2 != 0 {
+		return nil, fmt.Errorf("invalid dict call: %w", ErrUnevenArgumentCount)
+	}
+
+	dict := make(map[string]any, len(values)/2)
+
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("invalid key: %w", ErrNonStringKey)
+		}
+
+		dict[key] = values[i+1]
+	}
+
+	return dict, nil
 }
 
 // processLink resolves the target of a symlink and verifies its existence,
@@ -157,7 +184,10 @@ func buildDirectoryListingParams(path, basePath string, entries []FileEntry, r *
 // If it is not enabled, a 403-Forbidden is produced instead of the directory listing.
 // The middleware skips directory listing when serving files or paths with index.html present.
 func directoryListing(fsys fs.StatFS, enable bool, basePath, rootPath string) (func(http.Handler) http.Handler, error) {
-	tmpl, err := template.New("directoryListing").Parse(directoryListingTemplate)
+	tmpl, err := template.
+		New("directoryListing").
+		Funcs(template.FuncMap{"dict": dict}).
+		Parse(directoryListingTemplate)
 
 	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
 	if err != nil {
