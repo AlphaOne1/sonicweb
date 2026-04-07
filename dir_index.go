@@ -128,14 +128,12 @@ func collectDirectoryEntries(fsys fs.StatFS, path, basePath, rootPath string) ([
 
 		linkTarget := ""
 
-		if rawEntry.Type()&fs.ModeSymlink == fs.ModeSymlink {
-			l, worked := processLink(fsys, rawEntry, path, basePath, absRoot)
-
-			if !worked {
+		if rawEntry.Type()&fs.ModeSymlink != 0 {
+			if l, worked := processLink(fsys, rawEntry, path, basePath, absRoot); worked {
+				linkTarget = l
+			} else {
 				continue
 			}
-
-			linkTarget = l
 		}
 
 		entries = append(entries, FileEntry{
