@@ -8,7 +8,7 @@ go 1.26.0
 require (
 	github.com/AlphaOne1/geany v0.1.3
 	github.com/AlphaOne1/midgard v0.2.1
-	github.com/corazawaf/coraza/v3 v3.6.0
+	github.com/corazawaf/coraza/v3 v3.7.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.17.0
@@ -53,7 +53,7 @@ require (
 	github.com/kaptinlin/jsonpointer v0.4.17 // indirect
 	github.com/kaptinlin/jsonschema v0.7.6 // indirect
 	github.com/kaptinlin/messageformat-go v0.4.18 // indirect
-	github.com/magefile/mage v1.16.1 // indirect
+	github.com/magefile/mage v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
