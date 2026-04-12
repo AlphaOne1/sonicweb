@@ -96,7 +96,7 @@ jobs:
                 go-version-file: go.mod
 
           - name: Test
-            run: go tool gotestsum --junitfile junit.xml -- -race -v `go list ./... | grep -v example` --covermode=atomic --coverpkg=./... --coverprofile=coverage.txt
+            run: make testreport
 
           - name: Upload test results to Codecov
             if: ${{ !cancelled() }}

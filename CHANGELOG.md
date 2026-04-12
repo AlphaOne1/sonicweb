@@ -8,6 +8,8 @@ Release 1.8.1
 - hardened workflows
 - improved documentation
 - fixed an issue in the directory listing concerning symlinks
+- included third party licenses in deliverables
+- moved testreport functionality from workflow to Makefile
 - dependency updates
 
 Release 1.8.0

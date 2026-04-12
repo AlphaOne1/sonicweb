@@ -42,7 +42,7 @@ SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
 SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod dir_index.html.tmpl logo.tmpl
 
 
-.PHONY: all clean docker fuzz helm package test tls
+.PHONY: all clean docker fuzz helm package test testreport tls
 .DELETE_ON_ERROR:
 
 all: $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
@@ -87,7 +87,7 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
 			 -o $@
 
-docker-%: $(EXEC_PREFIX)-%
+docker-%: $(EXEC_PREFIX)-% third_party_licenses.tar.xz
 	TARGET_OS="$(call osName,$<)"							\
 	TARGET_ARCH="$(call archName,$<)"						\
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}	\
@@ -98,10 +98,10 @@ docker-%: $(EXEC_PREFIX)-%
 $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(wildcard helm/* helm/**/*)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) third_party_licenses
 	nfpm package --config $< --packager deb --target $@
 
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) third_party_licenses
 	nfpm package --config $< --packager rpm --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
@@ -120,8 +120,14 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	PROJECT_NAME="$(PROJECT_NAME)"	\
 	envsubst < $< > $@
 
+%.tar: %
+	tar -cf $@ $<
+
 %.gz: %
 	gzip -k -f -9 $<
+
+%.xz: %
+	xz -k -f -6 $<
 
 tls:
 	mkdir -p testcert
@@ -154,14 +160,27 @@ tls:
 test:
 	go test ./...
 
+testreport:
+	go tool gotestsum --junitfile junit.xml --	\
+	    -race									\
+	    -v `go list ./... | grep -v example`	\
+	    --covermode=atomic						\
+	    --coverpkg=./...						\
+	    --coverprofile=coverage.txt
 
 fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
+
+third_party_licenses: go.mod
+	export TMP_DIR=`mktemp -d`										;\
+	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	;\
+	mv $${TMP_DIR} $@
 
 clean:
 	@-rm -vrf	$(EXEC_PREFIX)-*-*			\
 				nfpm-*.yaml					\
 				testcert					\
+				third_party_licenses*       \
 				man/$(EXEC_PREFIX)*.1.gz	\
 				man/$(EXEC_PREFIX)*.1		\
 				$(PACKAGE_FILE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/
