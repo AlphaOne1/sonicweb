@@ -39,8 +39,8 @@ func cleanRequestPath(urlPath string) string {
 }
 
 // hasIndexFile checks if an index.html file exists in the given directory path.
-func hasIndexFile(fsys fs.StatFS, path string) bool {
-	indexPath := strings.TrimPrefix(filepath.Join(path, "index.html"), "./")
+func hasIndexFile(fsys fs.StatFS, urlPath string) bool {
+	indexPath := strings.TrimPrefix(path.Join(urlPath, "index.html"), "./")
 
 	if index, err := fsys.Stat(indexPath); err == nil && !index.IsDir() {
 		return true
@@ -74,9 +74,9 @@ func dict(values ...any) (map[string]any, error) {
 func processLink(
 	fsys fs.StatFS,
 	rawEntry fs.DirEntry,
-	path, basePath, absRootPath string) (string, bool) {
+	urlPath, basePath, absRootPath string) (string, bool) {
 
-	lntgt, err := fs.ReadLink(fsys, filepath.Join(path, rawEntry.Name()))
+	lntgt, err := fs.ReadLink(fsys, path.Join(urlPath, rawEntry.Name()))
 
 	if err != nil {
 		return "", false
@@ -85,20 +85,27 @@ func processLink(
 	var resolvedTarget string
 
 	if filepath.IsAbs(lntgt) {
-		resolvedTarget = strings.TrimPrefix(strings.TrimPrefix(lntgt, absRootPath), `/`)
+		resolvedTarget = filepath.Clean(lntgt)
 	} else {
-		resolvedTarget = filepath.Join(path, lntgt)
-		resolvedTarget = filepath.Clean(resolvedTarget)
+		resolvedTarget = filepath.Clean(filepath.Join(absRootPath, urlPath, lntgt))
 	}
 
-	if _, err := fsys.Stat(resolvedTarget); err != nil {
+	relTarget, err := filepath.Rel(absRootPath, resolvedTarget)
+
+	if err != nil ||
+		relTarget == ".." ||
+		strings.HasPrefix(relTarget, ".."+string(filepath.Separator)) {
+		return "", false
+	}
+
+	if _, err := fsys.Stat(path.Clean(path.Join(".", filepath.ToSlash(relTarget)))); err != nil {
 		return "", false
 	}
 
 	var linkTarget string
 
 	if filepath.IsAbs(lntgt) {
-		linkTarget = filepath.Join(basePath, resolvedTarget)
+		linkTarget = path.Join(basePath, filepath.ToSlash(relTarget))
 		linkTarget = "/" + strings.TrimPrefix(strings.ReplaceAll(linkTarget, `\`, `/`), "/")
 	} else {
 		linkTarget = lntgt

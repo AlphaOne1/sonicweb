@@ -110,9 +110,9 @@ jobs:
           - name: Compress xz
             if: matrix.os != 'windows'
             run: |
-                  tar -cf - sonicweb-${{ matrix.os }}-${{ matrix.architecture }}                    \
-                            third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz \
-                | xz -T0 -9 > sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
+                tar -cf - sonicweb-${{ matrix.os }}-${{ matrix.architecture }}                     \
+                          third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz |\
+                xz -T0 -9 > sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
 
           - name: Compress 7z (Windows)
             if: matrix.os == 'windows'
