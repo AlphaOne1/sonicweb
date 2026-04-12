@@ -82,6 +82,8 @@ func processLink(
 		return "", false
 	}
 
+	lntgt = filepath.ToSlash(lntgt)
+
 	var resolvedTarget string
 
 	if filepath.IsAbs(lntgt) {
@@ -89,7 +91,7 @@ func processLink(
 
 		if err != nil ||
 			resolvedTarget == ".." ||
-			strings.HasPrefix(resolvedTarget, ".."+string(filepath.Separator)) {
+			strings.HasPrefix(resolvedTarget, "../") {
 			return "", false
 		}
 	} else {
@@ -106,10 +108,11 @@ func processLink(
 	if filepath.IsAbs(lntgt) {
 		// in case of an absolute link, we directly set the links target instead of the links name
 		linkTarget = path.Join(basePath, resolvedTarget)
-		linkTarget = "/" + strings.TrimPrefix(filepath.ToSlash(linkTarget), "/")
+		linkTarget = "/" + strings.TrimPrefix(linkTarget, "/")
+		linkTarget = path.Clean(linkTarget)
 	} else {
 		// for relative links, we let the file handler resolve it properly
-		linkTarget = filepath.ToSlash(lntgt)
+		linkTarget = lntgt
 	}
 
 	return linkTarget, true
@@ -128,6 +131,8 @@ func collectDirectoryEntries(fsys fs.StatFS, path, basePath, rootPath string) ([
 	if absRootErr != nil {
 		absRoot = ""
 	}
+
+	absRoot = filepath.ToSlash(absRoot)
 
 	entries := make([]FileEntry, 0, len(rawEntries))
 
