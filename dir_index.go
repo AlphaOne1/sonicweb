@@ -35,7 +35,7 @@ type FileEntry struct {
 
 // cleanRequestPath cleans the URL path by trimming leading and trailing slashes.
 func cleanRequestPath(urlPath string) string {
-	return strings.TrimSuffix(strings.TrimPrefix(urlPath, "/"), "/")
+	return strings.Trim(urlPath, "/")
 }
 
 // hasIndexFile checks if an index.html file exists in the given directory path.
@@ -85,29 +85,30 @@ func processLink(
 	var resolvedTarget string
 
 	if filepath.IsAbs(lntgt) {
-		resolvedTarget = filepath.Clean(lntgt)
+		resolvedTarget, err = filepath.Rel(absRootPath, lntgt)
+
+		if err != nil ||
+			resolvedTarget == ".." ||
+			strings.HasPrefix(resolvedTarget, ".."+string(filepath.Separator)) {
+			return "", false
+		}
 	} else {
-		resolvedTarget = filepath.Clean(filepath.Join(absRootPath, urlPath, lntgt))
+		resolvedTarget = path.Join(urlPath, lntgt)
+		resolvedTarget = path.Clean(resolvedTarget)
 	}
 
-	relTarget, err := filepath.Rel(absRootPath, resolvedTarget)
-
-	if err != nil ||
-		relTarget == ".." ||
-		strings.HasPrefix(relTarget, ".."+string(filepath.Separator)) {
-		return "", false
-	}
-
-	if _, err := fsys.Stat(path.Clean(path.Join(".", filepath.ToSlash(relTarget)))); err != nil {
+	if _, err := fsys.Stat(resolvedTarget); err != nil {
 		return "", false
 	}
 
 	var linkTarget string
 
 	if filepath.IsAbs(lntgt) {
-		linkTarget = path.Join(basePath, filepath.ToSlash(relTarget))
+		// in case of an absolute link, we directly set the links target instead of the links name
+		linkTarget = path.Join(basePath, resolvedTarget)
 		linkTarget = "/" + strings.TrimPrefix(strings.ReplaceAll(linkTarget, `\`, `/`), "/")
 	} else {
+		// for relative links, we let the file handler resolve it properly
 		linkTarget = lntgt
 	}
 

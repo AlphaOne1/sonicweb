@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -197,7 +198,7 @@ func indexCreateFS(t *testing.T) (*os.Root, string) {
 		return nil, ""
 	}
 
-	if err := tmpFS.Symlink("/noIndex/file.html", "noIndex/abslink.html"); err != nil {
+	if err := tmpFS.Symlink(filepath.Join(dirName, "/noIndex/file.html"), "noIndex/abslink.html"); err != nil {
 		t.Errorf("could not create absolute symlink: %v", err)
 		return nil, ""
 	}
