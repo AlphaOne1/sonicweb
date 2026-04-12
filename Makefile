@@ -7,6 +7,7 @@ PROJECT_NAME=       SonicWeb
 EXEC_PREFIX=		sonicweb
 PACKAGE_FILE_PREFIX=$(PROJECT_NAME)
 PACKAGE_NAME=		$(EXEC_PREFIX)
+THIRD_PARTY_NAME=   third_party_licenses
 IGOOS:=				$(shell go env GOOS)
 IGOARCH:=			$(shell go env GOARCH)
 EXEC_SUFFIX=		$(if $(filter windows,$(IGOOS)),.exe,)
@@ -52,6 +53,15 @@ package: $(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb \
 		$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz
 
+%.tar: %
+	tar -cf $@ $<
+
+%.gz: %
+	gzip -k -f -9 $<
+
+%.xz: %
+	xz -k -f -6 $<
+
 define osNamePrefix
 $(firstword $(subst -, ,$(basename $(patsubst $(2)-%,%,$(1)))))
 endef
@@ -87,7 +97,20 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
 			 -o $@
 
-docker-%: $(EXEC_PREFIX)-% third_party_licenses.tar.xz
+$(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
+	mv $< $(patsubst %-dir,%,$<)
+	tar -cJf $@ $(patsubst %-dir,%,$<)
+
+$(THIRD_PARTY_NAME)-%-dir: go.mod
+	rm -rf $@
+	export TMP_DIR=`mktemp -d`										&&	\
+	GOOS="$(call osNamePrefix,$(patsubst %-$*,%,$@))"				&&	\
+	GOARCH="$(call archNamePrefix,$(patsubst %-$*,%,$@))"			&&	\
+	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
+	mv $${TMP_DIR} $@												||	\
+	rm -rf ${TMP_DIR}
+
+docker-%: $(EXEC_PREFIX)-% $(THIRD_PARTY_NAME)-%.tar.xz
 	TARGET_OS="$(call osName,$<)"							\
 	TARGET_ARCH="$(call archName,$<)"						\
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}	\
@@ -98,11 +121,9 @@ docker-%: $(EXEC_PREFIX)-% third_party_licenses.tar.xz
 $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(wildcard helm/* helm/**/*)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) third_party_licenses
-	nfpm package --config $< --packager deb --target $@
-
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) third_party_licenses
-	nfpm package --config $< --packager rpm --target $@
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).%: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) $(THIRD_PARTY_NAME)-$(IGOOS)-$(IGOARCH)-dir
+	$(if $(filter deb rpm,$*),,$(error "Package type $* not supported"))
+	nfpm package --config $< --packager $* --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
 	TARGET_OS="$(call osNamePrefix,$@,nfpm)"		\
@@ -119,15 +140,6 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	EXEC_PREFIX="$(EXEC_PREFIX)"	\
 	PROJECT_NAME="$(PROJECT_NAME)"	\
 	envsubst < $< > $@
-
-%.tar: %
-	tar -cf $@ $<
-
-%.gz: %
-	gzip -k -f -9 $<
-
-%.xz: %
-	xz -k -f -6 $<
 
 tls:
 	mkdir -p testcert
@@ -171,16 +183,11 @@ testreport:
 fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
 
-third_party_licenses: go.mod
-	export TMP_DIR=`mktemp -d`										;\
-	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	;\
-	mv $${TMP_DIR} $@
-
 clean:
 	@-rm -vrf	$(EXEC_PREFIX)-*-*			\
 				nfpm-*.yaml					\
 				testcert					\
-				third_party_licenses*       \
+				$(THIRD_PARTY_NAME)*       \
 				man/$(EXEC_PREFIX)*.1.gz	\
 				man/$(EXEC_PREFIX)*.1		\
 				$(PACKAGE_FILE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/
