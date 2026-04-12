@@ -106,10 +106,10 @@ func processLink(
 	if filepath.IsAbs(lntgt) {
 		// in case of an absolute link, we directly set the links target instead of the links name
 		linkTarget = path.Join(basePath, resolvedTarget)
-		linkTarget = "/" + strings.TrimPrefix(strings.ReplaceAll(linkTarget, `\`, `/`), "/")
+		linkTarget = "/" + strings.TrimPrefix(filepath.ToSlash(linkTarget), "/")
 	} else {
 		// for relative links, we let the file handler resolve it properly
-		linkTarget = lntgt
+		linkTarget = filepath.ToSlash(lntgt)
 	}
 
 	return linkTarget, true
