@@ -119,7 +119,7 @@ Installation
 *SonicWeb* provides prebuilt binaries and installation packages for Debian and RPM-based distributions.
 
 Builds are secured with SLSA Level 3 provenance via slsa-framework/slsa-github-generator.
-The downloaded source archive together with the provenance file `multiple.intoto.jsonl`
+The downloaded archive together with the provenance file `multiple.intoto.jsonl`
 can be verified using the [slsa-verifier](https://github.com/slsa-framework/slsa-verifier/)
 (replace the `<VERSION>` with the one you actually downloaded, e.g., `v1.8.0`):
 

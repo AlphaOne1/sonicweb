@@ -40,7 +40,7 @@ func cleanRequestPath(urlPath string) string {
 
 // hasIndexFile checks if an index.html file exists in the given directory path.
 func hasIndexFile(fsys fs.StatFS, path string) bool {
-	indexPath := strings.TrimLeft(filepath.Join(path, "index.html"), "./")
+	indexPath := strings.TrimPrefix(filepath.Join(path, "index.html"), "./")
 
 	if index, err := fsys.Stat(indexPath); err == nil && !index.IsDir() {
 		return true

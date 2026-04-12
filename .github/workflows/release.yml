@@ -76,8 +76,8 @@ jobs:
                 GOOS: ${{matrix.os}}
                 GOARCH: ${{matrix.architecture}}
             run: |
-                make third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}
-                make third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
+                make third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}-dir \
+                     third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
 
           - name: Upload Executable Artifacts
             if: matrix.os == 'linux'
@@ -142,12 +142,12 @@ jobs:
             shell: powershell
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                tag: ${{ github.event.release.tag_name }}
+                TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 Set-StrictMode -Version Latest
                 $ErrorActionPreference = 'Stop'
                 Get-ChildItem -File -Path . -Filter 'sonicweb-*-*.7z' | ForEach-Object {
-                    gh release upload $tag $_.FullName --clobber
+                    gh release upload $env:TAG_NAME $_.FullName --clobber
                 }
 
     BuildDockerMultiArch:
