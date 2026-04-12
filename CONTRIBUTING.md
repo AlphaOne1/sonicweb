@@ -149,5 +149,5 @@ Dependency updates are generally tracked by dependabot.
 
 Concerning the validity of obtained artifacts, *SonicWeb* relies on the
 well-established Go module management. It downloads the exact version from
-`go.mod` via [git](https://git-scm.org) from the original sources and validates
+`go.mod` via [git](https://git-scm.com) from the original sources and validates
 the check sums stored in the `go.sum` file.

@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -150,19 +151,19 @@ func collectDirectoryEntries(fsys fs.StatFS, path, basePath, rootPath string) ([
 }
 
 // buildDirectoryListingParams builds the parameters for the directory listing template.
-func buildDirectoryListingParams(path, basePath string, entries []FileEntry, r *http.Request) map[string]any {
+func buildDirectoryListingParams(urlPath, basePath string, entries []FileEntry, r *http.Request) map[string]any {
 	params := map[string]any{
-		"DirectoryName":   filepath.Join(basePath, path),
-		"DirectoryPrefix": filepath.Join(basePath, path),
+		"DirectoryName":   path.Join(basePath, urlPath),
+		"DirectoryPrefix": path.Join(basePath, urlPath),
 		"Entries":         entries,
 	}
 
-	if path != "." {
+	if urlPath != "." {
 		parentDir := basePath
 
-		if idx := strings.LastIndex(path, "/"); idx >= 0 {
+		if idx := strings.LastIndex(urlPath, "/"); idx >= 0 {
 			// we want the trailing / here, makes clear that it is a directory
-			parentDir = filepath.Join(basePath, path[:idx+1])
+			parentDir = path.Join(basePath, urlPath[:idx+1])
 		}
 
 		params["ParentDirectory"] = parentDir
@@ -197,18 +198,18 @@ func directoryListing(fsys fs.StatFS, enable bool, basePath, rootPath string) (f
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// check the desired file is either a directory or an index.html
-			path := cleanRequestPath(r.URL.Path)
+			urlPath := cleanRequestPath(r.URL.Path)
 
-			if path == "" {
-				path = "."
+			if urlPath == "" {
+				urlPath = "."
 			}
 
-			info, infoErr := fsys.Stat(path)
+			info, infoErr := fsys.Stat(urlPath)
 			hasIndex := false
 
 			// check if index.html is already existing
 			if infoErr == nil && info.IsDir() {
-				hasIndex = hasIndexFile(fsys, path)
+				hasIndex = hasIndexFile(fsys, urlPath)
 			}
 
 			// jump to the next handler, if we are not to generate the index.html here
@@ -223,21 +224,21 @@ func directoryListing(fsys fs.StatFS, enable bool, basePath, rootPath string) (f
 				return
 			}
 
-			entries, dirErr := collectDirectoryEntries(fsys, path, basePath, rootPath)
+			entries, dirErr := collectDirectoryEntries(fsys, urlPath, basePath, rootPath)
 			if dirErr != nil {
 				slog.Error("could not read directory", //nolint:gosec // slog cares for safety
-					slog.String("path", cutLog(path)), slog.String("error", dirErr.Error()))
+					slog.String("path", cutLog(urlPath)), slog.String("error", dirErr.Error()))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 				return
 			}
 
-			params := buildDirectoryListingParams(path, basePath, entries, r)
+			params := buildDirectoryListingParams(urlPath, basePath, entries, r)
 			outBuf := bytes.Buffer{}
 
 			if err := tmpl.Execute(&outBuf, params); err != nil {
 				slog.Error("could not execute directory listing template", //nolint:gosec // slog cares for safety
-					slog.String("path", cutLog(path)),
+					slog.String("path", cutLog(urlPath)),
 					slog.String("error", err.Error()))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 

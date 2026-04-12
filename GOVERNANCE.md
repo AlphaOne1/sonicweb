@@ -81,7 +81,7 @@ To ensure the project's continuity, the following measures are taken:
 account settings to take over repository management if the primary maintainer is
 incapacitated.
 
-<!-- Currently this is not implemented, uncomment, if is indeed enacted:
+<!-- Currently this is not implemented, uncomment if it is indeed enacted:
 *Access Recovery*: Recovery keys for the repository and build infrastructure are
 stored in a secure digital vault with emergency access enabled for a trusted
 party.

@@ -104,8 +104,8 @@ $(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
 $(THIRD_PARTY_NAME)-%-dir: go.mod
 	rm -rf $@
 	export TMP_DIR=`mktemp -d`										&&	\
-	GOOS="$(call osNamePrefix,$(patsubst %-$*,%,$@))"				&&	\
-	GOARCH="$(call archNamePrefix,$(patsubst %-$*,%,$@))"			&&	\
+	GOOS="$(call osNamePrefix,$@,$(patsubst %-$*,%,$@))"			&&	\
+	GOARCH="$(call archNamePrefix,$@,$(patsubst %-$*,%,$@))"		&&	\
 	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
 	mv $${TMP_DIR} $@												||	\
 	rm -rf ${TMP_DIR}

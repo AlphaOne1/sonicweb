@@ -93,7 +93,7 @@ jobs:
             if: matrix.os == 'linux'
             uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
             with:
-                name: third_party_licences-${{ matrix.os }}-${{ matrix.architecture }}
+                name: third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}
                 path: |
                     third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
                 compression-level: '1'
@@ -110,9 +110,9 @@ jobs:
           - name: Compress xz
             if: matrix.os != 'windows'
             run: |
-                  tar -cf - sonicweb-${{ matrix.os }}-${{ matrix.architecture }} \
-                            third_party_licenses.tar.xz                          \
-                | xz -T0 -9 sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
+                  tar -cf - sonicweb-${{ matrix.os }}-${{ matrix.architecture }}                    \
+                            third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz \
+                | xz -T0 -9 > sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
 
           - name: Compress 7z (Windows)
             if: matrix.os == 'windows'
@@ -120,9 +120,9 @@ jobs:
             run: |
                 $sevenZip = "C:\Program Files\7-Zip\7z.exe"
                 if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
-                & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.7z" \
-                    "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.exe"
-                    "third_party_licenses.tar.xz"
+                & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.7z" `
+                    "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.exe" `
+                    "third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz"
 
           - name: Upload Non-Windows Release (via GitHub CLI)
             if: matrix.os != 'windows'

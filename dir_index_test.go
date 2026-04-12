@@ -207,7 +207,7 @@ func indexCreateFS(t *testing.T) (*os.Root, string) {
 		return nil, ""
 	}
 
-	if err := tmpFS.Symlink("/noIndex/nofile.html", "noIndex/wrongRelLink.html"); err != nil {
+	if err := tmpFS.Symlink("nofile.html", "noIndex/wrongRelLink.html"); err != nil {
 		t.Errorf("could not create relative wrong symlink: %v", err)
 		return nil, ""
 	}

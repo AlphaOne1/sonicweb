@@ -116,7 +116,7 @@ Features
 Installation
 ------------
 
-*SonicWeb* provides prebuild binaries and installation packages for Debian and RPM-based distributions.
+*SonicWeb* provides prebuilt binaries and installation packages for Debian and RPM-based distributions.
 
 Builds are secured with SLSA Level 3 provenance via slsa-framework/slsa-github-generator.
 The downloaded source archive together with the provenance file `multiple.intoto.jsonl`
