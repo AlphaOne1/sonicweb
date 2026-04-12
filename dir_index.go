@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-License-Identifier: MPL-2.0
+
 package main
 
 import (
@@ -182,10 +185,8 @@ func buildDirectoryListingParams(path, basePath string, entries []FileEntry, r *
 // If it is not enabled, a 403-Forbidden is produced instead of the directory listing.
 // The middleware skips directory listing when serving files or paths with index.html present.
 func directoryListing(fsys fs.StatFS, enable bool, basePath, rootPath string) (func(http.Handler) http.Handler, error) {
-	tmpl, err := template.
-		New("directoryListing").
-		Funcs(template.FuncMap{"dict": dict}).
-		Parse(directoryListingTemplate)
+	tmpl, err := template.New("directoryListing").
+		Funcs(template.FuncMap{"dict": dict}).Parse(directoryListingTemplate)
 
 	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
 	if err != nil {
