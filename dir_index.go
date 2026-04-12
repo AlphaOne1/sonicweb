@@ -39,7 +39,7 @@ func cleanRequestPath(urlPath string) string {
 
 // hasIndexFile checks if an index.html file exists in the given directory path.
 func hasIndexFile(fsys fs.StatFS, path string) bool {
-	indexPath := strings.TrimLeft(filepath.Join(path, "/index.html"), "./")
+	indexPath := strings.TrimLeft(filepath.Join(path, "index.html"), "./")
 
 	if index, err := fsys.Stat(indexPath); err == nil && !index.IsDir() {
 		return true
@@ -161,6 +161,7 @@ func buildDirectoryListingParams(path, basePath string, entries []FileEntry, r *
 		parentDir := basePath
 
 		if idx := strings.LastIndex(path, "/"); idx >= 0 {
+			// we want the trailing / here, makes clear that it is a directory
 			parentDir = filepath.Join(basePath, path[:idx+1])
 		}
 
