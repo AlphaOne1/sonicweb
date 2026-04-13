@@ -54,7 +54,7 @@ package: $(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb \
 helm: $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz
 
 %.tar: %
-	tar -cf $@ $<
+	COPYFILE_DISABLE=1 tar -cf $@ $<
 
 %.gz: %
 	gzip -k -f -9 $<
@@ -99,8 +99,7 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 
 $(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
 	ln -s $< $(patsubst %-dir,%,$<)
-	ls -lah
-	COPYFILE_DISABLE=1 tar -cHf - $(patsubst %-dir,%,$<) | xz -9 > $@
+	COPYFILE_DISABLE=1 tar -cH $(patsubst %-dir,%,$<) | xz -9 > $@
 	rm -f $(patsubst %-dir,%,$<)
 
 .PRECIOUS: $(THIRD_PARTY_NAME)-%-dir
