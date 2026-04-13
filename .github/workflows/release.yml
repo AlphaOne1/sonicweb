@@ -59,7 +59,6 @@ jobs:
             if: matrix.os == 'linux'
             run: |
                 go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
-                echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
           - name: Install go-licenses
             run: |
@@ -67,7 +66,7 @@ jobs:
 
           - name: Add GOPATH/bin to PATH
             run:
-                echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+                echo "`go env GOPATH`/bin" >> "$GITHUB_PATH"
 
           - name: Build
             env:
