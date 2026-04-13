@@ -105,11 +105,11 @@ $(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
 .PRECIOUS: $(THIRD_PARTY_NAME)-%-dir
 $(THIRD_PARTY_NAME)-%-dir: go.mod
 	rm -rf $@
-	export TMP_DIR=`mktemp -d`										&&	\
-	GOOS="$(call osNamePrefix,$@,$(THIRD_PARTY_NAME))"				&&	\
-	GOARCH="$(call archNamePrefix,$@,$(THIRD_PARTY_NAME))"			&&	\
-	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
-	mv $${TMP_DIR} $@												||	\
+	export TMP_DIR=`mktemp -d`												&&	\
+	GOOS="$(call osNamePrefix,$@,$(THIRD_PARTY_NAME))"						&&	\
+	GOARCH="$(call archNamePrefix,$@,$(THIRD_PARTY_NAME))"					&&	\
+	$${GOPATH}/bin/go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
+	mv $${TMP_DIR} $@														||	\
 	rm -rf $${TMP_DIR}
 
 docker-%: $(EXEC_PREFIX)-% $(THIRD_PARTY_NAME)-%.tar.xz

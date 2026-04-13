@@ -61,6 +61,14 @@ jobs:
                 go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
                 echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
+          - name: Install go-licenses
+            run: |
+                go install github.com/google/go-licenses/v2
+
+          - name: Add GOPATH/bin to PATH
+            run:
+                echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
           - name: Build
             env:
                 CGO_ENABLED: "0"
