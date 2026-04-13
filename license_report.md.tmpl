@@ -1,0 +1,27 @@
+<!-- markdownlint-disable MD013 MD033 MD041 -->
+<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
+
+License Report
+==============
+
+The following licenses are used by imports of this project:
+{{ $licenses := . }}
+{{ range $index, $element := . -}}
+    {{- $found := "false" -}}
+    {{- range (slice $licenses 0 $index) -}}
+        {{- if eq .LicenseName $element.LicenseName -}}
+            {{- $found = "true" -}}
+            {{- break -}}
+        {{- end -}}
+    {{- end -}}
+    {{- if eq $found "false" -}}
+        {{ printf "* [%s](%s)\n" $element.LicenseName $element.LicenseURL }}
+    {{- end -}}
+{{- end }}
+The following projects are either imported directly or indirectly and use their respective licenses:
+
+{{ range . -}}
+* {{ .Name }}-{{ .Version }}: [{{ .LicenseName }}]({{ .LicenseURL }})
+{{ end }}
