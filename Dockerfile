@@ -49,7 +49,9 @@ COPY --chmod=0755 sonicweb-linux-${TARGETARCH} /tmp/root/bin/sonicweb
 COPY --chmod=0444 docker_root/                \
                   README.md                   \
                   sonicweb_logo.svg           /tmp/root/www/
-COPY --chmod=0444 third_party_licenses-linux-${TARGETARCH}.tar.xz /tmp/root/usr/share/doc/sonicweb/
+COPY --chmod=0444 LICENSE                                         \
+                  README.md                                       \
+                  third_party_licenses-linux-${TARGETARCH}.tar.xz /tmp/root/usr/share/doc/sonicweb/
 
 ADD --chmod=0444                                                                     \
     --checksum=sha256:${HLJS_JS_SHA256}                                              \

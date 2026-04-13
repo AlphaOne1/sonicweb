@@ -121,6 +121,8 @@ jobs:
             if: matrix.os != 'windows'
             run: |
                 tar -cf - sonicweb-${{ matrix.os }}-${{ matrix.architecture }}                     \
+                          LICENSE                                                                  \
+                          README.md                                                                \
                           third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz |\
                 xz -T0 -9 > sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
 
@@ -132,6 +134,8 @@ jobs:
                 if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
                 & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.7z" `
                     "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.exe" `
+                    "LICENSE"                                                  `
+                    "README.md"                                                `
                     "third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz"
 
           - name: Upload Non-Windows Release (via GitHub CLI)

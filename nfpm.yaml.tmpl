@@ -32,6 +32,10 @@ contents:
     dst: /usr/share/man/de/man1/${EXEC_PREFIX}.1.gz
   - src: ./man/${EXEC_PREFIX}_es.1.gz
     dst: /usr/share/man/es/man1/${EXEC_PREFIX}.1.gz
+  - src: ./README.md
+    dst: /usr/share/doc/${PACKAGE_NAME}/README.md
+  - src: ./LICENSE
+    dst: /usr/share/doc/${PACKAGE_NAME}/LICENSE
   - src: ./third_party_licenses-${TARGET_OS}-${TARGET_ARCH}-dir
     dst: /usr/share/doc/${PACKAGE_NAME}/third_party_licenses
 overrides:  {}
