@@ -108,7 +108,10 @@ $(THIRD_PARTY_NAME)-%-dir: go.mod
 	export TMP_DIR=`mktemp -d`								&&	\
 	GOOS="$(call osNamePrefix,$@,$(THIRD_PARTY_NAME))"		&&	\
 	GOARCH="$(call archNamePrefix,$@,$(THIRD_PARTY_NAME))"	&&	\
-	go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
+	go-licenses save ./...		\
+		--force					\
+		--save_path $${TMP_DIR}	\
+		--ignore `go list -m`								&&	\
 	mv $${TMP_DIR} $@										||	\
 	rm -rf $${TMP_DIR}
 
