@@ -65,10 +65,12 @@ jobs:
                 go install github.com/google/go-licenses/v2
 
           - name: Add GOPATH/bin to PATH
+            shell: bash
             run:
                 echo "`go env GOPATH`/bin" >> "$GITHUB_PATH"
 
           - name: Build
+            shell: bash
             env:
                 CGO_ENABLED: "0"
                 GOOS: ${{matrix.os}}
@@ -78,6 +80,7 @@ jobs:
                 make
 
           - name: Gather Third Party License Information
+            shell: bash
             env:
                 CGO_ENABLED: "0"
                 GOOS: ${{matrix.os}}
