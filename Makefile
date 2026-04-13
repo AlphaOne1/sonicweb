@@ -98,9 +98,11 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 			 -o $@
 
 $(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
-	mv $< $(patsubst %-dir,%,$<)
-	tar -cJf $@ $(patsubst %-dir,%,$<)
+	ln -s $< $(patsubst %-dir,%,$<)
+	COPYFILE_DISABLE=1 tar -cHJf $@ $(patsubst %-dir,%,$<)
+	rm -f $(patsubst %-dir,%,$<)
 
+.PRECIOUS: $(THIRD_PARTY_NAME)-%-dir
 $(THIRD_PARTY_NAME)-%-dir: go.mod
 	rm -rf $@
 	export TMP_DIR=`mktemp -d`										&&	\
@@ -108,7 +110,7 @@ $(THIRD_PARTY_NAME)-%-dir: go.mod
 	GOARCH="$(call archNamePrefix,$@,$(patsubst %-$*,%,$@))"		&&	\
 	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
 	mv $${TMP_DIR} $@												||	\
-	rm -rf ${TMP_DIR}
+	rm -rf $${TMP_DIR}
 
 docker-%: $(EXEC_PREFIX)-% $(THIRD_PARTY_NAME)-%.tar.xz
 	TARGET_OS="$(call osName,$<)"							\
