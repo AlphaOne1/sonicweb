@@ -62,7 +62,7 @@ func TestHasIndexFile(t *testing.T) {
 	fdir, fdirErr := os.OpenRoot(dir)
 
 	if fdirErr != nil {
-		t.Errorf("could not open root: %v", fdirErr)
+		t.Fatalf("could not open root: %v", fdirErr)
 	}
 
 	defer func() { _ = fdir.Close() }()
@@ -70,7 +70,7 @@ func TestHasIndexFile(t *testing.T) {
 	statFS, isStatFS := fdir.FS().(fs.StatFS)
 
 	if !isStatFS {
-		t.Errorf("could not get StatFS")
+		t.Fatalf("could not get StatFS")
 	}
 
 	if hasIndexFile(statFS, ".") {
@@ -169,48 +169,46 @@ func indexCreateFS(t *testing.T) (*os.Root, string) {
 	tmpFS, err := os.OpenRoot(dirName)
 
 	if err != nil {
-		t.Errorf("could not open temporary root: %v", err)
-		return nil, ""
+		t.Fatalf("could not open temporary root: %v", err)
 	}
 
-	if err := tmpFS.Mkdir("withIndex", 0o755); err != nil {
-		t.Errorf("could not create directory: %v", err)
-		return nil, ""
+	if err := tmpFS.Mkdir("withIndex", 0755); err != nil {
+		t.Fatalf("could not create directory: %v", err)
 	}
 
-	if err := tmpFS.Mkdir("noIndex", 0o755); err != nil {
-		t.Errorf("could not create directory: %v", err)
-		return nil, ""
+	if err := tmpFS.Mkdir("noIndex", 0755); err != nil {
+		t.Fatalf("could not create directory: %v", err)
 	}
 
-	if err := tmpFS.WriteFile("withIndex/index.html", []byte("index-content"), 0644); err != nil {
-		t.Errorf("could not write to withIndex/index.html: %v", err)
-		return nil, ""
+	if err := tmpFS.WriteFile("withIndex/index.html", []byte("index-content"), 0400); err != nil {
+		t.Fatalf("could not write to withIndex/index.html: %v", err)
 	}
 
-	if err := tmpFS.WriteFile("noIndex/file.html", []byte("file-content"), 0644); err != nil {
-		t.Errorf("could not write to noIndex/file.html: %v", err)
-		return nil, ""
+	if err := tmpFS.WriteFile("noIndex/file.html", []byte("file-content"), 0400); err != nil {
+		t.Fatalf("could not write to noIndex/file.html: %v", err)
 	}
 
 	if err := tmpFS.Symlink("file.html", "noIndex/link.html"); err != nil {
-		t.Errorf("could not create symlink: %v", err)
-		return nil, ""
+		t.Fatalf("could not create symlink: %v", err)
 	}
 
-	if err := tmpFS.Symlink(filepath.Join(dirName, "/noIndex/file.html"), "noIndex/abslink.html"); err != nil {
-		t.Errorf("could not create absolute symlink: %v", err)
-		return nil, ""
+	if err := tmpFS.Symlink(filepath.Join(dirName, "noIndex/file.html"), "noIndex/abslink.html"); err != nil {
+		t.Fatalf("could not create absolute symlink: %v", err)
 	}
 
-	if err := tmpFS.Symlink("/non/existent.html", "noIndex/wrongAbsLink.html"); err != nil {
-		t.Errorf("could not create absolute wrong symlink: %v", err)
-		return nil, ""
+	outsideDir := t.TempDir()
+	outsideFile := filepath.Join(outsideDir, "outside.html")
+
+	if err := os.WriteFile(outsideFile, []byte("outside-content"), 0400); err != nil {
+		t.Fatalf("could not create file in outside-of-root directory: %v", err)
+	}
+
+	if err := tmpFS.Symlink(outsideFile, "noIndex/wrongAbsLink.html"); err != nil {
+		t.Fatalf("could not create absolute wrong (points outside of root) symlink: %v", err)
 	}
 
 	if err := tmpFS.Symlink("nofile.html", "noIndex/wrongRelLink.html"); err != nil {
-		t.Errorf("could not create relative wrong symlink: %v", err)
-		return nil, ""
+		t.Fatalf("could not create relative wrong symlink: %v", err)
 	}
 
 	return tmpFS, dirName
@@ -284,10 +282,15 @@ func TestCollectDirectoryEntries(t *testing.T) {
 	}
 
 	indexFS, indexDirName := indexCreateFS(t)
+
+	if indexFS == nil {
+		t.Fatal("could not create index test filesystem")
+	}
+
 	directory, casted := indexFS.FS().(fs.StatFS)
 
 	if !casted {
-		t.Error("directory does not implement fs.StatFS")
+		t.Fatal("directory does not implement fs.StatFS")
 	}
 
 	for testNum, test := range tests {
