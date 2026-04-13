@@ -99,7 +99,7 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 
 $(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
 	ln -s $< $(patsubst %-dir,%,$<)
-	COPYFILE_DISABLE=1 tar -cH $(patsubst %-dir,%,$<) | xz -9 > $@
+	COPYFILE_DISABLE=1 tar -ch $(patsubst %-dir,%,$<) | xz -9 > $@
 	rm -f $(patsubst %-dir,%,$<)
 
 .PRECIOUS: $(THIRD_PARTY_NAME)-%-dir
