@@ -58,3 +58,34 @@ stated.
 The BDFL may alternatively decide to move to a Steering Committee governance
 model, in which case this document must be replaced with a new description of
 roles and responsibilities.
+
+
+Access to Sensitive Resources
+-----------------------------
+
+The following project members have access to sensitive resources (GitHub
+Secrets, Repository Settings, Release Keys):
+
+* Alexander Adam (@AlphaOne1) - BDFL / Primary Maintainer
+
+Currently, no other contributors have administrative access to the
+build infrastructure or cryptographic keys.
+
+
+Project Continuity
+------------------
+
+To ensure the project's continuity, the following measures are taken:
+
+*GitHub Successor*: A designated successor has been appointed in the GitHub
+account settings to take over repository management if the primary maintainer is
+incapacitated.
+
+<!-- Currently this is not implemented, uncomment if it is indeed enacted:
+*Access Recovery*: Recovery keys for the repository and build infrastructure are
+stored in a secure digital vault with emergency access enabled for a trusted
+party.
+-->
+
+*Forking*: As a fallback, the MPL-2.0 license ensures that the community can
+fork and continue the project at any time.

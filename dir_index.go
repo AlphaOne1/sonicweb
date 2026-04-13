@@ -1,0 +1,270 @@
+// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-License-Identifier: MPL-2.0
+
+package main
+
+import (
+	"bytes"
+	_ "embed"
+	"errors"
+	"fmt"
+	"html/template"
+	"io"
+	"io/fs"
+	"log/slog"
+	"net/http"
+	"path"
+	"path/filepath"
+	"strings"
+)
+
+//go:embed dir_index.html.tmpl
+var directoryListingTemplate string
+
+// ErrUnevenArgumentCount indicates an error when the number of arguments provided is not even as expected.
+var ErrUnevenArgumentCount = errors.New("number of arguments uneven")
+
+// ErrNonStringKey represents an error indicating that a provided key is not a string as required.
+var ErrNonStringKey = errors.New("key must be a string")
+
+type FileEntry struct {
+	Name       string
+	Info       fs.FileInfo
+	LinkTarget string
+}
+
+// cleanRequestPath cleans the URL path by trimming leading and trailing slashes.
+func cleanRequestPath(urlPath string) string {
+	return strings.Trim(urlPath, "/")
+}
+
+// hasIndexFile checks if an index.html file exists in the given directory path.
+func hasIndexFile(fsys fs.StatFS, urlPath string) bool {
+	indexPath := strings.TrimPrefix(path.Join(urlPath, "index.html"), "./")
+
+	if index, err := fsys.Stat(indexPath); err == nil && !index.IsDir() {
+		return true
+	}
+
+	return false
+}
+
+func dict(values ...any) (map[string]any, error) {
+	if len(values)%2 != 0 {
+		return nil, fmt.Errorf("invalid dict call: %w", ErrUnevenArgumentCount)
+	}
+
+	dict := make(map[string]any, len(values)/2)
+
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("invalid key: %w", ErrNonStringKey)
+		}
+
+		dict[key] = values[i+1]
+	}
+
+	return dict, nil
+}
+
+// processLink resolves the target of a symlink and verifies its existence,
+// returning the cleaned link target and indicator of having been able to process it.
+func processLink(
+	fsys fs.StatFS,
+	rawEntry fs.DirEntry,
+	urlPath, basePath, absRootPath string) (string, bool) {
+
+	lntgt, err := fs.ReadLink(fsys, path.Join(urlPath, rawEntry.Name()))
+
+	if err != nil {
+		return "", false
+	}
+
+	lntgt = filepath.ToSlash(lntgt)
+
+	var resolvedTarget string
+
+	if filepath.IsAbs(lntgt) {
+		resolvedTarget, err = filepath.Rel(absRootPath, lntgt)
+
+		if err != nil ||
+			resolvedTarget == ".." ||
+			strings.HasPrefix(resolvedTarget, "../") {
+			return "", false
+		}
+	} else {
+		resolvedTarget = path.Join(urlPath, lntgt)
+		resolvedTarget = path.Clean(resolvedTarget)
+	}
+
+	if _, err := fsys.Stat(resolvedTarget); err != nil {
+		return "", false
+	}
+
+	var linkTarget string
+
+	if filepath.IsAbs(lntgt) {
+		// in case of an absolute link, we directly set the links target instead of the links name
+		linkTarget = path.Join(basePath, resolvedTarget)
+		linkTarget = "/" + strings.TrimPrefix(linkTarget, "/")
+		linkTarget = path.Clean(linkTarget)
+	} else {
+		// for relative links, we let the file handler resolve it properly
+		linkTarget = lntgt
+	}
+
+	return linkTarget, true
+}
+
+// collectDirectoryEntries reads and processes directory entries, handling symlinks.
+func collectDirectoryEntries(fsys fs.StatFS, path, basePath, rootPath string) ([]FileEntry, error) {
+	rawEntries, err := fs.ReadDir(fsys, path)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory entries: %w", err)
+	}
+
+	absRoot, absRootErr := filepath.Abs(rootPath)
+
+	if absRootErr != nil {
+		absRoot = ""
+	}
+
+	absRoot = filepath.ToSlash(absRoot)
+
+	entries := make([]FileEntry, 0, len(rawEntries))
+
+	for _, rawEntry := range rawEntries {
+		finfo, err := rawEntry.Info()
+
+		if err != nil {
+			continue
+		}
+
+		linkTarget := ""
+
+		if rawEntry.Type()&fs.ModeSymlink != 0 {
+			if l, worked := processLink(fsys, rawEntry, path, basePath, absRoot); worked {
+				linkTarget = l
+			} else {
+				continue
+			}
+		}
+
+		entries = append(entries, FileEntry{
+			Name:       rawEntry.Name(),
+			Info:       finfo,
+			LinkTarget: linkTarget,
+		})
+	}
+
+	return entries, nil
+}
+
+// buildDirectoryListingParams builds the parameters for the directory listing template.
+func buildDirectoryListingParams(urlPath, basePath string, entries []FileEntry, r *http.Request) map[string]any {
+	params := map[string]any{
+		"DirectoryName":   path.Join(basePath, urlPath),
+		"DirectoryPrefix": path.Join(basePath, urlPath),
+		"Entries":         entries,
+	}
+
+	if urlPath != "." {
+		parentDir := basePath
+
+		if idx := strings.LastIndex(urlPath, "/"); idx >= 0 {
+			// we want the trailing / here, makes clear that it is a directory
+			parentDir = path.Join(basePath, urlPath[:idx+1])
+		}
+
+		params["ParentDirectory"] = parentDir
+	} else {
+		params["DirectoryName"] = basePath
+
+		if basePath == "/" {
+			params["DirectoryPrefix"] = ""
+		} else {
+			params["DirectoryPrefix"] = strings.TrimSuffix(basePath, "/")
+		}
+	}
+
+	params["Languages"] = parseLanguageHeader(r.Header.Get("Accept-Language"))
+
+	return params
+}
+
+// directoryListing creates middleware for handling directory listing in an HTTP file server.
+// If enabled, it generates an HTML page showing the directory's contents using a predefined template.
+// If it is not enabled, a 403-Forbidden is produced instead of the directory listing.
+// The middleware skips directory listing when serving files or paths with index.html present.
+func directoryListing(fsys fs.StatFS, enable bool, basePath, rootPath string) (func(http.Handler) http.Handler, error) {
+	tmpl, err := template.New("directoryListing").
+		Funcs(template.FuncMap{"dict": dict}).Parse(directoryListingTemplate)
+
+	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
+	if err != nil {
+		return nil, fmt.Errorf("could not parse directory listing template: %w", err)
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// check the desired file is either a directory or an index.html
+			urlPath := cleanRequestPath(r.URL.Path)
+
+			if urlPath == "" {
+				urlPath = "."
+			}
+
+			info, infoErr := fsys.Stat(urlPath)
+			hasIndex := false
+
+			// check if index.html is already existing
+			if infoErr == nil && info.IsDir() {
+				hasIndex = hasIndexFile(fsys, urlPath)
+			}
+
+			// jump to the next handler, if we are not to generate the index.html here
+			if infoErr != nil || !info.IsDir() || hasIndex {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// if we should not generate the index.html, we deny the listing at this point
+			if !enable {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			entries, dirErr := collectDirectoryEntries(fsys, urlPath, basePath, rootPath)
+			if dirErr != nil {
+				slog.Error("could not read directory", //nolint:gosec // slog cares for safety
+					slog.String("path", cutLog(urlPath)), slog.String("error", dirErr.Error()))
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+				return
+			}
+
+			params := buildDirectoryListingParams(urlPath, basePath, entries, r)
+			outBuf := bytes.Buffer{}
+
+			if err := tmpl.Execute(&outBuf, params); err != nil {
+				slog.Error("could not execute directory listing template", //nolint:gosec // slog cares for safety
+					slog.String("path", cutLog(urlPath)),
+					slog.String("error", err.Error()))
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+			if written, err := io.Copy(w, &outBuf); err != nil {
+				slog.Error("could not fully send directory listing",
+					slog.Int64("written", written),
+					slog.String("error", err.Error()))
+			}
+		})
+	}, nil
+}

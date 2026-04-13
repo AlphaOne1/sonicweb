@@ -7,6 +7,7 @@ PROJECT_NAME=       SonicWeb
 EXEC_PREFIX=		sonicweb
 PACKAGE_FILE_PREFIX=$(PROJECT_NAME)
 PACKAGE_NAME=		$(EXEC_PREFIX)
+THIRD_PARTY_NAME=   third_party_licenses
 IGOOS:=				$(shell go env GOOS)
 IGOARCH:=			$(shell go env GOARCH)
 EXEC_SUFFIX=		$(if $(filter windows,$(IGOOS)),.exe,)
@@ -42,7 +43,7 @@ SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
 SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod dir_index.html.tmpl logo.tmpl
 
 
-.PHONY: all clean docker fuzz helm package test tls
+.PHONY: all clean docker fuzz helm package test testreport tls
 .DELETE_ON_ERROR:
 
 all: $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX)
@@ -51,6 +52,15 @@ docker: docker-linux-amd64
 package: $(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb \
 		$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm
 helm: $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz
+
+%.tar: %
+	tar -cf $@ $<
+
+%.gz: %
+	gzip -k -f -9 $<
+
+%.xz: %
+	xz -k -f -6 $<
 
 define osNamePrefix
 $(firstword $(subst -, ,$(basename $(patsubst $(2)-%,%,$(1)))))
@@ -87,7 +97,22 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
 			 -o $@
 
-docker-%: $(EXEC_PREFIX)-%
+$(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
+	ln -s $< $(patsubst %-dir,%,$<)
+	COPYFILE_DISABLE=1 tar -cHJf $@ $(patsubst %-dir,%,$<)
+	rm -f $(patsubst %-dir,%,$<)
+
+.PRECIOUS: $(THIRD_PARTY_NAME)-%-dir
+$(THIRD_PARTY_NAME)-%-dir: go.mod
+	rm -rf $@
+	export TMP_DIR=`mktemp -d`										&&	\
+	GOOS="$(call osNamePrefix,$@,$(patsubst %-$*,%,$@))"			&&	\
+	GOARCH="$(call archNamePrefix,$@,$(patsubst %-$*,%,$@))"		&&	\
+	go tool go-licenses save ./... --force --save_path $${TMP_DIR}	&&	\
+	mv $${TMP_DIR} $@												||	\
+	rm -rf $${TMP_DIR}
+
+docker-%: $(EXEC_PREFIX)-% $(THIRD_PARTY_NAME)-%.tar.xz
 	TARGET_OS="$(call osName,$<)"							\
 	TARGET_ARCH="$(call archName,$<)"						\
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}	\
@@ -98,11 +123,9 @@ docker-%: $(EXEC_PREFIX)-%
 $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(wildcard helm/* helm/**/*)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).deb: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
-	nfpm package --config $< --packager deb --target $@
-
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).rpm: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES)
-	nfpm package --config $< --packager rpm --target $@
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).%: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) $(THIRD_PARTY_NAME)-$(IGOOS)-$(IGOARCH)-dir
+	$(if $(filter deb rpm,$*),,$(error "Package type $* not supported"))
+	nfpm package --config $< --packager $* --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
 	TARGET_OS="$(call osNamePrefix,$@,nfpm)"		\
@@ -119,9 +142,6 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	EXEC_PREFIX="$(EXEC_PREFIX)"	\
 	PROJECT_NAME="$(PROJECT_NAME)"	\
 	envsubst < $< > $@
-
-%.gz: %
-	gzip -k -f -9 $<
 
 tls:
 	mkdir -p testcert
@@ -154,6 +174,13 @@ tls:
 test:
 	go test ./...
 
+testreport:
+	go tool gotestsum --junitfile junit.xml --	\
+	    -race									\
+	    -v `go list ./... | grep -v example`	\
+	    --covermode=atomic						\
+	    --coverpkg=./...						\
+	    --coverprofile=coverage.txt
 
 fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
@@ -162,6 +189,7 @@ clean:
 	@-rm -vrf	$(EXEC_PREFIX)-*-*			\
 				nfpm-*.yaml					\
 				testcert					\
+				$(THIRD_PARTY_NAME)*       \
 				man/$(EXEC_PREFIX)*.1.gz	\
 				man/$(EXEC_PREFIX)*.1		\
 				$(PACKAGE_FILE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/

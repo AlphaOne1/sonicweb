@@ -86,7 +86,7 @@ linters:
                     allow:
                         - $gostd
                         - github.com/stretchr/testify/assert
-                        - github.com/AlphaOne1/*
+                        - github.com/AlphaOne1
 
         godot:
             exclude:

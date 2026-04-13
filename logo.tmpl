@@ -10,6 +10,6 @@
    |  , \_/  /____/\____/_/ /_/_/\___/ |__/|__/\___/_.___/
    | / \           \
    |/   \    _______\ Version: {{ if .Values.Tag }} {{- .Values.Tag }}{{ .Geany.VcsModified -}} {{ else }} {{- .Geany.VcsRevision }}{{ .Geany.VcsModified -}} {{ end }}
-         \  |              of: {{ .Geany.VcsTime }}
+         \  |              of: {{ if eq .Geany.VcsTime "unknown" }} {{- .Values.ExeTime -}} {{ else }} {{- .Geany.VcsTime -}} {{ end }}
           \ |           using: {{ .Geany.GoVersion }}
            \|

@@ -4,10 +4,12 @@
 package main
 
 import (
+	"os"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type LangPref struct {
@@ -72,4 +74,23 @@ func cutLog(s string) string {
 	}
 
 	return s
+}
+
+// executableTime retrieves the modification time of the current executable and
+// returns it formatted as an RFC3339 string.
+// If the executable lookup fails, the time since the start of the program is returned instead.
+func executableTime() string {
+	exe, err := os.Executable()
+
+	if err != nil {
+		return startTime.Format(time.RFC3339)
+	}
+
+	info, err := os.Stat(exe)
+
+	if err != nil {
+		return startTime.Format(time.RFC3339)
+	}
+
+	return info.ModTime().Format(time.RFC3339)
 }

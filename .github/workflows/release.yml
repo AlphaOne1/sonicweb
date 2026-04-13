@@ -70,7 +70,16 @@ jobs:
                 go version
                 make
 
-          - name: Upload Artifacts
+          - name: Gather Third Party License Information
+            env:
+                CGO_ENABLED: "0"
+                GOOS: ${{matrix.os}}
+                GOARCH: ${{matrix.architecture}}
+            run: |
+                make third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}-dir \
+                     third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
+
+          - name: Upload Executable Artifacts
             if: matrix.os == 'linux'
             uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
             with:
@@ -78,6 +87,16 @@ jobs:
                 path: |
                     sonicweb-${{ matrix.os }}-${{ matrix.architecture }}
                 compression-level: '9'
+                retention-days: 2
+
+          - name: Upload Third Party License Artifacts
+            if: matrix.os == 'linux'
+            uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+            with:
+                name: third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}
+                path: |
+                    third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
+                compression-level: '1'
                 retention-days: 2
 
           - name: Build Package
@@ -90,7 +109,10 @@ jobs:
 
           - name: Compress xz
             if: matrix.os != 'windows'
-            run: xz -T0 -9 sonicweb-*-*
+            run: |
+                tar -cf - sonicweb-${{ matrix.os }}-${{ matrix.architecture }}                     \
+                          third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz |\
+                xz -T0 -9 > sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz
 
           - name: Compress 7z (Windows)
             if: matrix.os == 'windows'
@@ -98,18 +120,21 @@ jobs:
             run: |
                 $sevenZip = "C:\Program Files\7-Zip\7z.exe"
                 if (-Not (Test-Path $sevenZip)) { throw "7-Zip not found at $sevenZip" }
-                & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.7z" "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.exe"
+                & $sevenZip a -t7z -ssw -mmt=on -mx=9 "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.7z" `
+                    "sonicweb-${{ matrix.os }}-${{ matrix.architecture }}.exe" `
+                    "third_party_licenses-${{ matrix.os }}-${{ matrix.architecture }}.tar.xz"
 
           - name: Upload Non-Windows Release (via GitHub CLI)
             if: matrix.os != 'windows'
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                TAG_NAME: ${{ github.event.release.tag_name }}
             shell: bash
             run: |
                 shopt -s nullglob
-                for file in sonicweb-*-* SonicWeb*.rpm SonicWeb*.deb
+                for file in sonicweb-*-*.tar.xz SonicWeb*.rpm SonicWeb*.deb
                 do
-                    gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
+                    gh release upload "$TAG_NAME" "$file" --clobber
                 done
 
           - name: Upload Windows Release (via GitHub CLI)
@@ -117,12 +142,12 @@ jobs:
             shell: powershell
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 Set-StrictMode -Version Latest
                 $ErrorActionPreference = 'Stop'
-                $tag = "${{ github.event.release.tag_name }}"
                 Get-ChildItem -File -Path . -Filter 'sonicweb-*-*.7z' | ForEach-Object {
-                    gh release upload $tag $_.FullName --clobber
+                    gh release upload $env:TAG_NAME $_.FullName --clobber
                 }
 
     BuildDockerMultiArch:
@@ -171,6 +196,13 @@ jobs:
                 merge-multiple: true
                 path: .
 
+          - name: Download Third Party Licenses Artifacts
+            uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+            with:
+                pattern: third_party_licenses-linux-*
+                merge-multiple: true
+                path: .
+
           - name: Build Docker Image
             id: docker_build
             uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
@@ -191,10 +223,12 @@ jobs:
                     ${{ env.IMAGE_NAME }}:latest
 
           - name: Inspect final manifests
+            env:
+                TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 set -euo pipefail
-                docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}"
-                docker manifest inspect "${IMAGE_NAME}:${{ github.event.release.tag_name }}-${{ github.sha }}"
+                docker manifest inspect "${IMAGE_NAME}:${TAG_NAME}"
+                docker manifest inspect "${IMAGE_NAME}:${TAG_NAME}-${{ github.sha }}"
                 docker manifest inspect "${IMAGE_NAME}:latest"
 
     ChecksumReleaseAssets:
@@ -217,12 +251,13 @@ jobs:
           - name: Download all release assets via GitHub CLI
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 set -euo pipefail
                 mkdir -p release-assets
                 cd release-assets
                 # gets all assets of the release
-                gh release download "${{ github.event.release.tag_name }}" --clobber
+                gh release download "$TAG_NAME" --clobber
                 echo "Downloaded assets:"
                 ls -lah
 

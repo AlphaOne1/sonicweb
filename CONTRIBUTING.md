@@ -128,3 +128,26 @@ flag as follows:
 ```shell
 git config --global alias.ci 'commit -s'
 ```
+
+Trust & Compliance
+------------------
+
+<!-- not yet
+*SonicWeb* is built with security in mind. For a detailed justification of its
+security design and threat model, please refer to the
+[Security Assurance Case](SECURITY_ASSURANCE.md).
+-->
+
+### Dependency Management
+
+Especially when deciding to include new library dependencies, it is suggested to
+first check if the desired functionality is already available in the standard
+library or to be implemented with minimal effort. 
+
+Dependencies are also checked by the linter and must be registered there.
+Dependency updates are generally tracked by dependabot.
+
+Concerning the validity of obtained artifacts, *SonicWeb* relies on the
+well-established Go module management. It downloads the exact version from
+`go.mod` via [git](https://git-scm.com) from the original sources and validates
+the check sums stored in the `go.sum` file.
