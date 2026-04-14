@@ -314,7 +314,7 @@ jobs:
             id-token: write
             packages: write
         needs:
-            - BuildDockerMultiArch
+          - BuildDockerMultiArch
         name: Container Provenance (immutable tag)
         if: startsWith(github.ref, 'refs/tags/')
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 #must have semver!
