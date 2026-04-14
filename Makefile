@@ -139,6 +139,7 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	TARGET_ARCH="$(call archNamePrefix,$@,nfpm)"	\
 	TARGET_VERSION="$(IBUILDTAG)"					\
 	EXEC_PREFIX="$(EXEC_PREFIX)"					\
+	EXEC_SUFFIX="$(EXEC_SUFFIX)"					\
 	PACKAGE_NAME="$(PACKAGE_NAME)"					\
 	PROJECT_NAME="$(PROJECT_NAME)"					\
 	envsubst < $< > $@

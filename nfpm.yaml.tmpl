@@ -24,8 +24,8 @@ vendor:     "AlphaOne1 <alphaone23@gmail.com>"
 homepage:   "https://github.com/AlphaOne1/sonicweb"
 license:    "MPL-2.0"
 contents:
-  - src: ./${EXEC_PREFIX}-${TARGET_OS}-${TARGET_ARCH}
-    dst: /usr/bin/${EXEC_PREFIX}
+  - src: ./${EXEC_PREFIX}-${TARGET_OS}-${TARGET_ARCH}${EXEC_SUFFIX}
+    dst: /usr/bin/${EXEC_PREFIX}${EXEC_SUFFIX}
   - src: ./man/${EXEC_PREFIX}.1.gz
     dst: /usr/share/man/man1/${EXEC_PREFIX}.1.gz
   - src: ./man/${EXEC_PREFIX}_de.1.gz
