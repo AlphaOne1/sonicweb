@@ -58,7 +58,7 @@ jobs:
           - name: Install nfpm
             if: matrix.os == 'linux'
             run: |
-                go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.0
+                go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.1
 
           - name: Install go-licenses
             run: |
