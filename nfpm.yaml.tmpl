@@ -38,8 +38,29 @@ contents:
     dst: /usr/share/doc/${PACKAGE_NAME}/LICENSE
   - src: ./third_party_licenses-${TARGET_OS}-${TARGET_ARCH}-dir
     dst: /usr/share/doc/${PACKAGE_NAME}/third_party_licenses
-overrides:  {}
+
+overrides:
+    msix:
+        contents:
+          - src: ./${EXEC_PREFIX}-${TARGET_OS}-${TARGET_ARCH}${EXEC_SUFFIX}
+            dst: ${EXEC_PREFIX}${EXEC_SUFFIX}
+          - src: ./README.md
+            dst: README.md
+          - src: ./LICENSE
+            dst: LICENSE
+          - src: ./third_party_licenses-${TARGET_OS}-${TARGET_ARCH}-dir
+            dst: third_party_licenses
 deb:
     compression: xz
 rpm:
     compression: xz
+msix:
+    publisher: "CN=${PACKAGE_NAME}, O=The ${PACKAGE_NAME} contributors, C=DE"
+    properties:
+        logo: sonicweb_logo.svg
+    applications:
+      - id: ${PACKAGE_NAME}
+        executable: ${EXEC_PREFIX}${EXEC_SUFFIX}
+        visual_elements:
+            display_name: ${PACKAGE_NAME}
+            description: ${PACKAGE_NAME} is a lightweight, cloud-native, static-file webserver.

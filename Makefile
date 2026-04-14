@@ -130,8 +130,8 @@ docker-%: $(EXEC_PREFIX)-% $(THIRD_PARTY_NAME)-%.tar.xz
 $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(wildcard helm/* helm/**/*)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
 
-$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).%: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH) $(MANPAGES) $(THIRD_PARTY_NAME)-$(IGOOS)-$(IGOARCH)-dir
-	$(if $(filter deb rpm,$*),,$(error "Package type $* not supported"))
+$(PACKAGE_FILE_PREFIX)-$(IGOOS)-$(IGOARCH)-$(IBUILDTAG).%: nfpm-$(IGOOS)-$(IGOARCH).yaml $(EXEC_PREFIX)-$(IGOOS)-$(IGOARCH)$(EXEC_SUFFIX) $(MANPAGES) $(THIRD_PARTY_NAME)-$(IGOOS)-$(IGOARCH)-dir
+	$(if $(filter deb msix rpm,$*),,$(error "Package type $* not supported"))
 	nfpm package --config $< --packager $* --target $@
 
 nfpm-%.yaml: nfpm.yaml.tmpl
