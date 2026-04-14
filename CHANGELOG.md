@@ -11,6 +11,7 @@ Release 1.8.1
 - included third-party licenses in deliverables
 - moved testreport functionality from workflow to Makefile
 - dependency updates
+- initial MSIX package support
 
 Release 1.8.0
 =============
