@@ -6,7 +6,7 @@ name: Compliance Checks
 on:
   push:
       branches:
-         - master
+        - master
   pull_request:
       branches:
         - master
@@ -19,6 +19,156 @@ permissions:
     contents: read
 
 jobs:
+    CheckSignedOff:
+        if: github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'bypass-dco')
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: read
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+            with:
+                egress-policy: audit
+
+          - name: Checkout
+            uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            with:
+                fetch-depth: 0
+
+          - name: Determine pushed commits
+            if: >
+                github.event_name == 'push' &&
+                !contains(github.actor, '[bot]') &&
+                !contains(github.event.pusher.name, '[bot]') &&
+                github.event.pusher.name != 'web-flow'
+            env:
+                # Use GitHub-provided SHAs to build the range for this push
+                BEFORE: ${{ github.event.before }}
+                AFTER: ${{ github.sha }}
+            run: |
+                set -euo pipefail
+
+                if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
+                then
+                    # New branch or force push without previous SHA
+                    git rev-list --no-merges "$AFTER" > shas.txt
+                else
+                    git rev-list --no-merges "$BEFORE".."$AFTER" > shas.txt
+                fi
+
+          - name: Get PR commits
+            if: github.event_name == 'pull_request'
+            env:
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            run: |
+                set -euo pipefail
+                
+                # Fetch all commits of the PR with pagination and extract SHAs
+                gh api -H "Accept: application/vnd.github+json" --paginate \
+                  repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
+                  | jq -r '.[].sha' > shas.txt
+
+          - name: Check for Signed-off-by
+            env:
+                GH_ACTOR: ${{ github.actor }}
+                GH_NAME: ${{ github.event.name == 'push' && github.event.pusher.name
+                                                         || github.event.pull_request.user.login }}
+                GH_NAME_SOURCE: ${{ github.event_name == 'push' && 'github.event.pusher.name'
+                                                                || 'github.event.pull_request.user.login' }}
+            run: |
+                set -euo pipefail
+                missing=""
+
+                while read -r sha
+                do
+                    [ -n "$sha" ] || continue
+
+                    # Skip commits from bots
+                    committer_name=`git log --format=%cn -n 1 "$sha"`
+                    committer_email=`git log --format=%ce -n 1 "$sha"`
+                    if    echo "$committer_name" | grep -Fq '[bot]' \
+                       || [ "$committer_name" = "web-flow" ]        \
+                       || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
+                    then
+                        echo "Skipping commit $sha from $committer_name <$committer_email>"
+                        continue
+                    fi
+
+                    msg=`git log --format=%B -n 1 "$sha"`
+
+                    if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
+                    then
+                        echo "Commit $sha missing Signed-off-by"
+                        missing="true"
+
+                        printf "%-38s %s" "Committer name:"  "$committer_name"
+                        printf "%-38s %s" "Committer email:" "$committer_email"
+                        printf "%-38s %s" "github.actor:"    "$GH_ACTOR"
+                        printf "%-38s %s" "$GH_NAME_SOURCE:" "$GH_NAME"
+                    fi
+                done < shas.txt
+
+                if [ "$missing" = "true" ]
+                then
+                    echo "DCO check failed for commits"
+                    exit 1
+                fi
+
+                echo "All commits are signed"
+
+    FormatCheck:
+        strategy:
+            matrix:
+                go-version:
+                  - "stable"
+        runs-on: ubuntu-latest
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+            with:
+                egress-policy: audit
+
+          - name: Install Go
+            uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+            with:
+                go-version: ${{matrix.go-version}}
+
+          - name: Checkout
+            uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            with:
+                fetch-depth: 1
+
+          - name: FormatCheck
+            run: if [ `go fmt ./... | wc -l` -gt 0 ] ; then echo "Found unformatted code" ; exit 1 ; else exit 0 ; fi
+
+    GolangCI:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+          - name: Harden Runner
+            uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+            with:
+                egress-policy: audit
+
+          - name: Checkout
+            uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            with:
+                fetch-depth: 1
+
+          - name: Run golangci-lint
+            uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+            with:
+                version: latest
+                args: --timeout=5m --output.sarif.path=golangci-lint-results.sarif --output.text.path=stdout
+
+          - name: Upload golangci-lint results to GitHub Security tab
+            uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
+            with:
+                sarif_file: golangci-lint-results.sarif
+
     REUSE:
         runs-on: ubuntu-latest
         steps:
@@ -35,152 +185,31 @@ jobs:
           - name: REUSE Compliance Check
             uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 #v6.0.0
 
-    CheckSignedOffCommit:
-        if: >
-            github.event_name == 'push' &&
-            !contains(github.actor, '[bot]') &&
-            !contains(github.event.pusher.name, '[bot]') &&
-            github.event.pusher.name != 'web-flow'
+    StaticCheck:
+        strategy:
+            matrix:
+                go-version:
+                  - "stable"
         runs-on: ubuntu-latest
-        permissions:
-            contents: read
         steps:
           - name: Harden Runner
             uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
             with:
                 egress-policy: audit
 
-          - name: Checkout
-            uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+          - name: Install Go
+            uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
             with:
-                fetch-depth: 0
-
-          - name: Determine pushed commits
-            id: range
-            run: |
-                set -euo pipefail
-
-                # Use GitHub-provided SHAs to build the range for this push
-                BEFORE="${{ github.event.before }}"
-                AFTER="${{ github.sha }}"
-
-                if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
-                then
-                    # New branch or force push without previous SHA
-                    git rev-list --no-merges "$AFTER" > shas.txt
-                else
-                    git rev-list --no-merges "$BEFORE".."$AFTER" > shas.txt
-                fi
-
-          - name: Check for Signed-off-by
-            run: |
-                set -euo pipefail
-                missing=""
-
-                while read -r sha
-                do
-                    [ -n "$sha" ] || continue
-
-                    # Skip commits from bots
-                    committer_name=`git log --format=%cn -n 1 "$sha"`
-                    committer_email=`git log --format=%ce -n 1 "$sha"`
-                    if    echo "$committer_name" | grep -Fq '[bot]' \
-                       || [ "$committer_name" = "web-flow" ]        \
-                       || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
-                    then
-                        echo "Skipping commit $sha from $committer_name <$committer_email>"
-                        continue
-                    fi
-
-                    msg=`git log --format=%B -n 1 "$sha"`
-
-                    if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
-                    then
-                        echo "Commit $sha missing Signed-off-by"
-                        missing="true"
-
-                        echo "Committer name:           $committer_name"
-                        echo "Committer email:          $committer_email"
-                        echo "github.actor:             ${{ github.actor }}"
-                        echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
-                    fi
-                done < shas.txt
-
-                if [ "$missing" = "true" ]
-                then
-                    echo "DCO check failed on push"
-                    exit 1
-                fi
-
-                echo "All pushed commits are signed"
-
-    CheckSignedOffPullRequest:
-        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'bypass-dco')
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            pull-requests: read
-        steps:
-          - name: Harden Runner
-            uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
-            with:
-                egress-policy: audit
+                go-version: ${{matrix.go-version}}
 
           - name: Checkout
             uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
             with:
-                fetch-depth: 0
+                fetch-depth: 1
 
-          - name: Get PR commits
-            env:
-                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            run: |
-                set -euo pipefail
-                gh --version
-                jq --version
-
-                # Fetch all commits of the PR with pagination and extract SHAs
-                gh api -H "Accept: application/vnd.github+json" --paginate \
-                  repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
-                  | jq -r '.[].sha' > shas.txt
-
-          - name: Check for Signed-off-by
-            run: |
-                set -euo pipefail
-                missing=""
-
-                while read -r sha
-                do
-                    [ -n "$sha" ] || continue
-
-                    # Skip commits from bots
-                    committer_name=`git log --format=%cn -n 1 "$sha"`
-                    committer_email=`git log --format=%ce -n 1 "$sha"`
-                    if    echo "$committer_name" | grep -Fq '[bot]' \
-                       || [ "$committer_name" = "web-flow" ]        \
-                       || echo "$committer_email" | grep -Eqi 'noreply@github\.com$|@users\.noreply\.github\.com$'
-                    then
-                        echo "Skipping commit $sha from $committer_name <$committer_email>"
-                        continue
-                    fi
-
-                    msg=`git log --format=%B -n 1 "$sha"`
-
-                    if ! printf '%s' "$msg" | grep -Eqi '^[[:space:]]*Signed[- ]off[- ]by:'
-                    then
-                        echo "Commit $sha missing Signed-off-by"
-                        missing="true"
-
-                        echo "Committer name:           $committer_name"
-                        echo "Committer email:          $committer_email"
-                        echo "github.actor:             ${{ github.actor }}"
-                        echo "github.event.pusher.name: ${{ github.event.pusher.name }}"
-                    fi
-                done < shas.txt
-
-                if [ "$missing" = "true" ]
-                then
-                    echo "DCO check failed"; exit 1
-                fi
-
-                echo "All commits are signed"
+          - name: StaticCheck
+            uses: dominikh/staticcheck-action@9716614d4101e79b4340dd97b10e54d68234e431 # v1.4.1
+            with:
+                version: latest
+                install-go: false
+                cache-key: ${{matrix.go-version}}
