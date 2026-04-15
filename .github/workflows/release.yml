@@ -58,11 +58,15 @@ jobs:
           - name: Install nfpm
             if: matrix.os == 'linux'
             run: |
-                go install github.com/goreleaser/nfpm/v2/cmd/nfpm
+                VERSION=`go list -m -f '{{.Version}}' github.com/goreleaser/nfpm/v2`
+                echo "Installing nfpm version $VERSION"
+                go install github.com/goreleaser/nfpm/v2/cmd/nfpm@$VERSION
 
           - name: Install go-licenses
             run: |
-                go install github.com/google/go-licenses/v2
+                VERSION=`go list -m -f '{{.Version}}' github.com/google/go-licenses/v2`
+                echo "Installing go-licenses version $VERSION"
+                go install github.com/google/go-licenses/v2@$VERSION
 
           - name: Add GOPATH/bin to PATH
             shell: bash
