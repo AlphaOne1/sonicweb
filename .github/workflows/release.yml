@@ -63,6 +63,7 @@ jobs:
                 go install github.com/goreleaser/nfpm/v2/cmd/nfpm@$VERSION
 
           - name: Install go-licenses
+            shell: bash
             run: |
                 VERSION=`go list -m -f '{{.Version}}' github.com/google/go-licenses/v2`
                 echo "Installing go-licenses version $VERSION"
