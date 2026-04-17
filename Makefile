@@ -3,20 +3,21 @@
 # SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
-PROJECT_NAME=       SonicWeb
-EXEC_PREFIX=		sonicweb
-PACKAGE_FILE_PREFIX=$(PROJECT_NAME)
-PACKAGE_NAME=		$(EXEC_PREFIX)
-THIRD_PARTY_NAME=   third_party_licenses
-IGOOS:=				$(shell go env GOOS)
-IGOARCH:=			$(shell go env GOARCH)
-EXEC_SUFFIX=		$(if $(filter windows,$(IGOOS)),.exe,)
-ICGO_ENABLED=		$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
+PROJECT_NAME:=			SonicWeb
+PROJECT_NAME_UC:=		$(shell echo "$(PROJECT_NAME)" | tr '[:lower:]' '[:upper:]')
+EXEC_PREFIX:=			sonicweb
+PACKAGE_FILE_PREFIX:=	$(PROJECT_NAME)
+PACKAGE_NAME:=			$(EXEC_PREFIX)
+THIRD_PARTY_NAME:=		third_party_licenses
+IGOOS:=					$(shell go env GOOS)
+IGOARCH:=				$(shell go env GOARCH)
+EXEC_SUFFIX=			$(if $(filter windows,$(IGOOS)),.exe,)
+ICGO_ENABLED=			$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
 
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell git status 2>/dev/null),yes,no)
 ifeq ($(GIT_AVAILABLE),yes)
-    IBUILDTAG :=  $(or $(strip $(shell git describe --tags 2>/dev/null)),v0.0)
+	IBUILDTAG :=  $(or $(strip $(shell git describe --tags 2>/dev/null)),v0.0)
 	GIT_REF_DATE:=$(strip $(shell git log -1 --date=format:"%B %Y" --format="%ad" 2>/dev/null))
 endif
 IBUILDTAG?=		unknown
@@ -35,12 +36,12 @@ $(info IBUILDTAG:           $(IBUILDTAG))
 $(info GIT_REF_DATE:        $(GIT_REF_DATE))
 endif
 
-PATH:=       $(PATH):$(shell go env GOPATH)/bin
-MANPAGES=    man/$(EXEC_PREFIX).1.gz		\
-             man/$(EXEC_PREFIX)_de.1.gz	\
-             man/$(EXEC_PREFIX)_es.1.gz
-SOURCES_FMT= '{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
-SOURCES:=    $(shell go list -f $(SOURCES_FMT) ./... ) go.mod dir_index.html.tmpl logo.tmpl
+PATH:=			$(PATH):$(shell go env GOPATH)/bin
+MANPAGES:=		man/$(EXEC_PREFIX).1.gz		\
+				man/$(EXEC_PREFIX)_de.1.gz	\
+				man/$(EXEC_PREFIX)_es.1.gz
+SOURCES_FMT:=	'{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
+SOURCES:=		$(shell go list -f $(SOURCES_FMT) ./... ) go.mod dir_index.html.tmpl logo.tmpl
 
 
 .PHONY: all clean docker fuzz helm package test testreport tls
@@ -94,8 +95,8 @@ $(EXEC_PREFIX)-%: $(SOURCES)
 	GOARCH="$(call archName,$@)"								\
 	CGO_ENABLED="$(ICGO_ENABLED)"								\
 	go build -trimpath											\
-			 -ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
-			 -o $@
+			-ldflags "-s -w -X main.buildInfoTag=$(IBUILDTAG)"	\
+			-o $@
 
 $(THIRD_PARTY_NAME)-%.tar.xz: $(THIRD_PARTY_NAME)-%-dir
 	ln -s $< $(patsubst %-dir,%,$<)
@@ -113,9 +114,9 @@ $(THIRD_PARTY_NAME)-%-dir: go.mod
 		--save_path $${TMP_DIR}	\
 		--ignore `go list -m`								&&	\
 	go-licenses report ./...				\
-	    --template license_report.md.tmpl	\
-	    --ignore `go list -m`				\
-	    > $${TMP_DIR}/license_report.md						&&	\
+		--template license_report.md.tmpl	\
+		--ignore `go list -m`				\
+		> $${TMP_DIR}/license_report.md						&&	\
 	mv $${TMP_DIR} $@										||	\
 	rm -rf $${TMP_DIR}
 
@@ -123,9 +124,9 @@ docker-%: $(EXEC_PREFIX)-% $(THIRD_PARTY_NAME)-%.tar.xz
 	TARGET_OS="$(call osName,$<)"							\
 	TARGET_ARCH="$(call archName,$<)"						\
 	docker build --platform=$${TARGET_OS}/$${TARGET_ARCH}	\
-	             -t $(EXEC_PREFIX):$(IBUILDTAG)					\
-	             --squash									\
-	             .
+				-t $(EXEC_PREFIX):$(IBUILDTAG)				\
+				--squash									\
+				.
 
 $(PACKAGE_FILE_PREFIX)-$(IBUILDTAG).tgz: $(wildcard helm/* helm/**/*)
 	helm package --app-version "$(IBUILDTAG)" --version "$(IBUILDTAG)" helm
@@ -145,11 +146,11 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	envsubst < $< > $@
 
 %.1: %.1.tmpl
-	GIT_REF_DATE="$(GIT_REF_DATE)"	\
-	GIT_TAG="$(IBUILDTAG)"			\
-	EXEC_PREFIX="$(EXEC_PREFIX)"	\
-	PROJECT_NAME="$(PROJECT_NAME)"	\
-	PROJECT_NAME_UC=`echo "$(PROJECT_NAME)" | tr '[:lower:]' '[:upper:]'`	\
+	GIT_REF_DATE="$(GIT_REF_DATE)"			\
+	GIT_TAG="$(IBUILDTAG)"					\
+	EXEC_PREFIX="$(EXEC_PREFIX)"			\
+	PROJECT_NAME="$(PROJECT_NAME)"			\
+	PROJECT_NAME_UC="$(PROJECT_NAME_UC)"	\
 	envsubst < $< > $@
 
 tls:
@@ -169,8 +170,8 @@ tls:
 				-CAkey testcert/ca-key.pem
 	openssl ecparam -name prime256v1 -genkey -noout -out testcert/client-key.pem
 	openssl req -new -subj "/CN=localhost" 			\
-  				-key    testcert/client-key.pem		\
-   				-out    testcert/client-req.pem
+				-key    testcert/client-key.pem		\
+				-out    testcert/client-req.pem
 	openssl x509 -req -days 7 -set_serial 01		\
 				-in    testcert/client-req.pem		\
 				-out   testcert/client-cert.pem		\
@@ -185,11 +186,11 @@ test:
 
 testreport:
 	go tool gotestsum --junitfile junit.xml --	\
-	    -race									\
-	    -v `go list ./... | grep -v example`	\
-	    --covermode=atomic						\
-	    --coverpkg=./...						\
-	    --coverprofile=coverage.txt
+		-race									\
+		-v `go list ./... | grep -v example`	\
+		--covermode=atomic						\
+		--coverpkg=./...						\
+		--coverprofile=coverage.txt
 
 fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
