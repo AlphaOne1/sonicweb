@@ -3,4 +3,4 @@
 
 [[IgnoredVulns]]
 id = "GO-2026-4514"
-reason = "Dependency is used for internal tooling, not included in final binary. Further this seems to be fixed in v1.1.2".
+reason = "Dependency is used for internal tooling, not included in final binary. Further this seems to be fixed in v1.1.2."
