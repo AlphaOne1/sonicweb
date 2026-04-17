@@ -2,6 +2,12 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
+Release Next
+============
+
+- introduced `osv-scanner.toml` to silence non-affecting vulnerability reports
+- dependency updates
+
 Release 1.8.1
 =============
 

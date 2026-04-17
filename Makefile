@@ -149,6 +149,7 @@ nfpm-%.yaml: nfpm.yaml.tmpl
 	GIT_TAG="$(IBUILDTAG)"			\
 	EXEC_PREFIX="$(EXEC_PREFIX)"	\
 	PROJECT_NAME="$(PROJECT_NAME)"	\
+	PROJECT_NAME_UC=`echo "$(PROJECT_NAME)" | tr '[:lower:]' '[:upper:]'`	\
 	envsubst < $< > $@
 
 tls:
