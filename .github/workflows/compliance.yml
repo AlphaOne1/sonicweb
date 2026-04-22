@@ -66,8 +66,8 @@ jobs:
                 
                 # Fetch all commits of the PR with pagination and extract SHAs
                 gh api -H "Accept: application/vnd.github+json" --paginate \
-                  repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
-                  | jq -r '.[].sha' > shas.txt
+                    repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
+                    | jq -r '.[].sha' > shas.txt
 
           - name: Check for Signed-off-by
             env:
