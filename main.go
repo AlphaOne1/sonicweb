@@ -27,10 +27,13 @@ import (
 	"github.com/AlphaOne1/midgard/handler/accesslog"
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/helper"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
+	"github.com/AlphaOne1/sonicweb/dirindex"
 	"github.com/AlphaOne1/sonicweb/instrumentation"
 	"github.com/AlphaOne1/sonicweb/service"
+	"github.com/AlphaOne1/sonicweb/utils"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // ServerName is the reported server name in the header.
@@ -264,7 +267,7 @@ func generateFileHandler(
 		// handlers that operate on the filesystem, no basePath prefix
 		addTryFiles(tryFiles, statFS),
 		checkValidFilePath(),
-		helper.Must(directoryListing(statFS, indexEnabled, basePath, rootPath)))
+		helper.Must(dirindex.DirIndex(statFS, indexEnabled, basePath, rootPath)))
 
 	return midgard.StackMiddlewareHandler(
 			mwStack,
@@ -325,7 +328,7 @@ func setupInstrumentation(
 // run initializes all necessary parts and starts the server.
 // It returns the desired process exit code.
 func run(signalShutdown context.Context) int {
-	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag, "ExeTime": executableTime()})
+	_ = geany.PrintLogo(logoTmpl, map[string]string{"Tag": buildInfoTag, "ExeTime": utils.ExecutableTime()})
 
 	// Parse command line flags
 	config := setupFlags()

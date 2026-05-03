@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
-package main
+// Package utils contains utility functions for the SonicWeb server.
+package utils
 
 import (
 	"os"
@@ -12,6 +13,7 @@ import (
 	"time"
 )
 
+// LangPref represents a language preference with language, variant, and a quality factor (preference value).
 type LangPref struct {
 	Lang    string
 	Variant string
@@ -23,8 +25,11 @@ type LangPref struct {
 var acceptLanguageHeaderRegex = regexp.MustCompile(
 	`^(([A-Za-z]+)(?:-[A-Za-z0-9]+)*|\*)(?:;q=(1(?:\.0)?|0(?:\.[0-9]+)?))?$`)
 
-// parseLanguageHeader parses the Accept-Language header and returns a sorted slice of LangPref by preference value.
-func parseLanguageHeader(langHeader string) []LangPref {
+// startTime contains the start time of the process.
+var startTime = time.Now() //nolint:gochecknoglobals // this one is intentional
+
+// ParseLanguageHeader parses the Accept-Language header and returns a sorted slice of LangPref by preference value.
+func ParseLanguageHeader(langHeader string) []LangPref {
 	const AverageLangLength = 5
 	const LangPrefMatch = 4
 
@@ -64,8 +69,8 @@ func parseLanguageHeader(langHeader string) []LangPref {
 	return langs
 }
 
-// cutLog truncates a string to ensure it does not exceed a specified length, appending a suffix if truncation occurs.
-func cutLog(s string) string {
+// CutLog truncates a string to ensure it does not exceed a specified length, appending a suffix if truncation occurs.
+func CutLog(s string) string {
 	const MaxLogStringLength = 64 // must be smaller than the MaxPathPartLength!!!
 	const EndFill = "..."
 
@@ -76,10 +81,10 @@ func cutLog(s string) string {
 	return s
 }
 
-// executableTime retrieves the modification time of the current executable and
+// ExecutableTime retrieves the modification time of the current executable and
 // returns it formatted as an RFC3339 string.
 // If the executable lookup fails, the time since the start of the program is returned instead.
-func executableTime() string {
+func ExecutableTime() string {
 	exe, err := os.Executable()
 
 	if err != nil {
