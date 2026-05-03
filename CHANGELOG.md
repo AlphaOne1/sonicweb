@@ -5,6 +5,8 @@
 Release Next
 ============
 
+- extend directory listing with accessibility, localized time format, sorting,
+  no-script support and some optical enhancements
 - introduced `osv-scanner.toml` to silence non-affecting vulnerability reports
 - dependency updates
 

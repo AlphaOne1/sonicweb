@@ -40,8 +40,11 @@ PATH:=			$(PATH):$(shell go env GOPATH)/bin
 MANPAGES:=		man/$(EXEC_PREFIX).1.gz		\
 				man/$(EXEC_PREFIX)_de.1.gz	\
 				man/$(EXEC_PREFIX)_es.1.gz
-SOURCES_FMT:=	'{{ range .GoFiles }} {{$$.Dir}}/{{.}} {{ end }}'
-SOURCES:=		$(shell go list -f $(SOURCES_FMT) ./... ) go.mod dir_index.html.tmpl logo.tmpl
+SOURCES_FMT:=	{{ range .GoFiles    }} {{$$.Dir}}/{{.}} {{ end }}
+EMBED_FMT:=		{{ range .EmbedFiles }} {{$$.Dir}}/{{.}} {{ end }}
+SOURCES:=		$(shell go list -f "$(SOURCES_FMT)$(EMBED_FMT)" ./... )	\
+				go.mod	\
+				go.sum
 
 
 .PHONY: all clean docker fuzz helm package test testreport tls

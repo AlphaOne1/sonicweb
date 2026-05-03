@@ -489,7 +489,7 @@ func sonicMainHandlerTest(t *testing.T, uri string, method string, header string
 
 	// Only fuzz a small, meaningful method set to reduce noise
 	switch strings.ToUpper(method) {
-	case "GET", "HEAD":
+	case http.MethodGet, http.MethodHead:
 		method = strings.ToUpper(method)
 	default:
 		t.Skip()

@@ -1,0 +1,70 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+SPDX-License-Identifier: MPL-2.0
+*/ -}}
+
+{{- $lang             := .Language                 -}}
+{{- $textDir          := "ltr"                     -}}
+{{- $listingName      := .Translation.ListingName  -}}
+{{- $headName         := .Translation.Name         -}}
+{{- $headSize         := .Translation.Size         -}}
+{{- $headLastModified := .Translation.LastModified -}}
+
+{{- if .Translation.RTL                            -}}
+{{-     $textDir = "rtl"                           -}}
+{{- end                                            -}}
+
+<!DOCTYPE html>
+<html lang="{{ $lang }}" dir="{{ $textDir }}">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="robots" content="noindex, follow">
+
+	<style>
+{{ render "dir_index.css" . | tindent 2 | safeCSS }}
+	</style>
+
+	<script>
+{{ render "dir_index.js" .  | tindent 2 | safeJS  }}
+	</script>
+
+	<title> {{.DirectoryName}} </title>
+</head>
+<body>
+	<h1> <span class="icon" aria-hidden="true">📂</span> {{.DirectoryName}} </h1>
+	<table class="directoryListing">
+		<caption class="sr-only"> {{ $listingName }} </caption>
+		<thead>
+			<tr><th scope="col" aria-sort="none">
+					<button type="button" onClick="sortTable(0)">{{ $headName }} <span class="sort-indicator"></span></button></th>
+				<th scope="col" aria-sort="none">
+					<button type="button" onClick="sortTable(1)">{{ $headSize }} <span class="sort-indicator"></span></button></th>
+				<th scope="col" aria-sort="none">
+					<button type="button" onClick="sortTable(2)">{{ $headLastModified }} <span class="sort-indicator"></span></button></th>
+			</tr>
+		</thead>
+		<tbody>
+			{{- if .ParentDirectory }}
+			<tr><td><a href="{{ .ParentDirectory }}"> .. </a></td><td></td><td></td></tr>
+			{{- end -}}
+			{{- $dirPrefix := .DirectoryPrefix -}}
+			{{- range .Entries -}}
+			{{- $fi := .Info }}
+			<tr>{{ if $fi.IsDir -}}	<td><em><a href="{{ $dirPrefix }}/{{ .Name }}"> <span class="icon" aria-hidden="true">📁</span> {{ .Name }}/ </a></em></td>
+				{{- else if gt (len .LinkTarget) 0 -}}
+					{{- if eq (slice .LinkTarget 0 1) "/" -}}
+									<td><a href="{{ .LinkTarget }}"> <span class="icon" aria-hidden="true">🔗</span> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
+					{{- else -}}
+									<td><a href="{{ $dirPrefix }}/{{ .Name }}"> <span class="icon" aria-hidden="true">🔗</span> {{ .Name }} &rarr; {{ .LinkTarget }} </a></td>
+					{{- end -}}
+				{{- else -}}		<td><a href="{{ $dirPrefix }}/{{ .Name }}"> <span class="icon" aria-hidden="true">📄</span> {{ .Name }} </a></td>
+				{{- end }}
+				<td> {{ $fi.Size    }} </td>
+				<td> <time class="auto-date" datetime="{{ $fi.ModTime.Format "2006-01-02T15:04:05Z07:00" }}">{{ $fi.ModTime.Format "2006-01-02 15:04:05 -07" }}</time> </td>
+			</tr>
+			{{- end }}
+		</tbody>
+	</table>
+</body>
+</html>

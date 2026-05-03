@@ -19,6 +19,8 @@ import (
 	"github.com/AlphaOne1/midgard/handler/addheader"
 	"github.com/AlphaOne1/midgard/helper"
 
+	"github.com/AlphaOne1/sonicweb/utils"
+
 	"github.com/corazawaf/coraza/v3"
 	corhttp "github.com/corazawaf/coraza/v3/http"
 )
@@ -251,10 +253,10 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 						http.Error(w, "name too long", http.StatusBadRequest)
 
 						// we trim the path and parts to avoid logging overflows
-						slog.Warn("filename too long, truncated", //nolint:gosec // slog cares for safety
+						slog.Warn("filename too long, truncated",
 							slog.Int("length", len(part)),
-							slog.String("part", cutLog(part)),
-							slog.String("path", cutLog(path)))
+							slog.String("part", utils.CutLog(part)),
+							slog.String("path", utils.CutLog(path)))
 
 						return
 					}
@@ -264,7 +266,7 @@ func checkValidFilePath() func(http.Handler) http.Handler {
 			if path != "" && !fs.ValidPath(path) {
 				http.Error(w, "invalid path", http.StatusBadRequest)
 				// we do not trim the path here, as it is already reasonably short and we want to see the error
-				slog.Warn("invalid path", slog.String("path", path)) //nolint:gosec // slog cares for safety
+				slog.Warn("invalid path", slog.String("path", path))
 
 				return
 			}

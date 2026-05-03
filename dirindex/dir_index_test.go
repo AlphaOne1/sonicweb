@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 // SPDX-License-Identifier: MPL-2.0
 
-package main
+package dirindex_test
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"github.com/AlphaOne1/midgard"
 	"github.com/AlphaOne1/midgard/defs"
 	"github.com/AlphaOne1/midgard/helper"
+
+	"github.com/AlphaOne1/sonicweb/dirindex"
 )
 
 func TestCleanRequestPath(t *testing.T) {
@@ -45,7 +46,7 @@ func TestCleanRequestPath(t *testing.T) {
 		t.Run(fmt.Sprintf("TestCleanRequestPath-%d", i), func(t *testing.T) {
 			t.Parallel()
 
-			got := cleanRequestPath(test.in)
+			got := dirindex.TcleanRequestPath(test.in)
 
 			if got != test.want {
 				t.Errorf("got %s, want %s", got, test.want)
@@ -73,7 +74,7 @@ func TestHasIndexFile(t *testing.T) {
 		t.Fatalf("could not get StatFS")
 	}
 
-	if hasIndexFile(statFS, ".") {
+	if dirindex.ThasIndexFile(statFS, ".") {
 		t.Errorf("hasIndexFile should return false")
 	}
 
@@ -85,67 +86,8 @@ func TestHasIndexFile(t *testing.T) {
 
 	_ = idx.Close()
 
-	if !hasIndexFile(statFS, ".") {
+	if !dirindex.ThasIndexFile(statFS, ".") {
 		t.Errorf("hasIndexFile should return true")
-	}
-}
-
-func TestDict(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		in   []any
-		want map[string]any
-		err  error
-	}{
-		{
-			in:   []any{"a", "1", "b", "2", "c", 3},
-			want: map[string]any{"a": "1", "b": "2", "c": 3},
-			err:  nil,
-		},
-		{
-			in:   []any{},
-			want: map[string]any{},
-			err:  nil,
-		},
-		{
-			in:   []any{1, 2},
-			want: nil,
-			err:  ErrNonStringKey,
-		},
-		{
-			in:   []any{"1", "2", "3"},
-			want: nil,
-			err:  ErrUnevenArgumentCount,
-		},
-	}
-
-	for testNum, test := range tests {
-		t.Run(fmt.Sprintf("TestDict-%d", testNum), func(t *testing.T) {
-			t.Parallel()
-
-			got, gotErr := dict(test.in...)
-
-			if !errors.Is(gotErr, test.err) {
-				t.Errorf("got error %v, want %v", gotErr, test.err)
-			}
-
-			if len(got) != len(test.want) {
-				t.Errorf("got %d entries, wanted %d", len(got), len(test.want))
-			}
-
-			for k, v := range test.want {
-				val, ok := got[k]
-
-				if !ok {
-					t.Errorf("key %s not found in dict", k)
-				}
-
-				if val != v {
-					t.Errorf("got %v for key %s, want %v", val, k, v)
-				}
-			}
-		})
 	}
 }
 
@@ -214,6 +156,7 @@ func indexCreateFS(t *testing.T) (*os.Root, string) {
 	return tmpFS, dirName
 }
 
+//nolint:lll //we have to have some longer lines here
 func TestCollectDirectoryEntries(t *testing.T) {
 	t.Parallel()
 
@@ -225,13 +168,13 @@ func TestCollectDirectoryEntries(t *testing.T) {
 		wantStatus   int
 	}{
 		{
-			path:         "/",
+			path:         "/?lang=en",
 			indexEnabled: true,
 			want: []string{
 				"<title> / </title>",
-				"<h1> 📂 / </h1>",
-				`<td><em><a href="/noIndex"> 📁 noIndex/ </a></em></td>`,
-				`<td><em><a href="/withIndex"> 📁 withIndex/ </a></em></td>`,
+				`<h1> <span class="icon" aria-hidden="true">📂</span> / </h1>`,
+				`<td><em><a href="/noIndex"> <span class="icon" aria-hidden="true">📁</span> noIndex/ </a></em></td>`,
+				`<td><em><a href="/withIndex"> <span class="icon" aria-hidden="true">📁</span> withIndex/ </a></em></td>`,
 			},
 			wantStatus: http.StatusOK,
 		},
@@ -244,14 +187,14 @@ func TestCollectDirectoryEntries(t *testing.T) {
 			wantStatus: http.StatusOK,
 		},
 		{
-			path:         "/noIndex",
+			path:         "/noIndex?lang=en",
 			indexEnabled: true,
 			want: []string{
 				"<title> /noIndex </title>",
-				"<h1> 📂 /noIndex </h1>",
-				`<td><a href="/noIndex/file.html"> 📄 file.html </a></td>`,
-				`<td><a href="/noIndex/link.html"> 🔗 link.html &rarr; file.html </a></td>`,
-				`<td><a href="/noIndex/file.html"> 🔗 abslink.html &rarr; /noIndex/file.html </a></td>`,
+				`<h1> <span class="icon" aria-hidden="true">📂</span> /noIndex </h1>`,
+				`<td><a href="/noIndex/file.html"> <span class="icon" aria-hidden="true">📄</span> file.html </a></td>`,
+				`<td><a href="/noIndex/link.html"> <span class="icon" aria-hidden="true">🔗</span> link.html &rarr; file.html </a></td>`,
+				`<td><a href="/noIndex/file.html"> <span class="icon" aria-hidden="true">🔗</span> abslink.html &rarr; /noIndex/file.html </a></td>`,
 			},
 			dontWant:   []string{"wrongAbsLink.html", "wrongRelLink.html"},
 			wantStatus: http.StatusOK,
@@ -299,7 +242,7 @@ func TestCollectDirectoryEntries(t *testing.T) {
 
 			testHandler := midgard.StackMiddlewareHandler(
 				[]defs.Middleware{
-					helper.Must(directoryListing(directory, test.indexEnabled, "/", indexDirName)),
+					helper.Must(dirindex.DirIndex(directory, test.indexEnabled, "/", indexDirName)),
 				},
 				http.FileServerFS(
 					directory,
