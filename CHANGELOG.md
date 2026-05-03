@@ -2,8 +2,8 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
-Release Next
-============
+Release 1.9.0
+=============
 
 - extend directory listing with accessibility, localized time format, sorting,
   no-script support and some optical enhancements
