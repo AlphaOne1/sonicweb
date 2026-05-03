@@ -117,7 +117,8 @@ var Translations = map[string]Translation{
 	"ru":  {ListingName: "Содержимое директории", Name: "Имя", Size: "Размер", LastModified: "Последнее изменение"},                 // Russian
 	"sa":  {ListingName: "निर्देशिकासूची", Name: "नाम", Size: "परिमाणम्", LastModified: "अन्तिमं परिवर्तनम्"},                       // Sanskrit
 	"sga": {ListingName: "ᚔᚋᚓᚔᚏᚓ", Name: "ᚐᚔᚋ", Size: "ᚋᚓᚈ", LastModified: "ᚐᚈᚐᚏ"},                                                  // Old Irish
-	//nolint:staticcheck //the invisible character here is intended
+	//nolint:staticcheck
+	//lint:ignore ST1018 the invisible character here is intended
 	"si":  {ListingName: "ඩිරෙක්ටරි ලැයිස්තුව", Name: "නම", Size: "ප්‍රමාණය", LastModified: "අවසන් වරට වෙනස් කළේ"},          // Sinhala
 	"sk":  {ListingName: "Výpis adresára", Name: "Názov", Size: "Veľkosť", LastModified: "Posledná zmena"},                  // Slovak
 	"sl":  {ListingName: "Seznam imenika", Name: "Ime", Size: "Velikost", LastModified: "Zadnja sprememba"},                 // Slovenian
