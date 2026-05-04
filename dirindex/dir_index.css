@@ -3,6 +3,10 @@ SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 SPDX-License-Identifier: MPL-2.0
 */
 
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
 .icon {
 	display: inline-block;
 	width: 1.2em;
@@ -53,7 +57,7 @@ th[aria-sort="descending"] .sort-indicator::after {
 }
 
 table.directoryListing {
-	font-family: monospace;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", "Noto Sans", monospace;
 }
 
 table.directoryListing .icon {
@@ -98,16 +102,16 @@ table.directoryListing a:focus-visible {
 table.directoryListing td:nth-child(1) {
 	overflow-wrap: break-word;
 	word-break: break-word;
-	padding-right: 0.5em;
+	padding-inline-end: 0.5em;
 }
 
 table.directoryListing td:nth-child(2) {
-	text-align: right;
-	padding-left: 0.5em;
-	padding-right: 0.5em;
+	text-align: end;
+	padding-inline-start: 0.5em;
+	padding-inline-end: 0.5em;
 }
 
 table.directoryListing td:nth-child(3) {
-	text-align: right;
-	padding-left: 0.5em;
+	text-align: end;
+	padding-inline-start: 0.5em;
 }
