@@ -2,6 +2,13 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
+Release Next
+============
+
+- added more languages to the directory listing translations
+- Makefile determines man-pages automatically
+- upgraded Helm dependencies
+
 Release 1.9.0
 =============
 

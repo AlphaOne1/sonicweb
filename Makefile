@@ -37,9 +37,8 @@ $(info GIT_REF_DATE:        $(GIT_REF_DATE))
 endif
 
 PATH:=			$(PATH):$(shell go env GOPATH)/bin
-MANPAGES:=		man/$(EXEC_PREFIX).1.gz		\
-				man/$(EXEC_PREFIX)_de.1.gz	\
-				man/$(EXEC_PREFIX)_es.1.gz
+MANPAGES:=		$(sort	$(wildcard man/*.gz)	\
+						$(foreach mp,$(patsubst %.tmpl,%,$(filter-out %.gz,$(wildcard man/*))),$(mp).gz))
 SOURCES_FMT:=	{{ range .GoFiles    }} {{$$.Dir}}/{{.}} {{ end }}
 EMBED_FMT:=		{{ range .EmbedFiles }} {{$$.Dir}}/{{.}} {{ end }}
 SOURCES:=		$(shell go list -f "$(SOURCES_FMT)$(EMBED_FMT)" ./... )	\
@@ -199,10 +198,10 @@ fuzz:
 	go test -fuzz=Fuzz -fuzztime="30s" -fuzzminimizetime="10s" -run "^$$"
 
 clean:
-	@-rm -vrf	$(EXEC_PREFIX)-*-*			\
-				nfpm-*.yaml					\
-				testcert					\
-				$(THIRD_PARTY_NAME)*       \
-				man/$(EXEC_PREFIX)*.1.gz	\
-				man/$(EXEC_PREFIX)*.1		\
+	@-rm -vrf	$(EXEC_PREFIX)-*-*														\
+				nfpm-*.yaml																\
+				testcert																\
+				$(THIRD_PARTY_NAME)*													\
+				$(foreach mp,$(patsubst %.tmpl,%,$(wildcard man/*.tmpl)),$(mp) $(mp).gz)\
+				$(foreach mp,$(filter-out %.gz %.tmpl,$(wildcard man/*)),$(mp).gz)		\
 				$(PACKAGE_FILE_PREFIX)-*.*	| sed -E s/"(.*)"/"cleaning \\1"/
