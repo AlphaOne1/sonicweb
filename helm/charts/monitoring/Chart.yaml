@@ -23,7 +23,7 @@ dependencies:
         repository: https://grafana-community.github.io/helm-charts
 
     -   name: alloy
-        version: 1.5.3
+        version: 1.8.0
         repository: https://grafana.github.io/helm-charts
 
     -   name: victoria-metrics-single
