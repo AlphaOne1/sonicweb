@@ -27,7 +27,7 @@ dependencies:
         repository: https://grafana.github.io/helm-charts
 
     -   name: victoria-metrics-single
-        version: 0.29.0
+        version: 0.37.0
         repository: https://victoriametrics.github.io/helm-charts/
         alias: metrics
 
