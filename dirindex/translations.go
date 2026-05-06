@@ -121,6 +121,7 @@ var Translations = map[string]Translation{
 	"om":  {ListingName: "Tarree galmee", Name: "Maqaa", Size: "Hamma", LastModified: "Dhuma irratti kan foyya'e"},                  // Oromo
 	"or":  {ListingName: "ଡିରେକ୍ଟୋରୀ ତାଲିକା", Name: "ନାମ", Size: "ଆକାର", LastModified: "ଶେଷରେ ପରିବର୍ତ୍ତିତ"},                         // Odia
 	"pa":  {ListingName: "ਡਾਇਰੈਕਟਰੀ ਸੂਚੀ", Name: "ਨਾਮ", Size: "ਆਕਾਰ", LastModified: "ਆਖਰੀ ਬਦਲਾਅ"},                                   // Punjabi
+	"peo": {ListingName: "𐎧𐎨𐎠 𐎴𐎠𐎶", Name: "𐎴𐎠𐎶", Size: "𐎼𐎠𐎲", LastModified: "𐎠𐎲𐎡𐎹 𐎱𐎠𐎿"},                                             // Old Persian
 	"phn": {ListingName: "𐤔𐤓𐤔 𐤎𐤐𐤓", Name: "𐤔𐤌", Size: "𐤌𐤃𐤃", LastModified: "𐤏𐤕 𐤀𐤇𐤓𐤍", RTL: true},                                    // Phoenician
 	"pl":  {ListingName: "Lista katalogu", Name: "Nazwa", Size: "Rozmiar", LastModified: "Ostatnia modyfikacja"},                    // Polish
 	"ps":  {ListingName: "د لارښود لړلیک", Name: "نوم", Size: "کچه", LastModified: "وروستی بدلون", RTL: true},                       // Pashto
@@ -157,6 +158,7 @@ var Translations = map[string]Translation{
 	"tr":  {ListingName: "Dizin İçeriği", Name: "Ad", Size: "Boyut", LastModified: "Son değişiklik"},                           // Turkish
 	"ts":  {ListingName: "Nxaxamelo wa dayirektori", Name: "Vito", Size: "Sayizi", LastModified: "Ku cinciwa ko hetelela"},     // Tsonga
 	"tt":  {ListingName: "Каталог исемлеге", Name: "Исем", Size: "Зурлык", LastModified: "Соңгы үзгәртү"},                      // Tatar
+	"uga": {ListingName: "𐎒𐎄𐎗 𐎍𐎃𐎕", Name: "𐎌𐎎", Size: "𐎎𐎄", LastModified: "𐎜𐎃𐎗 𐎌𐎓"},                                            // Ugaritic
 	"uk":  {ListingName: "Список каталогу", Name: "Ім'я", Size: "Розмір", LastModified: "Остання зміна"},                       // Ukrainian
 	"ur":  {ListingName: "ڈائریکٹری فہرست", Name: "نام", Size: "سائز", LastModified: "آخری تبدیلی", RTL: true},                 // Urdu
 	"uz":  {ListingName: "Direktoriyalar ro'yxati", Name: "Nomi", Size: "Hajmi", LastModified: "Oxirgi o'zgartirish"},          // Uzbek
