@@ -234,11 +234,19 @@ func getTranslation(r *http.Request) (string, Translation) {
 
 	langPrefs := utils.ParseLanguageHeader(r.Header.Get("Accept-Language"))
 
-	for _, l := range langPrefs {
-		t, found := Translations[l.Lang]
+	for _, lang := range langPrefs {
+		// first we look for the exact variant
+		t, found := Translations[lang.Variant]
 
 		if found {
-			return l.Lang, t
+			return lang.Variant, t
+		}
+
+		// then we look, if we find the base language
+		t, found = Translations[lang.Lang]
+
+		if found {
+			return lang.Lang, t
 		}
 	}
 
