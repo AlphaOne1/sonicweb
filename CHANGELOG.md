@@ -6,6 +6,7 @@ Release Next
 ============
 
 - added more languages to the directory listing translations
+- language variant support in directory listing translations
 - Makefile determines man-pages automatically
 - upgraded Helm dependencies
 
