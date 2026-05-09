@@ -2,8 +2,8 @@
      SPDX-License-Identifier: MPL-2.0
 -->
 
-Release Next
-============
+Release 1.10.0
+==============
 
 - added more languages to the directory listing translations
 - language variant support in directory listing translations
