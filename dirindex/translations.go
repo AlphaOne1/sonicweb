@@ -18,9 +18,10 @@ type Translation struct {
 //nolint:gochecknoglobals,goconst,gosmopolitan,lll,misspell
 var Translations = map[string]Translation{
 	"af":     {ListingName: "Gidsinhoud", Name: "Naam", Size: "Grootte", LastModified: "Laas gewysig"},                                 // Afrikaans
+	"aii":    {ListingName: "ܦܗܪܣܬܐ ܕܐܫܚܝܢܐ", Name: "ܫܡܐ", Size: "ܡܫܘܚܬܐ", LastModified: "ܫܘܚܠܦܐ ܐܚܪܝܐ", RTL: true},                    // Assyrian Neo-Aramaic
 	"akk":    {ListingName: "𒁾𒂍 𒈬", Name: "𒈬", Size: "𒈠𒁕𒁺", LastModified: "𒌓"},                                                         // Akkadian
 	"am":     {ListingName: "የማውጫ ዝርዝር", Name: "ስም", Size: "መጠን", LastModified: "መጨረሻ የተሻሻለው"},                                         // Amharic
-	"ar":     {ListingName: "قائمة الدليل", Name: "الاسم", Size: "الحجم", LastModified: "آخر تعديل", RTL: true},                        // Arabic
+	"ar":     {ListingName: "قائمة الدليل", Name: "الاسم", Size: "الحجم", LastModified: "تاريخ التعديل", RTL: true},                    // Arabic
 	"arc":    {ListingName: "ܡܢܝܢܐ ܕܡܕܒܪܢܐ", Name: "ܫܡܐ", Size: "ܡܫܘܚܬܐ", LastModified: "ܫܘܚܠܦܐ ܐܚܪܝܐ", RTL: true},                     // Aramaic
 	"arn":    {ListingName: "Wif üy", Name: "Üy", Size: "Tunten", LastModified: "Af dewmay"},                                           // Mapudungun (Mapuche)
 	"as":     {ListingName: "ডাইৰেকটৰী তালিকা", Name: "নাম", Size: "আকাৰ", LastModified: "অন্তিম সংশোধন"},                              // Assamese
@@ -45,7 +46,8 @@ var Translations = map[string]Translation{
 	"da":     {ListingName: "Mappeliste", Name: "Navn", Size: "Størrelse", LastModified: "Sidst ændret"},                               // Danish
 	"de":     {ListingName: "Verzeichnisinhalt", Name: "Name", Size: "Größe", LastModified: "Letzte Änderung"},                         // German
 	"de-CH":  {ListingName: "Verzeichnisinhalt", Name: "Name", Size: "Grösse", LastModified: "Letzte Änderung"},                        // German (Switzerland)
-	"dsb":    {ListingName: "Lisćina zapisa", Name: "Mě", Size: "Wjelikosć", LastModified: "Slědna změna"},                             // Lower Sorbian
+	"dsb":    {ListingName: "Lisćina zapisa", Name: "Měno", Size: "Wjelikosć", LastModified: "Slědna změna"},                           // Lower Sorbian
+	"dv":     {ListingName: "ޑައިރެކްޓަރީ ލިސްޓު", Name: "ނަން", Size: "ސައިޒު", LastModified: "އެންމެ ފަހުން ބަދަލުކުރި", RTL: true},  // Dhivehi (Maldivian)
 	"egy":    {ListingName: "𓏃𓏏 𓂋𓈖 𓉐", Name: "𓂋𓈖", Size: "𓉻𓂠", LastModified: "𓆎𓈖𓏏𓇳"},                                                   // Ancient Egyptian
 	"el":     {ListingName: "Λίστα καταλόγου", Name: "Όνομα", Size: "Μέγεθος", LastModified: "Τελευταία τροποποίηση"},                  // Greek
 	"en":     {ListingName: "Directory Listing", Name: "Name", Size: "Size", LastModified: "Last Modified"},                            // English (default, must remain!)
@@ -63,7 +65,7 @@ var Translations = map[string]Translation{
 	"fo":     {ListingName: "Yvirlit", Name: "Navn", Size: "Stødd", LastModified: "Seinast broytt"},                                    // Faroese
 	"fr":     {ListingName: "Contenu du répertoire", Name: "Nom", Size: "Taille", LastModified: "Dernière modification"},               // French
 	"fur":    {ListingName: "Lise de cartele", Name: "Non", Size: "Dimension", LastModified: "Ultime modifiche"},                       // Friulian
-	"fy":     {ListingName: "Map ynhâld", Name: "Namme", Size: "Grutte", LastModified: "Lêst feroare"},                                 // Western Frisian
+	"fy":     {ListingName: "Mapynhâld", Name: "Namme", Size: "Grutte", LastModified: "Lêst wizige"},                                   // Western Frisian (Frysk)
 	"ga":     {ListingName: "Liosta comhadlainne", Name: "Ainm", Size: "Méid", LastModified: "Modhnaithe go deireanach"},               // Irish
 	"gan":    {ListingName: "目录列表", Name: "名称", Size: "大小", LastModified: "最后修改"},                                                      // Gan Chinese
 	"gd":     {ListingName: "Liosta pasgain", Name: "Ainm", Size: "Meud", LastModified: "Atharrachadh mu dheireadh"},                   // Scottish Gaelic
@@ -71,9 +73,11 @@ var Translations = map[string]Translation{
 	"gl":     {ListingName: "Lista do directorio", Name: "Nome", Size: "Tamaño", LastModified: "Última modificación"},                  // Galician
 	"gmy":    {ListingName: "𐀵𐀟𐀼", Name: "𐀃𐀜𐀔", Size: "𐀕𐀼", LastModified: "𐀀𐀕𐀜"},                                                       // Mycenaean Greek
 	"gn":     {ListingName: "Tembiasakue Ñanduti", Name: "Téra", Size: "Tuichakue", LastModified: "Oñemoambue pahápe"},                 // Guaraní
+	"gsw":    {ListingName: "Verziichnisinhalt", Name: "Name", Size: "Grössi", LastModified: "Letschti Änderig"},                       // Alemannic
 	"gu":     {ListingName: "ડિરેક્ટરી સૂચિ", Name: "નામ", Size: "કદ", LastModified: "છેલ્લે ફેરફાર કરેલ"},                             // Gujarati
 	"ha":     {ListingName: "Jerin kundin adireshi", Name: "Suna", Size: "Girma", LastModified: "Gyaran ƙarshe"},                       // Hausa
 	"hak":    {ListingName: "目錄列表", Name: "名稱", Size: "大小", LastModified: "最後修改"},                                                      // Hakka
+	"haw":    {ListingName: "Papa kuhikuhi", Name: "Inoa", Size: "Nui", LastModified: "Hoʻololi hope loa"},                             // Hawaiian
 	"he":     {ListingName: "רשימת תיקייה", Name: "שם", Size: "גודל", LastModified: "שינוי אחרון", RTL: true},                          // Hebrew
 	"hi":     {ListingName: "निर्देशिका सूची", Name: "नाम", Size: "आकार", LastModified: "अंतिम परिवर्तन"},                              // Hindi
 	"hit":    {ListingName: "𒁾𒄭", Name: "𒈬", Size: "𒃲", LastModified: "𒌓"},                                                             // Hittite
@@ -94,7 +98,7 @@ var Translations = map[string]Translation{
 	"kl":     {ListingName: "Mappip allattorsimaffia", Name: "Ateq", Size: "Angissusia", LastModified: "Kingullermik allanngortippoq"}, // Greenlandic
 	"km":     {ListingName: "បញ្ជីថត", Name: "ឈ្មោះ", Size: "ទំហំ", LastModified: "ការកែប្រែចុងក្រោយ"},                                 // Khmer
 	"kn":     {ListingName: "ಡೈರೆಕ್ಟರಿ ಪಟ್ಟಿ", Name: "ಹೆಸರು", Size: "ಗಾತ್ರ", LastModified: "ಕೊನೆಯದಾಗಿ ಮಾರ್ಪಡಿಸಲಾಗಿದೆ"},                 // Kannada
-	"ko":     {ListingName: "디렉터리 목록", Name: "이름", Size: "크기", LastModified: "수정된 날짜"},                                                 // Korean
+	"ko":     {ListingName: "디렉터리 목록", Name: "이름", Size: "크기", LastModified: "마지막 수정"},                                                 // Korean
 	"ku":     {ListingName: "لیستی پەڕگەدان", Name: "ناو", Size: "قەبارە", LastModified: "دوا دەستکاری", RTL: true},                    // Kurdish
 	"ky":     {ListingName: "Каталог тизмеси", Name: "Аты", Size: "Өлчөмү", LastModified: "Акыркы өзгөртүү"},                           // Kyrgyz
 	"la":     {ListingName: "Index directorii", Name: "Nomen", Size: "Magnitudo", LastModified: "Novissime mutatum"},                   // Latin
@@ -115,6 +119,7 @@ var Translations = map[string]Translation{
 	"my":     {ListingName: "ဖိုင်တွဲစာရင်း", Name: "အမည်", Size: "အရွယ်အစား", LastModified: "နောက်ဆုံးပြင်ဆင်မှု"},                    // Burmese
 	"nah":    {ListingName: "Tlapohualiztli", Name: "Tocaitl", Size: "Chicuetiaz", LastModified: "Yancuic yectiliztli"},                // Nahuatl (Aztec)
 	"nb":     {ListingName: "Katalogliste", Name: "Navn", Size: "Størrelse", LastModified: "Sist endret"},                              // Norwegian Bokmal
+	"nds":    {ListingName: "Verteeknis-Inholt", Name: "Naam", Size: "Grött", LastModified: "Tolest ännert"},                           // Low German (Plattdüütsch)
 	"ne":     {ListingName: "डाइरेक्टरी सूची", Name: "नाम", Size: "साइज", LastModified: "अन्तिम परिमार्जन"},                            // Nepali
 	"nd":     {ListingName: "Uhlu lwesiqondisi", Name: "Ibizo", Size: "Ubukhulu", LastModified: "Kugcine ukulungiswa"},                 // Northern Ndebele
 	"nl":     {ListingName: "Mappinhoud", Name: "Naam", Size: "Grootte", LastModified: "Laatst gewijzigd"},                             // Dutch
@@ -136,6 +141,8 @@ var Translations = map[string]Translation{
 	"pt-PT":  {ListingName: "Conteúdo do diretório", Name: "Nome", Size: "Tamanho", LastModified: "Última alteração"},                  // Portuguese (Portugal)
 	"quc":    {ListingName: "Cholaj rech uxe’al", Name: "B’i’aj", Size: "Nimal", LastModified: "Uk’exik k’isbal mul"},                  // Kʼicheʼ
 	"quz":    {ListingName: "Ñiqichasqa", Name: "Suti", Size: "Sayay", LastModified: "Qhipa llamk'apusqa"},                             // Cusco Quechua
+	"rap":    {ListingName: "Te pehupehu", Name: "Inoa", Size: "Nui", LastModified: "Haka rari hopea"},                                 // Rapa Nui
+	"rm":     {ListingName: "Glista dal directori", Name: "Num", Size: "Grondezza", LastModified: "Ultima modificaziun"},               // Romansh
 	"ro":     {ListingName: "Listarea directorului", Name: "Nume", Size: "Mărime", LastModified: "Ultima modificare"},                  // Romanian
 	"rw":     {ListingName: "Urutonde", Name: "Izina", Size: "Ingano", LastModified: "Iheruka guhindurwa"},                             // Kinyarwanda
 	"ru":     {ListingName: "Содержимое директории", Name: "Имя", Size: "Размер", LastModified: "Последнее изменение"},                 // Russian
@@ -157,6 +164,7 @@ var Translations = map[string]Translation{
 	"sux":     {ListingName: "𒁾𒂍 𒈬", Name: "𒈬", Size: "𒃲", LastModified: "𒌓"},                                                      // Sumerian
 	"sv":      {ListingName: "Kataloglista", Name: "Namn", Size: "Storlek", LastModified: "Senast ändrad"},                         // Swedish
 	"sw":      {ListingName: "Orodha", Name: "Jina", Size: "Ukubwa", LastModified: "Ilibadilishwa mwisho"},                         // Swahili
+	"syc":     {ListingName: "ܡܟܬܒܘܬܐ ܕܦܪ̈ܣܐ", Name: "ܫܡܐ", Size: "ܡܫܘܚܬܐ", LastModified: "ܫܘܚܠܦܐ ܐܚܪܝܐ", RTL: true},               // Classical Syriac
 	"syl":     {ListingName: "ꠒꠣꠁꠠꠦꠇꠐꠠꠤ ꠟꠤꠡꠐ", Name: "ꠙꠣꠟ", Size: "ꠀꠇꠣꠠ", LastModified: "ꠢꠦꠡ ꠟꠣꠠꠣꠌꠣꠠꠣ"},                            // Sylheti
 	"ta":      {ListingName: "கோப்பகப் பட்டியல்", Name: "பெயர்", Size: "அளவு", LastModified: "கடைசியாக மாற்றப்பட்டது"},             // Tamil
 	"te":      {ListingName: "డైరెక్టరీ జాబితా", Name: "పేరు", Size: "పరిమాణం", LastModified: "చివరిగా మార్చబడింది"},               // Telugu
@@ -165,6 +173,7 @@ var Translations = map[string]Translation{
 	"tl":      {ListingName: "Listahan ng direktoryo", Name: "Pangalan", Size: "Laki", LastModified: "Huling binago"},              // Tagalog
 	"tk":      {ListingName: "Katalog sanawy", Name: "Ady", Size: "Ölçegi", LastModified: "Soňky üýtgeşme"},                        // Turkmen
 	"tr":      {ListingName: "Dizin İçeriği", Name: "Ad", Size: "Boyut", LastModified: "Son değişiklik"},                           // Turkish
+	"tru":     {ListingName: "ܠܝܣܛܐ ܕܦܝܠܘ̈ܐ", Name: "ܐܫܡܐ", Size: "ܓܐܘܬܐ", LastModified: "ܚܘܪܝܐ ܕܫܘܚܠܦܐ", RTL: true},               // Turoyo (West-Aramaic)
 	"ts":      {ListingName: "Nxaxamelo wa dayirektori", Name: "Vito", Size: "Sayizi", LastModified: "Ku cinciwa ko hetelela"},     // Tsonga
 	"tt":      {ListingName: "Каталог исемлеге", Name: "Исем", Size: "Зурлык", LastModified: "Соңгы үзгәртү"},                      // Tatar
 	"uga":     {ListingName: "𐎒𐎄𐎗 𐎍𐎃𐎕", Name: "𐎌𐎎", Size: "𐎎𐎄", LastModified: "𐎜𐎃𐎗 𐎌𐎓"},                                            // Ugaritic
@@ -173,14 +182,14 @@ var Translations = map[string]Translation{
 	"uz":      {ListingName: "Direktoriyalar ro'yxati", Name: "Nomi", Size: "Hajmi", LastModified: "Oxirgi o'zgartirish"},          // Uzbek
 	"ve":      {ListingName: "Mutevhe wa dairekithiri", Name: "Dzina", Size: "Saizi", LastModified: "Yo shandukiswa lwa u fhedza"}, // Venda
 	"vi":      {ListingName: "Danh sách thư mục", Name: "Tên", Size: "Kích thước", LastModified: "Sửa đổi lần cuối"},               // Vietnamese
-	"wo":      {ListingName: "Njataayu", Name: "Tur", Size: "Dayo", LastModified: "Muddit soppi"},                                  // Wolof
-	"xh":      {ListingName: "Uluhlu", Name: "Igama", Size: "Ubungakanani", LastModified: "Igcinwe ukulungiswa"},                   // Xhosa
+	"wo":      {ListingName: "Limu wayndare", Name: "Tur", Size: "Dayo", LastModified: "Soppiku bu mujj"},                          // Wolof
+	"xh":      {ListingName: "Uluhlu", Name: "Igama", Size: "Ubungakanani", LastModified: "Igqityelwe ukulungiswa"},                // Xhosa
 	"yi":      {ListingName: "דירעקטארי ליסטע", Name: "נאמען", Size: "גרייס", LastModified: "לעצט גענדערט", RTL: true},             // Yiddish
-	"yo":      {ListingName: "Àtòjọ ìtọ́kasí", Name: "Oruko", Size: "Iwon", LastModified: "Atunse to kẹhin"},                       // Yoruba
+	"yo":      {ListingName: "Àtòjọ ìtọ́kasí", Name: "Orúkọ", Size: "Ìwọ̀n", LastModified: "Àtúnṣe tó kẹ́hìn"},                     // Yoruba
 	"yua":     {ListingName: "Bix u beel", Name: "Kabaʼ", Size: "Bukaʼaj", LastModified: "Tu láakʼ kʼexiloʼob"},                    // Yucatec Maya
 	"yue":     {ListingName: "目錄列表", Name: "名稱", Size: "大小", LastModified: "最後修改"},                                                 // Cantonese
 	"zh":      {ListingName: "目录索引", Name: "名称", Size: "大小", LastModified: "修改日期"},                                                 // Chinese
 	"zh-HK":   {ListingName: "目錄列表", Name: "名稱", Size: "大小", LastModified: "最後修改"},                                                 // Chinese (Traditional, Hong Kong)
 	"zh-TW":   {ListingName: "目錄列表", Name: "名稱", Size: "大小", LastModified: "最後修改"},                                                 // Chinese (Traditional, Taiwan)
-	"zu":      {ListingName: "Uhlu", Name: "Igama", Size: "Ubukhulu", LastModified: "Igcine ukulungiswa"},                          // Zulu
+	"zu":      {ListingName: "Uhlu", Name: "Igama", Size: "Ubukhulu", LastModified: "Kugcine ukulungiswa"},                         // Zulu
 }
