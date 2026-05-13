@@ -3,8 +3,12 @@
 # SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
 # SPDX-License-Identifier: MPL-2.0
 
+define uppercase
+$(shell echo "$(1)" | tr '[:lower:]' '[:upper:]')
+endef
+
 PROJECT_NAME:=			SonicWeb
-PROJECT_NAME_UC:=		$(shell echo "$(PROJECT_NAME)" | tr '[:lower:]' '[:upper:]')
+PROJECT_NAME_UC:=		$(call uppercase,$(PROJECT_NAME))
 EXEC_PREFIX:=			sonicweb
 PACKAGE_FILE_PREFIX:=	$(PROJECT_NAME)
 PACKAGE_NAME:=			$(EXEC_PREFIX)
@@ -13,6 +17,10 @@ IGOOS:=					$(shell go env GOOS)
 IGOARCH:=				$(shell go env GOARCH)
 EXEC_SUFFIX=			$(if $(filter windows,$(IGOOS)),.exe,)
 ICGO_ENABLED=			$(if $(CGO_ENABLED),$(CGO_ENABLED),0)
+
+ifeq ($(PROJECT_NAME),$(EXEC_PREFIX))
+	$(error "PROJECT_NAME and EXEC_PREFIX must not be equal!")
+endif
 
 # recognize if git is available and set IBUILDTAG accordingly
 GIT_AVAILABLE := $(if $(shell git status 2>/dev/null),yes,no)
