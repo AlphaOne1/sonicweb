@@ -124,9 +124,9 @@ can be verified using the [slsa-verifier](https://github.com/slsa-framework/slsa
 (replace the `<VERSION>` with the one you actually downloaded, e.g., `v1.10.0`):
 
 ```bash
-$ slsa-verifier verify-artifact SonicWeb-linux-amd64-<VERSION>.deb \
-    --provenance-path multiple.intoto.jsonl                        \
-    --source-uri github.com/AlphaOne1/sonicweb                     \
+slsa-verifier verify-artifact SonicWeb-linux-amd64-<VERSION>.deb \
+    --provenance-path multiple.intoto.jsonl                      \
+    --source-uri github.com/AlphaOne1/sonicweb                   \
     --source-tag <VERSION>
 ```
 
@@ -246,9 +246,9 @@ endpoint of Let's Encrypt is used. Use the following command for testing:
 
 ```sh
 ./sonicweb-linux-amd64 -root testroot/             \
-                    -acmedomain example.com     \
-                    -acmedomain www.example.com \
-                    -acmeendpoint "https://acme-staging-v02.api.letsencrypt.org/directory"
+                       -acmedomain example.com     \
+                       -acmedomain www.example.com \
+                       -acmeendpoint "https://acme-staging-v02.api.letsencrypt.org/directory"
 ```
 
 Directory Listing
