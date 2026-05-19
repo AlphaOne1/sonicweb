@@ -38,16 +38,24 @@ jobs:
 
           - name: Determine pushed commits
             if: >
-                github.event_name == 'push' &&
-                !contains(github.actor, '[bot]') &&
-                !contains(github.event.pusher.name, '[bot]') &&
-                github.event.pusher.name != 'web-flow'
+                github.event_name == 'push'
             env:
                 # Use GitHub-provided SHAs to build the range for this push
                 BEFORE: ${{ github.event.before }}
                 AFTER: ${{ github.sha }}
+                GH_ACTOR: ${{ github.actor }}
+                GH_PUSHER: ${{ github.event.pusher.name }}
             run: |
                 set -euo pipefail
+
+                # Bot / web-flow pushes: create empty file so later steps succeed
+                if    echo "$GH_ACTOR"  | grep -Fq '[bot]' \
+                   || echo "$GH_PUSHER" | grep -Fq '[bot]' \
+                   || [ "$GH_PUSHER" = "web-flow" ]
+                then
+                    touch shas.txt
+                    exit 0
+                fi
 
                 if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]
                 then
@@ -72,7 +80,7 @@ jobs:
           - name: Check for Signed-off-by
             env:
                 GH_ACTOR: ${{ github.actor }}
-                GH_NAME: ${{ github.event.name == 'push' && github.event.pusher.name
+                GH_NAME: ${{ github.event_name == 'push' && github.event.pusher.name
                                                          || github.event.pull_request.user.login }}
                 GH_NAME_SOURCE: ${{ github.event_name == 'push' && 'github.event.pusher.name'
                                                                 || 'github.event.pull_request.user.login' }}

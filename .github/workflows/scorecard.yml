@@ -16,7 +16,7 @@ on:
       - cron: '36 3 * * 2'
     push:
         branches:
-          - master
+          - "master"
 
 # Declare default permissions as read-only.
 permissions: read-all
