@@ -246,6 +246,7 @@ jobs:
                 TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 set -euo pipefail
+
                 docker manifest inspect "${IMAGE_NAME}:${TAG_NAME}"
                 docker manifest inspect "${IMAGE_NAME}:${TAG_NAME}-${{ github.sha }}"
                 docker manifest inspect "${IMAGE_NAME}:latest"
@@ -273,6 +274,7 @@ jobs:
                 TAG_NAME: ${{ github.event.release.tag_name }}
             run: |
                 set -euo pipefail
+
                 mkdir -p release-assets
                 cd release-assets
                 # gets all assets of the release
@@ -284,12 +286,14 @@ jobs:
             working-directory: release-assets
             run: |
                 set -euo pipefail
-                # Robustly hash all regular files in this directory, then base64 and write via tee.
+
+                # Robustly hash all regular files in this directory, then base64 and write
                 LC_ALL=C find . -maxdepth 1 -type f -printf '%P\0' \
                   | sort -z \
                   | xargs -0 sha256sum -- \
                   | base64 -w0 \
-                  | tee check.sha256 > /dev/null
+                  > check.sha256
+
           - name: Upload Checksums
             id: hashes
             uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # 2.1.0
