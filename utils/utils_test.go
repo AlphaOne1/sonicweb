@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package utils_test
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AlphaOne1/sonicweb/utils"
+	"github.com/AlphaOne1/sonicred/utils"
 )
 
 func TestParseLanguageHeader(t *testing.T) {

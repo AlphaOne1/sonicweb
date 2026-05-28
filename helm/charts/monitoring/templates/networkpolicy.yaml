@@ -1,5 +1,5 @@
 {{- /*
-SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 SPDX-License-Identifier: MPL-2.0
 */ -}}
 
@@ -16,7 +16,7 @@ spec:
         - Ingress
     ingress:
         -   from:
-                -   podSelector: { } # Allows all pods in the same namespace (e.g., SonicWeb)
+                -   podSelector: { } # Allows all pods in the same namespace (e.g., SonicRed)
 
 ---
 # Victoria Instances: Access restricted to Alloy (Write) and Grafana (Read)

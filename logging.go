@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package main
@@ -13,7 +13,7 @@ import (
 var errLogConfig = errors.New("invalid log configuration")
 
 // setupLogging sets the log format and level. It can try to guess in which environment
-// SonicWeb runs (logStyle "auto"). If its parent seems to not be an init process, then
+// SonicRed runs (logStyle "auto"). If its parent seems to not be an init process, then
 // text logging is used, otherwise JSON.
 func setupLogging(logLevel string, logStyle string) error {
 	var parsedLogLevel slog.Level

@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 apiVersion:  v2
-name:        SonicWeb
+name:        SonicRed
 type:        application
-description: A Helm chart to deploy SonicWeb on Kubernetes
+description: A Helm chart to deploy SonicRed on Kubernetes
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.

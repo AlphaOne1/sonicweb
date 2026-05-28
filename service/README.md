@@ -1,25 +1,25 @@
 <!-- markdownlint-disable MD013 MD033 MD041 -->
-<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicRed contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
 
-SonicWeb Service
+SonicRed Service
 ================
 
-The service library of *SonicWeb* facilitates the management of multiple HTTP server instances. Its intent is to lift
+The service library of *SonicRed* facilitates the management of multiple HTTP server instances. Its intent is to lift
 the responsibility of managing the lifetimes of these servers to the user.
 
 
 Installation
 ------------
 
-To install the *SonicWeb* service library, you can use the following command:
+To install the *SonicRed* service library, you can use the following command:
 
 ```sh
-go get github.com/AlphaOne1/sonicweb/service
+go get github.com/AlphaOne1/sonicred/service
 ```
 
-Versions of this library are bound to the semantic versioning of *SonicWeb*. This library is intended for public use but
+Versions of this library are bound to the semantic versioning of *SonicRed*. This library is intended for public use but
 be aware that breaking changes may occur between minor versions. No breaking changes will be introduced between patch
 versions.
 
@@ -27,7 +27,7 @@ versions.
 Getting Started
 ---------------
 
-The following snippet illustrates the basic usage of the *SonicWeb* service library:
+The following snippet illustrates the basic usage of the *SonicRed* service library:
 
 ```go
 server := http.Server{}
@@ -106,7 +106,7 @@ g.WaitAllServersShutdown()
 Further Options
 ---------------
 
-As *SonicWeb* service library is an integral part of program flow, it is useful to give it the possibility to output its
+As *SonicRed* service library is an integral part of program flow, it is useful to give it the possibility to output its
 own log messages. The option `service.WithLogger` allows to specify a `slog.Logger`.
 
 To limit the time the servers have to shut down, a shutdown timeout can be specified using the
@@ -117,7 +117,7 @@ A typical server usecase, example could look like this (deliberately simplified,
 ```go
 server := http.Server{} // generate the webserver
 
-// using SonicWeb instrumentation library to generate an instrumentation server
+// using SonicRed instrumentation library to generate an instrumentation server
 instrumentationServer, _ := instrumentation.Server(
     "",     // all addresses
     "8081", // port

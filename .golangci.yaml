@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 # Configuration file for golangci-lint
@@ -58,7 +58,7 @@ linters:
                         - $gostd
                         - "github.com/AlphaOne1/geany"
                         - "github.com/AlphaOne1/midgard"
-                        - "github.com/AlphaOne1/sonicweb"
+                        - "github.com/AlphaOne1/sonicred"
                         - "github.com/AlphaOne1/templig"
                         - "github.com/corazawaf/coraza/v3"
                         - "github.com/prometheus/client_golang/prometheus"

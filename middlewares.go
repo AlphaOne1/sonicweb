@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package main
@@ -19,7 +19,7 @@ import (
 	"github.com/AlphaOne1/midgard/handler/addheader"
 	"github.com/AlphaOne1/midgard/helper"
 
-	"github.com/AlphaOne1/sonicweb/utils"
+	"github.com/AlphaOne1/sonicred/utils"
 
 	"github.com/corazawaf/coraza/v3"
 	corhttp "github.com/corazawaf/coraza/v3/http"
