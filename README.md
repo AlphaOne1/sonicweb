@@ -76,16 +76,16 @@
         <img src="https://slsa.dev/images/gh-badge-level3.svg"
              alt="SLSA Level 3">
     </a>
-    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicred?ref=badge_shield&issueType=license"
+    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=license"
        rel="external noopener noreferrer"
        target="_blank">
-        <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicred.svg?type=shield&issueType=license"
+        <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb.svg?type=shield&issueType=license"
             alt="FOSSA License Status">
     </a>
-    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicred?ref=badge_shield&issueType=security"
+    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb?ref=badge_shield&issueType=security"
        rel="external noopener noreferrer"
        target="_blank">
-        <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicred.svg?type=shield&issueType=security"
+        <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FAlphaOne1%2Fsonicweb.svg?type=shield&issueType=security"
              alt="FOSSA Security Status">
     </a>
     <a href="https://pkg.go.dev/github.com/AlphaOne1/sonicred"
