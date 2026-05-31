@@ -97,6 +97,11 @@
 </p>
 <!-- markdownlint-enable MD013 MD033 MD041 -->
 
+> [!IMPORTANT]
+> **Project Renaming:** This project was formerly known as **SonicWeb**. All repository paths,
+> Go modules, and binaries have been updated to **SonicRed**. If you have cloned this repository
+> prior to the rename, please update your remote URLs.
+
 *SonicRed* is a lightweight, easy-to-use web server for static content.
 
 

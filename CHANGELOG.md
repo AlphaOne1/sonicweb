@@ -8,6 +8,7 @@ Release 1.11.0
 - renaming from SonicWeb to SonicRed to avoid confusion with other preexisting
   projects
 - further expanded directory listing translations
+- dependency updates
 
 Release 1.10.0
 ==============
