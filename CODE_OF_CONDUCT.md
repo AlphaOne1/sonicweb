@@ -1,11 +1,11 @@
-<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicRed contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
 
-SonicWeb Community Code of Conduct
+SonicRed Community Code of Conduct
 ==================================
 
-Like the technical community as a whole, the *SonicWeb* team and community is
+Like the technical community as a whole, the *SonicRed* team and community is
 made up of a mixture of professionals and volunteers from all over the world,
 working on every aspect of the mission—including mentorship, teaching and
 connecting people.
@@ -35,9 +35,9 @@ mailing list, and other forums such as Skype, Google+ Hangouts, etc.
   no excuse for poor behavior and poor manners. We might all experience some
   frustration now and then, but we cannot allow that frustration to turn into a
   personal attack. It's important to remember that a community where people feel
-  uncomfortable or threatened is not productive. Members of the *SonicWeb*
+  uncomfortable or threatened is not productive. Members of the *SonicRed*
   community should be respectful when dealing with other members as well as with
-  people outside the *SonicWeb* community and with user groups/conferences,
+  people outside the *SonicRed* community and with user groups/conferences,
   user group/conference organizers.
 
 * __Be careful in the words that you choose.__ Remember that sexist, racist, and
@@ -47,9 +47,9 @@ mailing list, and other forums such as Skype, Google+ Hangouts, etc.
   appropriate for the community.
 
 __When we disagree, we try to understand why.__ Disagreements, both social and
-technical, happen all the time, and *SonicWeb* is no exception. It is important
+technical, happen all the time, and *SonicRed* is no exception. It is important
 that we resolve disagreements and differing views constructively. Remember that
-we're different. The strength of *SonicWeb* comes from its varied community,
+we're different. The strength of *SonicRed* comes from its varied community,
 people from a wide range of backgrounds. Different people have different
 perspectives on issues. Being unable to understand why someone holds a viewpoint
 doesn't mean that they're wrong. Don't forget that it is human to make errors,

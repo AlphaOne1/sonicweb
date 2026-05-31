@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+     SPDX-License-Identifier: MPL-2.0
+-->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 523 216" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-182.618416,-1403.692422)">
+        <g>
+            <g transform="matrix(1,0,0,1,-768,171.898202)">
+                <g transform="matrix(1.704604,0,0,2.639305,-345.934418,-1488.079001)">
+                    <path d="M838.602,1054.309C841.472,1112.384 755.318,1088.772 811.014,1053.336L809.981,1033.526L838.602,1054.309Z" style="fill:white;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,363,205.101798)">
+                    <path d="M668.802,1026.692L714.935,1077.865L750.038,1040.599L746.475,1109.405L797.648,1107.876L746.475,1154.009L783.741,1189.112L714.935,1185.549L716.464,1236.722L670.331,1185.549L635.228,1222.815L638.791,1154.009L587.618,1155.538L638.791,1109.405L601.525,1074.302L670.331,1077.865L668.802,1026.692ZM675.031,1041.548L676.595,1078.06L709.059,1079.544L675.031,1041.548ZM703.736,1111.251C672.107,1103.419 657.118,1121.405 646.384,1160.21L650.311,1159.694C657.515,1128.355 672.166,1106.012 699.847,1113.984L703.736,1111.251ZM697.663,1116.642C686.433,1110.428 670.483,1117.733 662.067,1132.943C653.651,1148.154 655.935,1165.547 667.164,1171.761C678.394,1177.974 694.344,1170.67 702.76,1155.46C711.176,1140.249 708.892,1122.856 697.663,1116.642Z" style="fill:url(#_Radial1);"/>
+                </g>
+                <g transform="matrix(1.91354,0,0,1.91354,-409.142267,-398.035327)">
+                    <g transform="matrix(50,0,0,50,802.462443,930.544179)">
+                    </g>
+                    <text x="769.113px" y="930.544px" style="font-family:'Arial-BoldItalicMT', 'Arial', sans-serif;font-weight:700;font-style:italic;font-size:50px;fill:white;stroke:black;stroke-width:2.4px;">S</text>
+                </g>
+            </g>
+            <g>
+                <g transform="matrix(1.704604,0,0,2.639305,-1105.934418,-1311.180799)">
+                    <path d="M838.602,1054.309C841.472,1112.384 755.318,1088.772 811.014,1053.336L809.981,1033.526L838.602,1054.309Z" style="fill:white;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,-397,382)">
+                    <path d="M668.802,1026.692L714.935,1077.865L750.038,1040.599L746.475,1109.405L797.648,1107.876L746.475,1154.009L783.741,1189.112L714.935,1185.549L716.464,1236.722L670.331,1185.549L635.228,1222.815L638.791,1154.009L587.618,1155.538L638.791,1109.405L601.525,1074.302L670.331,1077.865L668.802,1026.692ZM675.031,1041.548L676.595,1078.06L709.059,1079.544L675.031,1041.548ZM703.736,1111.251C672.107,1103.419 657.118,1121.405 646.384,1160.21L650.311,1159.694C657.515,1128.355 672.166,1106.012 699.847,1113.984L703.736,1111.251ZM697.663,1116.642C686.433,1110.428 670.483,1117.733 662.067,1132.943C653.651,1148.154 655.935,1165.547 667.164,1171.761C678.394,1177.974 694.344,1170.67 702.76,1155.46C711.176,1140.249 708.892,1122.856 697.663,1116.642Z" style="fill:url(#_Radial2);"/>
+                </g>
+                <g transform="matrix(1.91354,0,0,1.91354,-1169.142267,-221.137125)">
+                    <g transform="matrix(50,0,0,50,975.203654,930.544179)">
+                    </g>
+                    <text x="769.113px" y="930.544px" style="font-family:'Arial-BoldItalicMT', 'Arial', sans-serif;font-weight:700;font-style:italic;font-size:50px;fill:white;stroke:black;stroke-width:2.4px;">S<tspan x="798.962px 826.004px 853.046px 863.438px 887.746px 920.354px 944.662px " y="930.544px 930.544px 930.544px 930.544px 930.544px 930.544px 930.544px ">onicRed</tspan></text>
+                </g>
+            </g>
+        </g>
+    </g>
+    <defs>
+        <radialGradient id="_Radial1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(39.592327,-44.943225,44.943225,39.592327,692.633093,1131.707099)"><stop offset="0" style="stop-color:rgb(0,59,155);stop-opacity:1"/><stop offset="0.46" style="stop-color:rgb(1,70,183);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(2,99,255);stop-opacity:1"/></radialGradient>
+        <radialGradient id="_Radial2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(39.592327,-44.943225,44.943225,39.592327,692.633093,1131.707099)"><stop offset="0" style="stop-color:rgb(155,0,40);stop-opacity:1"/><stop offset="0.46" style="stop-color:rgb(183,1,48);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(255,2,68);stop-opacity:1"/></radialGradient>
+    </defs>
+</svg>

@@ -1,11 +1,11 @@
-<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicRed contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
 
 Contributing
 ============
 
-Thanks for your interest in contributing to *SonicWeb*. Please take a moment to
+Thanks for your interest in contributing to *SonicRed*. Please take a moment to
 review this document __before submitting a pull request__.
 
 Pull requests
@@ -16,23 +16,23 @@ __Please ask first before starting work on any significant new features.__
 It's never a fun experience to have your pull request declined after investing a
 lot of time and effort into a new feature. To avoid this from happening, we
 request that contributors create
-[a feature request](https://github.com/AlphaOne1/sonicweb/discussions/new?category=ideas)
+[a feature request](https://github.com/AlphaOne1/sonicred/discussions/new?category=ideas)
 to first discuss any new ideas. Your ideas and suggestions are welcome!
 
 Please ensure that the tests are passing when submitting a pull request. If
-you're adding new features or bugfixes to *SonicWeb*, please include tests.
+you're adding new features or bugfixes to *SonicRed*, please include tests.
 
 
 Where do I go from here?
 ------------------------
 
 For any questions, support, or ideas, etc.
-[please create a GitHub discussion](https://github.com/AlphaOne1/sonicweb/discussions/new).
+[please create a GitHub discussion](https://github.com/AlphaOne1/sonicred/discussions/new).
 If you've noticed a bug, [please submit an issue][new issue].
 
 ### Fork and create a branch
 
-If this is something you think you can fix, then [fork sonicweb] and create a
+If this is something you think you can fix, then [fork sonicred] and create a
 branch with a descriptive name.
 
 ### Get the test suite running
@@ -133,7 +133,7 @@ Trust & Compliance
 ------------------
 
 <!-- not yet
-*SonicWeb* is built with security in mind. For a detailed justification of its
+*SonicRed* is built with security in mind. For a detailed justification of its
 security design and threat model, please refer to the
 [Security Assurance Case](SECURITY_ASSURANCE.md).
 -->
@@ -147,7 +147,7 @@ library or to be implemented with minimal effort.
 Dependencies are also checked by the linter and must be registered there.
 Dependency updates are generally tracked by dependabot.
 
-Concerning the validity of obtained artifacts, *SonicWeb* relies on the
+Concerning the validity of obtained artifacts, *SonicRed* relies on the
 well-established Go module management. It downloads the exact version from
 `go.mod` via [git](https://git-scm.com) from the original sources and validates
 the check sums stored in the `go.sum` file.

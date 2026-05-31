@@ -1,12 +1,12 @@
 <!--  SPDX-FileCopyrightText: © 2004-2025 Greg Wilson
-      SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+      SPDX-FileCopyrightText: 2026 The SonicRed contributors.
       SPDX-License-Identifier: CC-BY-4.0
 -->
 
-*SonicWeb* Project Governance
+*SonicRed* Project Governance
 =============================
 
-The *SonicWeb* project uses a governance model commonly described as Benevolent
+The *SonicRed* project uses a governance model commonly described as Benevolent
 Dictator For Life (BDFL). This document outlines our implementation of this
 model.
 

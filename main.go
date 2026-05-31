@@ -1,7 +1,7 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
-// Package main contains the server logic of SonicWeb.
+// Package main contains the server logic of SonicRed.
 package main
 
 import (
@@ -28,16 +28,16 @@ import (
 	"github.com/AlphaOne1/midgard/handler/correlation"
 	"github.com/AlphaOne1/midgard/helper"
 
-	"github.com/AlphaOne1/sonicweb/dirindex"
-	"github.com/AlphaOne1/sonicweb/instrumentation"
-	"github.com/AlphaOne1/sonicweb/service"
-	"github.com/AlphaOne1/sonicweb/utils"
+	"github.com/AlphaOne1/sonicred/dirindex"
+	"github.com/AlphaOne1/sonicred/instrumentation"
+	"github.com/AlphaOne1/sonicred/service"
+	"github.com/AlphaOne1/sonicred/utils"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // ServerName is the reported server name in the header.
-const ServerName = "SonicWeb"
+const ServerName = "SonicRed"
 
 // ReadTimeout is the timeout used to read header and body content.
 const ReadTimeout = 2 * time.Second

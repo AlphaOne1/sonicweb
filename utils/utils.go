@@ -1,7 +1,7 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
-// Package utils contains utility functions for the SonicWeb server.
+// Package utils contains utility functions for the SonicRed server.
 package utils
 
 import (

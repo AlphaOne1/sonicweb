@@ -1,15 +1,15 @@
 # vim: set smartindent ts=4:
 
-# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 define uppercase
 $(shell echo "$(1)" | tr '[:lower:]' '[:upper:]')
 endef
 
-PROJECT_NAME:=			SonicWeb
+PROJECT_NAME:=			SonicRed
 PROJECT_NAME_UC:=		$(call uppercase,$(PROJECT_NAME))
-EXEC_PREFIX:=			sonicweb
+EXEC_PREFIX:=			sonicred
 PACKAGE_FILE_PREFIX:=	$(PROJECT_NAME)
 PACKAGE_NAME:=			$(EXEC_PREFIX)
 THIRD_PARTY_NAME:=		third_party_licenses

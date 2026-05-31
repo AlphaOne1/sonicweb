@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 // Package dirindex provides functionality for generating directory listings with customizable templates
@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AlphaOne1/sonicweb/utils"
+	"github.com/AlphaOne1/sonicred/utils"
 )
 
 //go:embed dir_index.css dir_index.js dir_index.html.tmpl
@@ -301,7 +301,7 @@ func DirIndex(fsys fs.StatFS, enable bool, basePath, rootPath string) (func(http
 	})
 	tmpl, err := tmpl.ParseFS(directoryListingTemplate, "*")
 
-	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicWeb's functionality.
+	// we accept the downstream nil here. It _must_ work, as it is a core component of SonicRed's functionality.
 	if err != nil {
 		return nil, fmt.Errorf("could not parse directory listing template: %w", err)
 	}

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 ############################
@@ -6,7 +6,7 @@
 #
 # This dockerfile relies on a previously build os and architecture fitting executable.
 # It can be generated as follows:
-#     $ make sonicweb-linux-amd64
+#     $ make sonicred-linux-amd64
 # Copy or mount the web content to the /www directory.
 # After starting the image the content of this directory will be served.
 
@@ -39,19 +39,19 @@ RUN useradd --home     "/nonexistent"      \
 
 RUN mkdir -p /tmp/root/bin        \
              /tmp/root/etc        \
-             /tmp/root/usr/share/doc/sonicweb \
+             /tmp/root/usr/share/doc/sonicred \
              /tmp/root/tmp        \
              /tmp/root/www        \
              /tmp/root/www/styles \
              /tmp/root/www/js
 
-COPY --chmod=0755 sonicweb-linux-${TARGETARCH} /tmp/root/bin/sonicweb
+COPY --chmod=0755 sonicred-linux-${TARGETARCH} /tmp/root/bin/sonicred
 COPY --chmod=0444 docker_root/                \
                   README.md                   \
-                  sonicweb_logo.svg           /tmp/root/www/
+                  sonicred_logo.svg           /tmp/root/www/
 COPY --chmod=0444 LICENSE                                         \
                   README.md                                       \
-                  third_party_licenses-linux-${TARGETARCH}.tar.xz /tmp/root/usr/share/doc/sonicweb/
+                  third_party_licenses-linux-${TARGETARCH}.tar.xz /tmp/root/usr/share/doc/sonicred/
 
 ADD --chmod=0444                                                                     \
     --checksum=sha256:${HLJS_JS_SHA256}                                              \
@@ -93,19 +93,19 @@ RUN getent passwd "${USER}" > /tmp/root/etc/passwd &&\
     sed -i '1,/<\/p>/{/<a href.*/,/<\/a>/d}' /tmp/root/www/README.md
 
 ################################################################################
-FROM scratch AS sonicweb
+FROM scratch AS sonicred
 
 # Defaults for local builds; CI should override these via --build-arg
 ARG VERSION=dev
 ARG REVISION=unknown
 ARG CREATED=1970-01-01T00:00:00Z
 
-LABEL org.opencontainers.image.title="SonicWeb"                             \
-      org.opencontainers.image.description="SonicWeb web server"            \
+LABEL org.opencontainers.image.title="SonicRed"                             \
+      org.opencontainers.image.description="SonicRed web server"            \
       org.opencontainers.image.licenses=MPL-2.0                             \
-      org.opencontainers.image.source=https://github.com/AlphaOne1/sonicweb \
-      org.opencontainers.image.documentation=https://github.com/AlphaOne1/sonicweb \
-      org.opencontainers.image.url=https://github.com/AlphaOne1/sonicweb    \
+      org.opencontainers.image.source=https://github.com/AlphaOne1/sonicred \
+      org.opencontainers.image.documentation=https://github.com/AlphaOne1/sonicred \
+      org.opencontainers.image.url=https://github.com/AlphaOne1/sonicred    \
       org.opencontainers.image.version="${VERSION}"                         \
       org.opencontainers.image.revision="${REVISION}"                       \
       org.opencontainers.image.created="${CREATED}"
@@ -127,4 +127,4 @@ EXPOSE  8080/tcp  \
 
 USER    ${USER}:${USER}
 
-ENTRYPOINT ["/bin/sonicweb"]
+ENTRYPOINT ["/bin/sonicred"]

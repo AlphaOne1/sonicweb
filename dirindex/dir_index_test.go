@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package dirindex_test
@@ -17,7 +17,7 @@ import (
 	"github.com/AlphaOne1/midgard/defs"
 	"github.com/AlphaOne1/midgard/helper"
 
-	"github.com/AlphaOne1/sonicweb/dirindex"
+	"github.com/AlphaOne1/sonicred/dirindex"
 )
 
 func TestCleanRequestPath(t *testing.T) {

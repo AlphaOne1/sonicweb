@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+// SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 // SPDX-License-Identifier: MPL-2.0
 
 package main
@@ -191,7 +191,7 @@ func TestSonicMain(t *testing.T) {
 	}
 
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb",
+		"sonicred",
 		"-root", "./testroot",
 		"-header", "X-Test-Header: testHeaderContent",
 		"-header", "X-Empty",
@@ -262,7 +262,7 @@ func TestSonicMainTLS(t *testing.T) {
 	certFile, keyFile := generateCertAndKey()
 
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb",
+		"sonicred",
 		"-root", "./testroot",
 		"-tlscert", certFile,
 		"-tlskey", keyFile,
@@ -340,7 +340,7 @@ func TestSonicMainTLS(t *testing.T) {
 
 func TestSonicMainVersion(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb", "-version",
+		"sonicred", "-version",
 	)
 
 	runtime.Gosched()
@@ -352,7 +352,7 @@ func TestSonicMainVersion(t *testing.T) {
 
 func TestSonicMainInvalidRoot(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb",
+		"sonicred",
 		"-root", "/noentry",
 		"-address", "localhost",
 		"-iaddress", "localhost",
@@ -367,7 +367,7 @@ func TestSonicMainInvalidRoot(t *testing.T) {
 
 func TestSonicMainInvalidHeaderFile(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb",
+		"sonicred",
 		"-root", "testroot/",
 		"-headerfile", "/noexist",
 		"-address", "localhost",
@@ -383,7 +383,7 @@ func TestSonicMainInvalidHeaderFile(t *testing.T) {
 
 func TestSonicMainInvalidWAFFile(t *testing.T) {
 	afterTimer, mainReturn := startMain(t,
-		"sonicweb",
+		"sonicred",
 		"-root", "testroot/",
 		"-wafcfg", "/noexist",
 		"-address", "localhost",

@@ -1,12 +1,12 @@
-# SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+# SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 # SPDX-License-Identifier: MPL-2.0
 
 /.idea
 .DS_Store
 go.work*
-sonicweb
-sonicweb-*-*
-SonicWeb-*.*
+sonicred
+sonicred-*-*
+SonicRed-*.*
 /testcert
 helm/**/*.tgz
 helm/**/Chart.lock

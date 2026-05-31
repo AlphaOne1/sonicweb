@@ -1,21 +1,21 @@
 {{- /*
-SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+SPDX-FileCopyrightText: 2026 The SonicRed contributors.
 SPDX-License-Identifier: MPL-2.0
 */ -}}
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: {{ include "SonicWeb.fullname" . }}
+    name: {{ include "SonicRed.fullname" . }}
     labels:
-        {{- include "SonicWeb.labels" . | nindent 8 }}
+        {{- include "SonicRed.labels" . | nindent 8 }}
 spec:
     {{- if not .Values.autoscaling.enabled }}
     replicas: {{ .Values.replicaCount }}
     {{- end }}
     selector:
         matchLabels:
-            {{- include "SonicWeb.selectorLabels" . | nindent 12 }}
+            {{- include "SonicRed.selectorLabels" . | nindent 12 }}
     template:
         metadata:
             {{- with .Values.podAnnotations }}
@@ -23,7 +23,7 @@ spec:
                 {{- toYaml . | nindent 16 }}
             {{- end }}
             labels:
-                {{- include "SonicWeb.labels" . | nindent 16 }}
+                {{- include "SonicRed.labels" . | nindent 16 }}
                 {{- with .Values.podLabels }}
                 {{- toYaml . | nindent 16 }}
                 {{- end }}
@@ -32,7 +32,7 @@ spec:
             imagePullSecrets:
                 {{- toYaml . | nindent 16 }}
             {{- end }}
-            serviceAccountName: {{ include "SonicWeb.serviceAccountName" . }}
+            serviceAccountName: {{ include "SonicRed.serviceAccountName" . }}
             securityContext:
                 {{- toYaml .Values.podSecurityContext | nindent 16 }}
             containers:

@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD013 MD033 MD041 -->
-<!-- SPDX-FileCopyrightText: 2026 The SonicWeb contributors.
+<!-- SPDX-FileCopyrightText: 2026 The SonicRed contributors.
      SPDX-License-Identifier: MPL-2.0
 -->
 
-SonicWeb Instrumentation
+SonicRed Instrumentation
 ========================
 
 This library is derived from the official documentation example for the OpenTelemetry Go SDK. It aims to provide a thin
@@ -19,13 +19,13 @@ provides the means for the operator and does not need to care further about the 
 Installation
 ------------
 
-To install the *SonicWeb* instrumentation library, you can use the following command:
+To install the *SonicRed* instrumentation library, you can use the following command:
 
 ```sh
-go get github.com/AlphaOne1/sonicweb/instrumentation
+go get github.com/AlphaOne1/sonicred/instrumentation
 ```
 
-Versions of this library are bound to the semantic versioning of *SonicWeb*. This library is intended for public use but
+Versions of this library are bound to the semantic versioning of *SonicRed*. This library is intended for public use but
 be aware that breaking changes may occur between minor versions. No breaking changes will be introduced between patch
 versions.
 
@@ -75,7 +75,7 @@ In addition, the OpenTelemetry Go SDK and its exporters evaluate further variabl
 
 ### Manual processing
 
-The following environment variables are evaluated by the *SonicWeb* instrumentation library.
+The following environment variables are evaluated by the *SonicRed* instrumentation library.
 
 | Variable                              | Purpose                                                                        | Supported / Expected Values                                                                                 | Default / Behavior                                                                                      |
 |---------------------------------------|--------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
