@@ -32,7 +32,7 @@ dependencies:
         alias: metrics
 
     -   name: victoria-logs-single
-        version: 0.13.3
+        version: 0.13.6
         repository: https://victoriametrics.github.io/helm-charts/
         alias: logs
 
