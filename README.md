@@ -52,12 +52,18 @@
        <img src="https://img.shields.io/coderabbit/prs/github/AlphaOne1/sonicred"
             alt="CodeRabbit Reviews">
     </a>
-    <!--<a href="https://www.bestpractices.dev/projects/0000"
+    <a href="https://www.bestpractices.dev/projects/13053"
        rel="external noopener noreferrer"
        target="_blank">
-        <img src="https://www.bestpractices.dev/projects/0000/badge"
+        <img src="https://www.bestpractices.dev/projects/13053/badge"
              alt="OpenSSF Best Practices">
-    </a>-->
+    </a>
+    <a href="https://www.bestpractices.dev/projects/13053"
+       rel="external noopener noreferrer"
+       target="_blank">
+        <img src="https://www.bestpractices.dev/projects/13053/baseline"
+             alt="OpenSSF Baseline">
+    </a>
     <a href="https://scorecard.dev/viewer/?uri=github.com/AlphaOne1/sonicred"
        rel="external noopener noreferrer"
        target="_blank">
@@ -126,7 +132,7 @@ Installation
 Builds are secured with SLSA Level 3 provenance via slsa-framework/slsa-github-generator.
 The downloaded archive together with the provenance file `multiple.intoto.jsonl`
 can be verified using the [slsa-verifier](https://github.com/slsa-framework/slsa-verifier/)
-(replace the `<VERSION>` with the one you actually downloaded, e.g., `v1.10.0`):
+(replace the `<VERSION>` with the one you actually downloaded, e.g., `v1.11.0`):
 
 ```bash
 slsa-verifier verify-artifact SonicRed-linux-amd64-<VERSION>.deb \
@@ -189,17 +195,18 @@ $ ./sonicred-linux-amd64 -root testroot/
    |  , \_/  /____/\____/_/ /_/_/\___/_/ |_|\___/\__._/
    | / \           \
    |/   \    _______\ Version: v1.11.0
-         \  |              of: 2026-05-09T20:35:43Z
+         \  |              of: 2026-05-31T08:21:05Z
           \ |           using: go1.26.3
            \|
-time=2026-05-10T23:20:45.064848+02:00 level=INFO msg=logging level=info
-time=2026-05-10T23:20:45.065440+02:00 level=INFO msg="using root directory" root=testroot
-time=2026-05-10T23:20:45.065505+02:00 level=INFO msg="using base path" path=/
-time=2026-05-10T23:20:45.070429+02:00 level=INFO msg="telemetry initialized"
-time=2026-05-10T23:20:45.070460+02:00 level=INFO msg="registering handlers for FileServer"
-time=2026-05-10T23:20:45.072648+02:00 level=INFO msg="started server" address=:8080 t_init=10.757033ms
-time=2026-05-10T23:20:45.072756+02:00 level=INFO msg="waiting for servers to shutdown"
-time=2026-05-10T23:20:45.072990+02:00 level=INFO msg="server started" name=SonicRed addr=[::]:8080
+
+time=2026-05-31T13:36:41.974831+02:00 level=INFO msg=logging level=info
+time=2026-05-31T13:36:41.974882+02:00 level=INFO msg="using root directory" root=testroot
+time=2026-05-31T13:36:41.974899+02:00 level=INFO msg="using base path" path=/
+time=2026-05-31T13:36:41.981945+02:00 level=INFO msg="telemetry initialized"
+time=2026-05-31T13:36:41.982108+02:00 level=INFO msg="registering handlers for FileServer"
+time=2026-05-31T13:36:41.983495+02:00 level=INFO msg="started server" address=:8080 t_init=9.39238ms
+time=2026-05-31T13:36:41.983543+02:00 level=INFO msg="waiting for servers to shutdown"
+time=2026-05-31T13:36:41.983588+02:00 level=INFO msg="server started" name=SonicRed addr=[::]:8080
 ```
 
 HTTPS
@@ -345,7 +352,7 @@ Docker Usage
 *SonicRed* is also distributed as a Docker image. To start it, one can simply write:
 
 ```sh
-docker run -p 8080:8080 ghcr.io/alphaone1/sonicred:v1.10.0
+docker run -p 8080:8080 ghcr.io/alphaone1/sonicred:v1.11.0
 ```
 
 and it will show this documentation. The entrypoint of the Dockerfile just starts *SonicRed* without any parameters.
@@ -353,7 +360,7 @@ Therefore, `/www` is the default web root directory. Every parameter passed afte
 parameter to *SonicRed*. For example, running
 
 ```sh
-docker run -p 8080:8080 ghcr.io/alphaone1/sonicred:v1.10.0 --log=debug
+docker run -p 8080:8080 ghcr.io/alphaone1/sonicred:v1.11.0 --log=debug
 ```
 
 is equivalent to running:
@@ -366,7 +373,7 @@ The Docker image allows new web content to be mounted on `/www`, replacing the d
 web root directory, e.g., `myapp/`, can be mounted like this:
 
 ```sh
-docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicred:v1.10.0
+docker run -p 8080:8080 -v ./myapp:/www:ro ghcr.io/alphaone1/sonicred:v1.11.0
 ```
 
 Note that without specifying the `:ro` flag, the content will be mounted as read-write. *SonicRed* does not write into
@@ -376,5 +383,5 @@ non-root user that *SonicRed* uses (UID 65532).
 If telemetry is needed, port 8081 needs to be exposed additionally:
 
 ```sh
-docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicred:v1.10.0
+docker run -p 8080:8080 -p 8081:8081 ghcr.io/alphaone1/sonicred:v1.11.0
 ```
