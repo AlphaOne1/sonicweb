@@ -73,6 +73,7 @@ var Translations = map[string]Translation{
 	"gl":     {ListingName: "Lista do directorio", Name: "Nome", Size: "Tamaño", LastModified: "Última modificación"},                  // Galician
 	"gmy":    {ListingName: "𐀵𐀟𐀼", Name: "𐀃𐀜𐀔", Size: "𐀕𐀼", LastModified: "𐀀𐀕𐀜"},                                                       // Mycenaean Greek
 	"gn":     {ListingName: "Tembiasakue Ñanduti", Name: "Téra", Size: "Tuichakue", LastModified: "Oñemoambue pahápe"},                 // Guaraní
+	"got":    {ListingName: "𐌰𐌻𐌰𐌿𐌽𐍃 𐌰𐌽𐌰𐌼𐌴𐌻𐌳𐌴𐌹𐌽", Name: "𐌽𐌰𐌼𐍉", Size: "𐌼𐌹𐌺𐌹𐌻𐌴𐌹", LastModified: "𐍃𐍄𐌰𐌿𐌰 𐌰𐍆𐍄𐌿𐌼𐌹𐍃𐍄"},                        // Gothic (Wulfila script)
 	"gsw":    {ListingName: "Verziichnisinhalt", Name: "Name", Size: "Grössi", LastModified: "Letschti Änderig"},                       // Alemannic
 	"gu":     {ListingName: "ડિરેક્ટરી સૂચિ", Name: "નામ", Size: "કદ", LastModified: "છેલ્લે ફેરફાર કરેલ"},                             // Gujarati
 	"ha":     {ListingName: "Jerin kundin adireshi", Name: "Suna", Size: "Girma", LastModified: "Gyaran ƙarshe"},                       // Hausa
